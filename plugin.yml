@@ -1,0 +1,12 @@
+name: Death and Rebirth
+main: muCkk.DeathAndRebirth.DAR
+version: 1.0
+author: muCkk
+commands:
+    resurrect:
+        aliases: [res]
+        description: Resurrects a player or yourself
+        usage: /<command> [playername]
+    shrine:
+        description: Errects or removes a shrine at the targeted location
+        usage: /<command> <add, rm, list> <name>
