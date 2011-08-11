@@ -42,6 +42,11 @@ public class DARShrines {
         }
 	}
 	
+	/**
+	 * Adds a new shrine to the world
+	 * @param shrine
+	 * @param name
+	 */
 	public void addShrine(DARShrine shrine, String name) {
 		config.setProperty("shrines."+name+".max.x", shrine.getMax()[0]);
 		config.setProperty("shrines."+name+".max.y", shrine.getMax()[1]);
@@ -62,6 +67,11 @@ public class DARShrines {
 		config.save();
 	}
 	
+	/**
+	 * Shows a list of all shrines
+	 * @param player
+	 * @param page
+	 */
 	public void list(Player player, int page) {
 		List<String> names = config.getKeys("shrines");
 		int pages = names.size()/6;
@@ -73,6 +83,11 @@ public class DARShrines {
 		}
 	}
 	
+	/**
+	 * Checks if a shrine with the given name exists
+	 * @param name
+	 * @return
+	 */
 	public boolean exists(String name) {
 		List<String> names = config.getKeys("shrines");
 		try {
@@ -90,6 +105,12 @@ public class DARShrines {
 		// NW, N, NE
 		// SW, S, SE
 		// W, E
+	
+	/**
+	 * Removes a shrine from the world
+	 * @param name
+	 * @param player
+	 */
 	public void removeShrine(String name, Player player) {
 		int x = config.getInt("shrines."+name+".tb.x", 0),
 			y = config.getInt("shrines."+name+".tb.y", 0),
@@ -119,6 +140,11 @@ public class DARShrines {
 		config.save();
 	}
 	
+	/**
+	 * Returns the shrine near a player if there is one
+	 * @param player
+	 * @return DARShrine
+	 */
 	public String getClose(Player player) {
 		Block pb = player.getLocation().getBlock();
 		int px = pb.getX();
@@ -151,7 +177,14 @@ public class DARShrines {
 		return null;
 	}
 	
-	public boolean isShrine(String name, Block block, Player player) {
+	/**
+	 * Checks if the block is around the shrine (3x3x3 area - everything above the glowstones)
+	 * @param name of the shrine
+	 * @param block which was placed
+	 * @param player who placed the block
+	 * @return true or false ;)
+	 */
+	public boolean isShrineArea(String name, Block block, Player player) {
 		int 	tx = config.getInt("shrines."+name+".tb.x", 0),
 				ty = config.getInt("shrines."+name+".tb.y", 0),
 				tz = config.getInt("shrines."+name+".tb.z", 0);
@@ -185,6 +218,45 @@ public class DARShrines {
 		return false;
 	}
 	
+	/**
+	 * Checks if the given block is part of a shrine
+	 * @param name of the shrine
+	 * @param block which was involved in the action
+	 * @param player who was involved in the action
+	 * @return true if the block is part of the shrine
+	 */
+	public boolean isShrine(String name, Block block, Player player) {
+		int 	tx = config.getInt("shrines."+name+".tb.x", 0),
+				ty = config.getInt("shrines."+name+".tb.y", 0),
+				tz = config.getInt("shrines."+name+".tb.z", 0);
+		
+		Block tb = player.getWorld().getBlockAt(tx, ty, tz);
+		Block rock1 = tb.getRelative(BlockFace.UP, 1);
+		Block rock2 = tb.getRelative(BlockFace.UP, 2);
+		Block rock3 = tb.getRelative(BlockFace.UP, 3);
+		Block nw = tb.getRelative(BlockFace.NORTH_WEST, 1);
+		Block n = tb.getRelative(BlockFace.NORTH, 1);
+		Block ne = tb.getRelative(BlockFace.NORTH_EAST, 1);
+		Block sw = tb.getRelative(BlockFace.SOUTH_WEST, 1);
+		Block s = tb.getRelative(BlockFace.SOUTH, 1);
+		Block se = tb.getRelative(BlockFace.SOUTH_EAST, 1);
+		Block w = tb.getRelative(BlockFace.WEST, 1);
+		Block e = tb.getRelative(BlockFace.EAST, 1);
+		
+		Block[] shrineBlocks = {tb, rock1, rock2, rock3, nw, n, ne, sw, s, se, w, e };
+		for (Block sb : shrineBlocks) {
+			if (block.getLocation().equals(sb.getLocation())) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Checks if the player is standing on a shrine
+	 * @param player who gets checked
+	 * @return true if the player stands on a shrine, else false
+	 */
 	public boolean isOnShrine(Player player) {
 		Block pb = player.getLocation().getBlock();
 		int px = pb.getX();
