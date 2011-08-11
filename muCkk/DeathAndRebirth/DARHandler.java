@@ -59,6 +59,9 @@ public class DARHandler {
 	}
 	
 	public void newPlayer(Player player) {
+		if(existsPlayer(player)) {
+			return;
+		}
 		String pname = player.getName();
 		
 		yml.setProperty("players." +pname +".dead", false);
@@ -167,8 +170,10 @@ public class DARHandler {
 		Location loc = new Location(world, x, y, z);
 		return loc;
 	}
-	
+
+	// **************************************************************
 	// *** code from DwarfCraft, found on the bukkit forum - THX! ***
+	// **************************************************************	
 	private boolean CheckItems(Player player, ItemStack costStack)
     {
         //make sure we have enough
@@ -216,4 +221,33 @@ public class DARHandler {
         }
         return true;
     }
+
+    /**
+     * binds the players soul to a shrine
+     * @param player
+     */
+	public void bindSoul(Player player) {
+		String pname = player.getName();
+		Location loc = player.getLocation();
+		yml.setProperty("players." +pname +".shrine.x", loc.getX());
+		yml.setProperty("players." +pname +".shrine.y", loc.getY());
+		yml.setProperty("players." +pname +".shrine.z", loc.getZ());
+	}
+	
+	public Location getBoundShrine(Player player) {
+		String pname = player.getName();
+		World world = player.getWorld();
+		
+		// *** check if a shrine is saved ***
+		Object doesShrineExists = yml.getProperty("players."+pname +".shrine.x");
+		if (doesShrineExists == null) {
+			return null;
+		}
+		
+		double x = yml.getDouble("players."+pname+".shrine.x", 0);
+		double y = yml.getDouble("players."+pname+".shrine.y", 64);
+		double z = yml.getDouble("players."+pname+".shrine.z", 0);
+		Location loc = new Location(world, x, y, z);	
+		return loc;
+	}
 }
