@@ -1,5 +1,6 @@
 package muCkk.DeathAndRebirth;
 
+import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.command.Command;
@@ -46,11 +47,14 @@ public class DAR extends JavaPlugin {
 		ghosts = new DARHandler(dataDir, handlerFile, config, graves);
 		ghosts.load();
 		shrines = new DARShrines(dataDir, shrinesFile);
+		
 		setupPermissions();
+		
 		PluginManager pm = getServer().getPluginManager();
-		DARPlayerListener playerlistener = new DARPlayerListener(ghosts,graves, shrines);
+		
+		DARPlayerListener playerlistener = new DARPlayerListener(ghosts, shrines);
 		DAREntityListener entityListener = new DAREntityListener(ghosts);
-		DARBlockListener blockListener = new DARBlockListener(shrines);
+		DARBlockListener blockListener = new DARBlockListener(shrines,ghosts,graves);
 		
 		pm.registerEvent(Type.PLAYER_JOIN, playerlistener, Priority.Low, this);
 		pm.registerEvent(Type.PLAYER_RESPAWN, playerlistener, Priority.Low, this);
@@ -61,7 +65,7 @@ public class DAR extends JavaPlugin {
 		pm.registerEvent(Type.ENTITY_TARGET, entityListener, Priority.Low, this);
 		pm.registerEvent(Type.ENTITY_DAMAGE, entityListener, Priority.Low, this);
 		
-		pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Low, this);
+		pm.registerEvent(Type.BLOCK_DAMAGE, blockListener, Priority.Low, this);
 		pm.registerEvent(Type.BLOCK_PLACE, blockListener, Priority.Low, this);
 	}
 	
@@ -104,12 +108,22 @@ public class DAR extends JavaPlugin {
 				}
 				// *** player resurrects itself ***
 			}catch (ArrayIndexOutOfBoundsException e) {
+				if(!ghosts.isGhost(player)) {
+					DARMessages.youAreNotDead(player);
+					return true;
+				}
 				if(shrines.isOnShrine(player)) {
 					ghosts.resurrect(player);
 					return true;
 				}
 				else {
-					DARMessages.shrineNotHere(player);
+					Location loc = ghosts.getBoundShrine(player);
+					if(loc == null) {
+						DARMessages.souldNotBound(player);
+						return true;
+					}
+					player.teleport(loc);
+					ghosts.resurrect(player);					
 					return true;
 				
 				}
@@ -145,7 +159,7 @@ public class DAR extends JavaPlugin {
 				
 				String shrineClose = shrines.getClose(player);
 				if (shrineClose != null) {
-					if(shrines.isShrine(shrineClose, tb, player)) {
+					if(shrines.isShrineArea(shrineClose, tb, player)) {
 						DARMessages.shrineAlreadyAtLoc(player);
 						return true;
 					}
