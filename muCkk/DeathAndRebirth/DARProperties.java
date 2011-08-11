@@ -15,7 +15,7 @@ public class DARProperties extends Properties {
 	FileWriter writer;
 	FileReader reader;
 	private String info = "needItem: (true/false) Defines if an item is needed to resurrect players\n" 
-			+ "itemID: ID of the Item which will be consumed\n"
+			+ "itemID: ID of the item which will be consumed\n"
 			+ "amount: Amount needed of that item to reserruct\n"
 			+ "distance: Maximal distance to the dead player";
 
