@@ -7,8 +7,8 @@ public final class DARMessages {
 	public static void playerNotDead(Player player, String target) {
 		player.sendMessage("Player "+target +" is not dead.");
 	}
-	public static void shrineNotHere(Player player) {
-		player.sendMessage("There is no shrine at your location.");
+	public static void souldNotBound(Player player) {
+		player.sendMessage("Your soul is not bound anywhere. You have to search for a shrine.");
 	}
 	public static void shrineAlreadyAtLoc(Player player) {
 		player.sendMessage("There is already a shrine at that location.");
@@ -22,8 +22,8 @@ public final class DARMessages {
 	public static void tooFarAway(Player player) {
 		player.sendMessage("You are too far away");
 	}
-	public static void cantUseThat(Player player) {
-		player.sendMessage("You are dead. Ghosts can't use that.");
+	public static void cantDoThat(Player player) {
+		player.sendMessage("You are dead. Ghosts can't do that.");
 	}
 	public static void shrineCantBeDestroyed(Player player) {
 		player.sendMessage("You can't destroy shrines.");
@@ -43,5 +43,14 @@ public final class DARMessages {
 	}
 	public static void youResurrected(Player player, Player target) {
 		player.sendMessage("You resurrected "+target.getName());
+	}
+	public static void cantAttackGhosts(Player player) {
+		player.sendMessage("You can't attack ghosts.");		
+	}
+	public static void boundShrine(Player player) {
+		player.sendMessage("Your soul is now bound to this shrine");
+	}
+	public static void youAreNotDead(Player player) {
+		player.sendMessage("You are not dead.");
 	}
 }
