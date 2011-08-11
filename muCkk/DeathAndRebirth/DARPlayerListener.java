@@ -58,11 +58,11 @@ public class DARPlayerListener extends PlayerListener {
 		
 		// *** Ghosts can't interact with everything ***
 		if(ghosts.isGhost(player)) {
-			Material type = event.getClickedBlock().getType(); 
+			Material type = event.getClickedBlock().getType(); 			
 			if(			!type.equals(Material.WOOD_DOOR)
-					||	!type.equals(Material.WOODEN_DOOR)
-					||	!type.equals(Material.STONE_BUTTON)
-					||	!type.equals(Material.LEVER)) {
+					&&	!type.equals(Material.WOODEN_DOOR)
+					&&	!type.equals(Material.STONE_BUTTON)
+					&&	!type.equals(Material.LEVER)) {
 				
 				DARMessages.cantDoThat(player);
 				event.setCancelled(true);
