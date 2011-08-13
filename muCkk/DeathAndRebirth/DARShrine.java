@@ -5,9 +5,8 @@ import org.bukkit.block.Block;
 public class DARShrine  { 
 	
 	private Block [] blocks;
-	private int [] originalIDs;
-	private int [] max, min;
-	private int [] tb;
+	private int [] originalIDs, max, min, tb;
+	private String world;
 	
 	// tb, rock1, rock2, rock3
 	// NW, N, NE
@@ -15,6 +14,7 @@ public class DARShrine  {
 	// W, E
 	public DARShrine(Block[] blocks) {
 		this.blocks = blocks;
+		world = blocks[0].getWorld().getName();
 		originalIDs = new int[12];
 		
 		tb = new int[3];
@@ -26,6 +26,7 @@ public class DARShrine  {
 	}
 	public DARShrine(Block[] blocks, int[] ids) {
 		this.blocks = blocks;
+		world = blocks[0].getWorld().getName();
 		this.originalIDs = ids;
 	}
 	public Block[] getBlocks() {
@@ -58,5 +59,8 @@ public class DARShrine  {
 	
 	public int[] getTB() {
 		return tb;
+	}
+	public String getWorld() {
+		return world;
 	}
 }
