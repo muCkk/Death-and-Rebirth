@@ -1,12 +1,12 @@
 name: Death and Rebirth
 main: muCkk.DeathAndRebirth.DAR
-version: 1.1
+version: 2.0
 author: muCkk
 commands:
     resurrect:
         aliases: [res]
         description: Resurrects a player or yourself
         usage: /<command> [playername]
-    shrine:
-        description: Errects or removes a shrine at the targeted location
-        usage: /<command> <add, rm, list> <name>
+    dar:
+        description: Errects, removes and lists a shrines. Gives admins the power to resurrect any player. Can reload the config files and enable or disable the support for each world. Gives you the name of the current world.
+        usage: /<command> <add, rm, list, res, reload, enable, disable, world> <name>
