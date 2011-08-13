@@ -3,6 +3,9 @@ package muCkk.DeathAndRebirth;
 import java.io.File;
 import java.util.List;
 
+import muCkk.DeathAndRebirth.Messages.DARErrors;
+import muCkk.DeathAndRebirth.Messages.DARMessages;
+
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -12,9 +15,11 @@ public class DARShrines {
 	
 	private String shrinesFile, shrinesDir;
 	private File yml; 
-	Configuration config ;
+	private Configuration config ;
+	private DARMessages msg ;
 	
-	public DARShrines(String dir, String fileName) {
+	public DARShrines(DARMessages msg, String dir, String fileName) {
+		this.msg = msg;
 		this.shrinesDir = dir;
 		this.shrinesFile = fileName;
 		yml = new File(shrinesFile);
@@ -48,21 +53,23 @@ public class DARShrines {
 	 * @param name
 	 */
 	public void addShrine(DARShrine shrine, String name) {
-		config.setProperty("shrines."+name+".max.x", shrine.getMax()[0]);
-		config.setProperty("shrines."+name+".max.y", shrine.getMax()[1]);
-		config.setProperty("shrines."+name+".max.z", shrine.getMax()[2]);
+		String world = shrine.getWorld();
 		
-		config.setProperty("shrines."+name+".min.x", shrine.getMin()[0]);
-		config.setProperty("shrines."+name+".min.y", shrine.getMin()[1]);
-		config.setProperty("shrines."+name+".min.z", shrine.getMin()[2]);
+		config.setProperty("shrines." +world +"." +name+".max.x", shrine.getMax()[0]);
+		config.setProperty("shrines." +world +"." +name+".max.y", shrine.getMax()[1]);
+		config.setProperty("shrines." +world +"." +name+".max.z", shrine.getMax()[2]);
 		
-		config.setProperty("shrines."+name+".tb.x", shrine.getTB()[0]);
-		config.setProperty("shrines."+name+".tb.y", shrine.getTB()[1]);
-		config.setProperty("shrines."+name+".tb.z", shrine.getTB()[2]);
+		config.setProperty("shrines." +world +"." +name+".min.x", shrine.getMin()[0]);
+		config.setProperty("shrines." +world +"." +name+".min.y", shrine.getMin()[1]);
+		config.setProperty("shrines." +world +"." +name+".min.z", shrine.getMin()[2]);
+		
+		config.setProperty("shrines." +world +"." +name+".tb.x", shrine.getTB()[0]);
+		config.setProperty("shrines." +world +"." +name+".tb.y", shrine.getTB()[1]);
+		config.setProperty("shrines." +world +"." +name+".tb.z", shrine.getTB()[2]);
 		
 		int[] ids = shrine.getIDs();
 		for (int i = 0; i< ids.length; i++) {
-			config.setProperty("shrines."+name+".originalids."+i, ids[i]);
+			config.setProperty("shrines." +world +"." +name+".originalids."+i, ids[i]);
 		}
 		config.save();
 	}
@@ -73,13 +80,18 @@ public class DARShrines {
 	 * @param page
 	 */
 	public void list(Player player, int page) {
-		List<String> names = config.getKeys("shrines");
-		int pages = names.size()/6;
-		if(names.size()%6 != 0) pages += 1;
-		
-		player.sendMessage("List of shrines "+page+"/"+pages);
-		for (int i=page-1; i<page*6 && i< names.size(); i++) {
-			player.sendMessage(i+1 +". "+names.get(i));
+		String world = player.getWorld().getName();
+		try {
+			List<String> names = config.getKeys("shrines." +world);
+			int pages = names.size()/6;
+			if(names.size()%6 != 0) pages += 1;
+			
+			player.sendMessage("List of shrines in world "+world +" (Page "+page+"/"+pages+")");
+			for (int i=page-1; i<page*6 && i< names.size(); i++) {
+				player.sendMessage(i+1 +". "+names.get(i));
+			}
+		}catch (NullPointerException e) {
+			msg.noShrinesFound(player);
 		}
 	}
 	
@@ -88,8 +100,8 @@ public class DARShrines {
 	 * @param name
 	 * @return
 	 */
-	public boolean exists(String name) {
-		List<String> names = config.getKeys("shrines");
+	public boolean exists(String name, String world) {
+		List<String> names = config.getKeys("shrines." +world);
 		try {
 			for (String currentName : names) {
 				if (currentName.equalsIgnoreCase(name)) return true;
@@ -112,13 +124,14 @@ public class DARShrines {
 	 * @param player
 	 */
 	public void removeShrine(String name, Player player) {
-		int x = config.getInt("shrines."+name+".tb.x", 0),
-			y = config.getInt("shrines."+name+".tb.y", 0),
-			z = config.getInt("shrines."+name+".tb.z", 0);
+		String world = player.getWorld().getName();
+		int x = config.getInt("shrines." +world +"." +name+".tb.x", 0),
+			y = config.getInt("shrines." +world +"." +name+".tb.y", 0),
+			z = config.getInt("shrines." +world +"." +name+".tb.z", 0);
 		
 		int[] ids = new int[12];
 		for (int i = 0; i< ids.length; i++) {
-			ids[i] = config.getInt("shrines."+name+".originalids."+i, 0);
+			ids[i] = config.getInt("shrines." +world +"." +name+".originalids."+i, 0);
 		}
 		Block tb = player.getWorld().getBlockAt(x, y, z);
 		
@@ -136,7 +149,7 @@ public class DARShrines {
 		tb.getRelative(BlockFace.EAST, 1).setTypeId(ids[11]);
 		
 		
-		config.removeProperty("shrines."+name);
+		config.removeProperty("shrines." +world +"." +name);
 		config.save();
 	}
 	
@@ -146,25 +159,26 @@ public class DARShrines {
 	 * @return DARShrine
 	 */
 	public String getClose(Player player) {
+		String world = player.getWorld().getName();
 		Block pb = player.getLocation().getBlock();
 		int px = pb.getX();
 		int py = pb.getY();
 		int pz = pb.getZ();
 		int bx,by,bz, x,y,z;
 		
-		List<String> names = config.getKeys("shrines");
+		List<String> names = config.getKeys("shrines." +world);
 		try {
 			for (String name : names) {
-				bx = config.getInt("shrines."+name+".tb.x", 0);
-				by = config.getInt("shrines."+name+".tb.y", 0) -5;
-				bz = config.getInt("shrines."+name+".tb.z", 0);
+				bx = config.getInt("shrines." +world +"." +name+".tb.x", 0);
+				by = config.getInt("shrines." +world +"." +name+".tb.y", 0) -4;
+				bz = config.getInt("shrines." +world +"." +name+".tb.z", 0);
 				
 				x = bx - px;
-				y = by+12;
+				y = by+11;
 				z = bz - pz;
 				
-				if		(	Math.abs(x) < 6 
-						&&	Math.abs(z) < 6 
+				if		(	Math.abs(x) < 4 
+						&&	Math.abs(z) < 4 
 						&&	by < py 
 						&&	py < y) {
 					return name;
@@ -185,9 +199,10 @@ public class DARShrines {
 	 * @return true or false ;)
 	 */
 	public boolean isShrineArea(String name, Block block, Player player) {
-		int 	tx = config.getInt("shrines."+name+".tb.x", 0),
-				ty = config.getInt("shrines."+name+".tb.y", 0),
-				tz = config.getInt("shrines."+name+".tb.z", 0);
+		String world = player.getWorld().getName();
+		int 	tx = config.getInt("shrines." +world +"." +name+".tb.x", 0),
+				ty = config.getInt("shrines." +world +"." +name+".tb.y", 0),
+				tz = config.getInt("shrines." +world +"." +name+".tb.z", 0);
 		
 		Block tb = player.getWorld().getBlockAt(tx, ty, tz);
 		Block nw = tb.getRelative(BlockFace.NORTH_WEST, 1);
@@ -226,9 +241,10 @@ public class DARShrines {
 	 * @return true if the block is part of the shrine
 	 */
 	public boolean isShrine(String name, Block block, Player player) {
-		int 	tx = config.getInt("shrines."+name+".tb.x", 0),
-				ty = config.getInt("shrines."+name+".tb.y", 0),
-				tz = config.getInt("shrines."+name+".tb.z", 0);
+		String world = player.getWorld().getName();
+		int 	tx = config.getInt("shrines." +world +"." +name+".tb.x", 0),
+				ty = config.getInt("shrines." +world +"." +name+".tb.y", 0),
+				tz = config.getInt("shrines." +world +"." +name+".tb.z", 0);
 		
 		Block tb = player.getWorld().getBlockAt(tx, ty, tz);
 		Block rock1 = tb.getRelative(BlockFace.UP, 1);
@@ -258,6 +274,7 @@ public class DARShrines {
 	 * @return true if the player stands on a shrine, else false
 	 */
 	public boolean isOnShrine(Player player) {
+		String world = player.getWorld().getName();
 		Block pb = player.getLocation().getBlock();
 		int px = pb.getX();
 		int py = pb.getY();
@@ -265,14 +282,14 @@ public class DARShrines {
 		int maxX, maxY, maxZ, minX,minY,minZ;
 		
 		try {
-			List<String> names = config.getKeys("shrines");
+			List<String> names = config.getKeys("shrines." +world);
 			for (String name : names) {
-				maxX = config.getInt("shrines."+name+".max.x", 0);
-				maxY = config.getInt("shrines."+name+".max.y", 0);
-				maxZ = config.getInt("shrines."+name+".max.z", 0);
-				minX = config.getInt("shrines."+name+".min.x", 0);
-				minY = config.getInt("shrines."+name+".min.y", 0);
-				minZ = config.getInt("shrines."+name+".min.z", 0);
+				maxX = config.getInt("shrines." +world +"." +name+".max.x", 0);
+				maxY = config.getInt("shrines." +world +"." +name+".max.y", 0);
+				maxZ = config.getInt("shrines." +world +"." +name+".max.z", 0);
+				minX = config.getInt("shrines." +world +"." +name+".min.x", 0);
+				minY = config.getInt("shrines." +world +"." +name+".min.y", 0);
+				minZ = config.getInt("shrines." +world +"." +name+".min.z", 0);
 				
 				if (	px <= maxX && px >= minX
 					&&	py <= maxY && py >= minY
