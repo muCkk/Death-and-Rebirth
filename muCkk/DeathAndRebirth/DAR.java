@@ -1,5 +1,12 @@
 package muCkk.DeathAndRebirth;
 
+import muCkk.DeathAndRebirth.Config.DARProperties;
+import muCkk.DeathAndRebirth.Listener.DARBlockListener;
+import muCkk.DeathAndRebirth.Listener.DAREntityListener;
+import muCkk.DeathAndRebirth.Listener.DARPlayerListener;
+import muCkk.DeathAndRebirth.Messages.DARErrors;
+import muCkk.DeathAndRebirth.Messages.DARMessages;
+
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -29,6 +36,7 @@ public class DAR extends JavaPlugin {
 	private DARProperties config;
 	private DARGraves graves;
 	private DARShrines shrines;
+	private DARMessages msg;
 	
 	public static PermissionHandler permissionHandler;
 	  
@@ -40,26 +48,43 @@ public class DAR extends JavaPlugin {
 	}
 
 	public void onEnable() {
+		
 		config = new DARProperties(dir, propertiesFile);
 		config.load();
+		
+		// *** check for spout ***
+		Plugin spoutPlugin = this.getServer().getPluginManager().getPlugin("Spout");
+		if (spoutPlugin != null) {
+			DARErrors.foundSpout();
+			msg = new DARMessages(true);
+			config.setSpout(true);
+		}
+		else {
+			msg = new DARMessages(false);
+			config.setSpout(false);
+		}
+				
 		graves = new DARGraves(dataDir, gravesFile);
 		graves.load();
-		ghosts = new DARHandler(dataDir, handlerFile, config, graves);
+		ghosts = new DARHandler(dataDir, handlerFile, config, msg, graves);
 		ghosts.load();
-		shrines = new DARShrines(dataDir, shrinesFile);
+		shrines = new DARShrines(msg, dataDir, shrinesFile);
 		
 		setupPermissions();
-		
+				
+		// *** Listener stuff ***
 		PluginManager pm = getServer().getPluginManager();
 		
-		DARPlayerListener playerlistener = new DARPlayerListener(ghosts, shrines);
-		DAREntityListener entityListener = new DAREntityListener(ghosts);
-		DARBlockListener blockListener = new DARBlockListener(shrines,ghosts,graves);
+		DARPlayerListener playerlistener = new DARPlayerListener(config, msg, ghosts, shrines);
+		DAREntityListener entityListener = new DAREntityListener(config, msg, ghosts);
+		DARBlockListener blockListener = new DARBlockListener(config, msg, shrines,ghosts,graves);
 		
 		pm.registerEvent(Type.PLAYER_JOIN, playerlistener, Priority.Low, this);
 		pm.registerEvent(Type.PLAYER_RESPAWN, playerlistener, Priority.Low, this);
 		pm.registerEvent(Type.PLAYER_PICKUP_ITEM, playerlistener, Priority.Low, this);
 		pm.registerEvent(Type.PLAYER_INTERACT, playerlistener, Priority.Low, this);
+		pm.registerEvent(Type.PLAYER_PORTAL, playerlistener, Priority.Low, this);
+		pm.registerEvent(Type.PLAYER_TELEPORT, playerlistener, Priority.Low, this);
 		
 		pm.registerEvent(Type.ENTITY_DEATH, entityListener, Priority.Low, this);
 		pm.registerEvent(Type.ENTITY_TARGET, entityListener, Priority.Low, this);
@@ -92,10 +117,12 @@ public class DAR extends JavaPlugin {
 		 */
 		if(cmd.getName().equalsIgnoreCase("resurrect") || cmd.getName().equalsIgnoreCase("res")) {			
 			// *** permission check ***
-			if (!DAR.permissionHandler.has(player, "dar.res")) {
-			    DARMessages.noPermission(player);  
-				return true;
-			  }
+			if(permissionHandler != null) {
+				if (!DAR.permissionHandler.has(player, "dar.res")) {
+				    msg.noPermission(player);  
+					return true;
+				 }
+			}
 			try {
 				Player target = sender.getServer().getPlayer(args[0]);
 				if(ghosts.isGhost(target)) {
@@ -103,13 +130,13 @@ public class DAR extends JavaPlugin {
 					return true;
 				}
 				else {
-					DARMessages.playerNotDead(player, args[0]);
+					msg.playerNotDead(player, args[0]);
 					return true;	
 				}
 				// *** player resurrects itself ***
 			}catch (ArrayIndexOutOfBoundsException e) {
 				if(!ghosts.isGhost(player)) {
-					DARMessages.youAreNotDead(player);
+					msg.youAreNotDead(player);
 					return true;
 				}
 				if(shrines.isOnShrine(player)) {
@@ -119,7 +146,7 @@ public class DAR extends JavaPlugin {
 				else {
 					Location loc = ghosts.getBoundShrine(player);
 					if(loc == null) {
-						DARMessages.souldNotBound(player);
+						msg.souldNotBound(player);
 						return true;
 					}
 					player.teleport(loc);
@@ -130,29 +157,90 @@ public class DAR extends JavaPlugin {
 			}
 		}
 		/**
-		 * shrine <add, rm, list> <name>
-		 * Errects a shrine at the targeted location
+		 * dar <add, rm, list, res, reload, enable, disable> <name>
+		 * Errects, removes and lists shrines. Admins can resurrect any player.
 		 */
-		if(cmd.getName().equalsIgnoreCase("shrine")) {
-			if (!DAR.permissionHandler.has(player, "dar.shrine")) {
-			    DARMessages.noPermission(player);  
-				return true;
-			  }
+		if(cmd.getName().equalsIgnoreCase("dar")) {
+			
+		// *** check permission ********************************************************************
+			if (permissionHandler != null) {
+				if (!DAR.permissionHandler.has(player, "dar.admin")) {
+					msg.noPermission(player);  
+					return true;
+				 }
+			}
+		// ** defaulting to OP system ***
+			else {
+				if(!player.isOp()) {
+					msg.noPermission(player);
+					return true;
+				}
+			}
+			
 			String arg = "";
 			String name = "";
 			try {
 				arg = args[0];
-			}catch (NullPointerException e) {
+			}catch (ArrayIndexOutOfBoundsException e) {
 				return false;
 			}
+			
+		// *** reloading all config files **********************************************************
+			if(arg.equalsIgnoreCase("reload")) {
+				config.load();
+				graves.load();
+				ghosts.load();
+				shrines.load();
+				msg.reloadComplete(player);
+				return true;
+			}
+
+		// *** giving the world name *******************************************************************
+			if(arg.equalsIgnoreCase("world")) {
+				String world = player.getWorld().getName();
+				player.sendMessage("You are in world: "+world);
+				String bool = "";
+				if (config.isEnabled(world)) {
+					 bool = "enabled";
+				}
+				else {
+					bool = "disabled";
+				}
+				player.sendMessage("Death and Rebirth is "+bool);
+				return true;
+			}
+		// *** enabling and disabling support for the world *******************************************
+			if (arg.equalsIgnoreCase("enable")) {
+				try {
+					name = args[1];
+				}catch (ArrayIndexOutOfBoundsException e) {
+					return false;
+				}
+				config.setBoolean(name, true);
+				msg.worldEnabled(player, name);
+				return true;
+			}
+			
+			if (arg.equalsIgnoreCase("disable")) {
+				try {
+					name = args[1];
+				}catch (ArrayIndexOutOfBoundsException e) {
+					return false;
+				}
+				config.setBoolean(name, false);
+				msg.worldDisabled(player, name);
+				return true;
+			}
+			
+		// *** adding shrines **********************************************************************
 			if (arg.equalsIgnoreCase("add")) {
 				try {
 					name = args[1];
-				}catch (NullPointerException e) {
+				}catch (ArrayIndexOutOfBoundsException e) {
 					return false;
 				}
-				if(shrines.exists(name)) {
-					DARMessages.nameAlreadyExists(player);
+				if(shrines.exists(name, player.getWorld().getName())) {
+					msg.nameAlreadyExists(player);
 					return true;
 				}
 				Block tb = player.getTargetBlock(null,5);
@@ -160,7 +248,7 @@ public class DAR extends JavaPlugin {
 				String shrineClose = shrines.getClose(player);
 				if (shrineClose != null) {
 					if(shrines.isShrineArea(shrineClose, tb, player)) {
-						DARMessages.shrineAlreadyAtLoc(player);
+						msg.shrineAlreadyAtLoc(player);
 						return true;
 					}
 				}
@@ -215,19 +303,22 @@ public class DAR extends JavaPlugin {
 				
 				return true;
 			}
+			
+		// *** removing shrines *****************************************************************
 			if (arg.equalsIgnoreCase("rm")) {
 				try {
 					name = args[1];
-				}catch (NullPointerException e) {
+				}catch (ArrayIndexOutOfBoundsException e) {
 					return false;
 				}
-				if(!shrines.exists(name)) {
-					DARMessages.nameNotFound(player);
+				if(!shrines.exists(name, player.getWorld().getName())) {
+					msg.nameNotFound(player);
 					return true;
 				}
 				shrines.removeShrine(name, player);
 				return true;
 			}
+		// *** listing shrines *********************************************************
 			if(arg.equalsIgnoreCase("list")) {
 				int page;
 				try {
@@ -236,6 +327,27 @@ public class DAR extends JavaPlugin {
 					page = 1;
 				}
 				shrines.list(player, page);
+				return true;
+			}
+			
+		// *** resurrecting players ***************************************************
+			if (arg.equalsIgnoreCase("res")) {
+				try {
+					name = args[1];
+				}catch (ArrayIndexOutOfBoundsException e) {
+					return false;
+				}
+				
+				Player target = getServer().getPlayer(name);
+			// *** check if the player is dead ***
+				if (!ghosts.isGhost(target)) {
+					msg.playerNotDead(player, name);
+					return true;
+				}
+				
+			// *** resurrection ***
+				ghosts.resurrect(target);
+				msg.youResurrected(player, target);
 				return true;
 			}
 		}
