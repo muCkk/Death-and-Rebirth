@@ -53,7 +53,7 @@ public class DAR extends JavaPlugin {
 		config.load();
 		
 		// *** check for spout ***
-		Plugin spoutPlugin = this.getServer().getPluginManager().getPlugin("Spout");
+		Plugin spoutPlugin = getServer().getPluginManager().getPlugin("Spout");
 		if (spoutPlugin != null) {
 			DARErrors.foundSpout();
 			msg = new DARMessages(true);
@@ -63,7 +63,12 @@ public class DAR extends JavaPlugin {
 			msg = new DARMessages(false);
 			config.setSpout(false);
 		}
-				
+		// *** check for citizens ***
+		Plugin citizensPlugin = getServer().getPluginManager().getPlugin("Citizens");
+		if (citizensPlugin != null) {
+			config.setCitizens(true);
+		}
+		
 		graves = new DARGraves(dataDir, gravesFile);
 		graves.load();
 		ghosts = new DARHandler(dataDir, handlerFile, config, msg, graves);
@@ -76,7 +81,7 @@ public class DAR extends JavaPlugin {
 		PluginManager pm = getServer().getPluginManager();
 		
 		DARPlayerListener playerlistener = new DARPlayerListener(config, msg, ghosts, shrines);
-		DAREntityListener entityListener = new DAREntityListener(config, msg, ghosts);
+		DAREntityListener entityListener = new DAREntityListener(config, msg, ghosts, shrines);
 		DARBlockListener blockListener = new DARBlockListener(config, msg, shrines,ghosts,graves);
 		
 		pm.registerEvent(Type.PLAYER_JOIN, playerlistener, Priority.Low, this);
@@ -85,10 +90,13 @@ public class DAR extends JavaPlugin {
 		pm.registerEvent(Type.PLAYER_INTERACT, playerlistener, Priority.Low, this);
 		pm.registerEvent(Type.PLAYER_PORTAL, playerlistener, Priority.Low, this);
 		pm.registerEvent(Type.PLAYER_TELEPORT, playerlistener, Priority.Low, this);
+		pm.registerEvent(Type.PLAYER_MOVE, playerlistener, Priority.Low, this);
+		pm.registerEvent(Type.PLAYER_CHAT, playerlistener, Priority.Low, this);
 		
 		pm.registerEvent(Type.ENTITY_DEATH, entityListener, Priority.Low, this);
 		pm.registerEvent(Type.ENTITY_TARGET, entityListener, Priority.Low, this);
 		pm.registerEvent(Type.ENTITY_DAMAGE, entityListener, Priority.Low, this);
+		pm.registerEvent(Type.ENTITY_EXPLODE, entityListener, Priority.Low, this);
 		
 		pm.registerEvent(Type.BLOCK_DAMAGE, blockListener, Priority.Low, this);
 		pm.registerEvent(Type.BLOCK_PLACE, blockListener, Priority.Low, this);
@@ -144,6 +152,10 @@ public class DAR extends JavaPlugin {
 					return true;
 				}
 				else {
+					if (config.isShrineOnlyEnabled()) {
+						DARMessages.youHaveToStandOnShrine(player);
+						return true;
+					}
 					Location loc = ghosts.getBoundShrine(player);
 					if(loc == null) {
 						msg.souldNotBound(player);
@@ -231,8 +243,59 @@ public class DAR extends JavaPlugin {
 				msg.worldDisabled(player, name);
 				return true;
 			}
+		// *** toggling fly mode ***************************************************************************
+			if (arg.equalsIgnoreCase("fly")) {
+				if(config.isFlyingEnabled()) {
+					config.setFly(false);
+					DARMessages.flyModeToggle(player, "disabled.");
+				}
+				else {
+					config.setFly(true);
+					DARMessages.flyModeToggle(player, "enabled.");
+				}
+				return true;
+			}
+		// *** toggling shrine  mode ***************************************************************************
+			if (arg.equalsIgnoreCase("shrinemode")) {
+				if(config.isShrineOnlyEnabled()) {
+					config.setShrineOnly(false);
+					DARMessages.shrineModeToggle(player, "disabled.");
+				}
+				else {
+					config.setShrineOnly(true);
+					DARMessages.shrineModeToggle(player, "enabled.");
+				}
+				return true;
+			}
+		// *** toggling blockGhostInteraction ********************************************************************
+			if (arg.equalsIgnoreCase("ghostinteraction")) {
+				if(config.isBlockGhostInteractionEnabled()) {
+					config.setBlockGhostInteraction(false);
+					DARMessages.blockGhostInteractionToggle(player, "disabled.");
+				}
+				else {
+					config.setBlockGhostInteraction(true);
+					DARMessages.blockGhostInteractionToggle(player, "enabled.");
+				}
+				return true;
+			}
+		// *** toggling ghost chat **********************************************************************************
+			if (arg.equalsIgnoreCase("ghostchat")) {
+				if(config.isGhostChatEnabled()) {
+					config.setGhostChat(false);
+					DARMessages.ghostChatToggle(player, "disabled.");
+				}
+				else {
+					config.setGhostChat(true);
+					DARMessages.ghostChatToggle(player, "enabled.");
+				}
+				return true;
+			}
 			
-		// *** adding shrines **********************************************************************
+			
+			
+			
+		// *** adding shrines *********************************************************************************
 			if (arg.equalsIgnoreCase("add")) {
 				try {
 					name = args[1];
@@ -245,7 +308,7 @@ public class DAR extends JavaPlugin {
 				}
 				Block tb = player.getTargetBlock(null,5);
 				
-				String shrineClose = shrines.getClose(player);
+				String shrineClose = shrines.getClose(player.getLocation());
 				if (shrineClose != null) {
 					if(shrines.isShrineArea(shrineClose, tb, player)) {
 						msg.shrineAlreadyAtLoc(player);
