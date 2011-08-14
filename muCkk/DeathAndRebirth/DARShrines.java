@@ -6,6 +6,7 @@ import java.util.List;
 import muCkk.DeathAndRebirth.Messages.DARErrors;
 import muCkk.DeathAndRebirth.Messages.DARMessages;
 
+import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -158,12 +159,44 @@ public class DARShrines {
 	 * @param player
 	 * @return DARShrine
 	 */
-	public String getClose(Player player) {
-		String world = player.getWorld().getName();
-		Block pb = player.getLocation().getBlock();
-		int px = pb.getX();
-		int py = pb.getY();
-		int pz = pb.getZ();
+//	public String getClose(Player player) {
+//		String world = player.getWorld().getName();
+//		Block pb = player.getLocation().getBlock();
+//		int px = pb.getX();
+//		int py = pb.getY();
+//		int pz = pb.getZ();
+//		int bx,by,bz, x,y,z;
+//		
+//		List<String> names = config.getKeys("shrines." +world);
+//		try {
+//			for (String name : names) {
+//				bx = config.getInt("shrines." +world +"." +name+".tb.x", 0);
+//				by = config.getInt("shrines." +world +"." +name+".tb.y", 0) -4;
+//				bz = config.getInt("shrines." +world +"." +name+".tb.z", 0);
+//				
+//				x = bx - px;
+//				y = by+11;
+//				z = bz - pz;
+//				
+//				if		(	Math.abs(x) < 4 
+//						&&	Math.abs(z) < 4 
+//						&&	by < py 
+//						&&	py < y) {
+//					return name;
+//				}
+//			}
+//		}catch (NullPointerException e) {
+//			// TODO NullPointer: no shrines (getClose)
+//			return null;
+//		}
+//		return null;
+//	}
+	
+	public String getClose(Location loc) {
+		String world = loc.getWorld().getName();
+		int locX = (int) loc.getX();
+		int locY = (int) loc.getY();
+		int locZ = (int) loc.getZ();
 		int bx,by,bz, x,y,z;
 		
 		List<String> names = config.getKeys("shrines." +world);
@@ -173,14 +206,14 @@ public class DARShrines {
 				by = config.getInt("shrines." +world +"." +name+".tb.y", 0) -4;
 				bz = config.getInt("shrines." +world +"." +name+".tb.z", 0);
 				
-				x = bx - px;
+				x = bx - locX;
 				y = by+11;
-				z = bz - pz;
+				z = bz - locZ;
 				
 				if		(	Math.abs(x) < 4 
 						&&	Math.abs(z) < 4 
-						&&	by < py 
-						&&	py < y) {
+						&&	by < locY 
+						&&	locY < y) {
 					return name;
 				}
 			}
