@@ -69,7 +69,7 @@ public class DARBlockListener extends BlockListener {
 			}
 		}
 		// *** shrine is being damaged ***
-		String shrine = shrines.getClose(player);
+		String shrine = shrines.getClose(player.getLocation());
 		if (shrine != null) {
 			if(shrines.isShrineArea(shrine, event.getBlock(), player)) {
 				msg.shrineCantBeDestroyed(player);
@@ -101,7 +101,7 @@ public class DARBlockListener extends BlockListener {
 		
 		
 		// *** preventing players from placing blocks on shrines ***
-		String shrine = shrines.getClose(player);
+		String shrine = shrines.getClose(player.getLocation());
 		if (shrine != null) {
 			Block block = event.getBlock();
 			if(shrines.isShrineArea(shrine, block, player)) {
