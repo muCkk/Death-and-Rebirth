@@ -20,7 +20,7 @@ public final class DARSpout {
 	 * @param player which dies
 	 */
 	public static void playerDied(Player player) {
-		SpoutPlayer sp = (SpoutPlayer) player;
+		SpoutPlayer sp = SpoutManager.getPlayer(player);
 		Plugin spoutPlugin = player.getServer().getPluginManager().getPlugin("SpoutTester");
 		
 		// *** Sound effect ***
@@ -36,7 +36,7 @@ public final class DARSpout {
 	 * @param player who gets resurrected
 	 */
 	public static void playerRes(Player player) {
-		SpoutPlayer sp = (SpoutPlayer) player;
+		SpoutPlayer sp = SpoutManager.getPlayer(player);
 		
 		// *** Skin ***
 		AppearanceManager appearanceM = SpoutManager.getAppearanceManager();
