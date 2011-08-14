@@ -10,9 +10,11 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerListener;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
@@ -24,6 +26,7 @@ public class DARPlayerListener extends PlayerListener {
 	private DARShrines shrines;
 	private DARProperties config;
 	private DARMessages msg;
+
 	
 	public DARPlayerListener(DARProperties config, DARMessages msg, DARHandler ghosts, DARShrines shrines) {
 		this.config = config;
@@ -41,6 +44,17 @@ public class DARPlayerListener extends PlayerListener {
 	}
 	
 	/**
+	 * Checks if ghosts are allowed to chat
+	 */
+	public void onPlayerChat(PlayerChatEvent event) {
+		Player player = event.getPlayer();
+		if(ghosts.isGhost(player) && !config.isGhostChatEnabled()) {
+			DARMessages.ghostsCantChat(player);
+			event.setCancelled(true);
+		}
+	}
+	
+	/**
 	 * Sets the players respawn location to their location of death
 	 */
 	public void onPlayerRespawn(PlayerRespawnEvent event) {
@@ -51,10 +65,11 @@ public class DARPlayerListener extends PlayerListener {
 		}
 		if(ghosts.isGhost(player)) {
 			event.setRespawnLocation(ghosts.getLocation(player));
-			
+			DARMessages.playerDied(player);
 			// *** spout stuff ***
 			if (config.isSpoutEnabled()) {
 				DARSpout.setGhostSkin(player);
+				player.setDisplayName("Ghost of "+player.getName());
 			}
 		}
 	}
@@ -76,17 +91,36 @@ public class DARPlayerListener extends PlayerListener {
 	}
 	
 	/**
+	 * Flying for ghosts
+	 */
+	public void onPlayerMove(PlayerMoveEvent event) {
+		Player player = event.getPlayer();
+		
+		if(!player.isSneaking() || !config.isFlyingEnabled() || !ghosts.isGhost(player)) {
+			return;
+		}		
+		player.setVelocity(player.getLocation().getDirection().multiply(1));		
+	}
+	
+	/**
 	 * Players try to bind their soul to a shrine
 	 */
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		Player player = event.getPlayer();
+		
+		
 		// check if the world is enabled
 		if(!config.isEnabled(player.getWorld().getName())) {
 			return;
 		}
-				
-		// *** Ghosts can't interact with everything ***
-		if(ghosts.isGhost(player)) {
+		
+
+	// *** ghost interactions ***
+		if (ghosts.isGhost(player)) {
+			if (config.isBlockGhostInteractionEnabled()) {
+				event.setCancelled(true);
+				return;
+			}
 			try {
 				Material type = event.getClickedBlock().getType(); 			
 				if(			!type.equals(Material.WOOD_DOOR)
@@ -103,9 +137,10 @@ public class DARPlayerListener extends PlayerListener {
 			}
 		}
 		
+		
 		// *** shrine is clicked ***
 		if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-			String shrine = shrines.getClose(player);
+			String shrine = shrines.getClose(player.getLocation());
 			if (shrine != null) {
 				Block clickedBlock = event.getClickedBlock();
 				if(shrines.isShrine(shrine, clickedBlock, player)) {
