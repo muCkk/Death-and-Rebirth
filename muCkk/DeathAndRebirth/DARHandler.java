@@ -112,6 +112,9 @@ public class DARHandler {
 	 * @return The state of the player (dead/alive).
 	 */
 	public boolean isGhost(Player player) {
+		if(player == null) {
+			return false;
+		}
 		String pname = player.getName();
 		String world = player.getWorld().getName();
 		
