@@ -81,4 +81,9 @@ public final class DARMessagesSpout {
 		String msg = "You are not dead";
 		sp.sendNotification(title, msg, mat);
 	}
+	public static void youHaveToStandOnShrine(Player player) {
+		SpoutPlayer sp = (SpoutPlayer) player;
+		String msg = "No shrine here";
+		sp.sendNotification(title, msg, mat);
+	}
 }

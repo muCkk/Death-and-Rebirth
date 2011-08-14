@@ -46,4 +46,7 @@ public final class DARMessagesChat {
 	public static void youAreNotDead(Player player) {
 		player.sendMessage("You are not dead.");
 	}
+	public static void youHaveToStandOnShrine(Player player) {
+		player.sendMessage("You have to stand on a shrine.");
+	}
 }
