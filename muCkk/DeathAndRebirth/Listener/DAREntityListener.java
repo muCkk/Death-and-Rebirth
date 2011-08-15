@@ -15,6 +15,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityListener;
 import org.bukkit.event.entity.EntityTargetEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.config.Configuration;
 
 import com.citizens.npcs.NPCManager;
@@ -23,12 +24,10 @@ public class DAREntityListener extends EntityListener {
 
 	private DARHandler ghosts;
 	private DARProperties config;
-	private DARMessages msg;
 	private DARShrines shrines;
 	
-	public DAREntityListener(DARProperties config, DARMessages msg, DARHandler ghosts, DARShrines shrines) {
+	public DAREntityListener(DARProperties config, DARHandler ghosts, DARShrines shrines) {
 		this.config = config;
-		this.msg = msg;
 		this.ghosts = ghosts;
 		this.shrines = shrines;
 	}
@@ -52,7 +51,17 @@ public class DAREntityListener extends EntityListener {
 			// *****************************************
 			
 			Player player = (Player) entity;
-			ghosts.died(player);
+			ItemStack [] playerDrops = new ItemStack[event.getDrops().size()];
+			if (!config.isDroppingEnabled()) {
+				int i = 0;
+				for (ItemStack item : event.getDrops()) {
+					if (item == null) continue;
+					playerDrops[i] = item;
+					i++;
+				}
+				event.getDrops().clear();
+			}
+			ghosts.died(player, playerDrops);
 		}
 	}
 	
@@ -130,7 +139,7 @@ public class DAREntityListener extends EntityListener {
 			 if (damager instanceof Player) {
 				 Player attacker = (Player) damager;
 				 if(ghosts.isGhost(attacker)) {
-					 msg.cantDoThat(attacker);
+					 DARMessages.cantDoThat(attacker);
 					 event.setCancelled(true);
 					 return;
 				 }
@@ -148,7 +157,7 @@ public class DAREntityListener extends EntityListener {
 					 Entity damager = ((EntityDamageByEntityEvent)event).getDamager();
 					 if (damager instanceof Player) {
 						 Player attacker = (Player) damager;
-						 msg.cantAttackGhosts(attacker);
+						 DARMessages.cantAttackGhosts(attacker);
 					 }
 				}
 				// *************************************************
