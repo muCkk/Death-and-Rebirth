@@ -24,7 +24,8 @@ public class DARGraves {
             	new File(dir).mkdir();
                 graveFile.createNewFile(); 
             } catch (Exception ex) {
-            	//TODO exception
+            	DARErrors.couldNotReadSignsFile();
+            	ex.printStackTrace();
             }
         } else {
         	DARErrors.gravesLoaded();
@@ -33,7 +34,8 @@ public class DARGraves {
             yml = new Configuration(graveFile);
             yml.load();
         } catch (Exception e) {
-        	//TODO exception
+        	DARErrors.couldNotReadSignsFile();
+        	e.printStackTrace();
         }
 	}
 	
