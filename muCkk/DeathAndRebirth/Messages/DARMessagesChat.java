@@ -2,7 +2,7 @@ package muCkk.DeathAndRebirth.Messages;
 
 import org.bukkit.entity.Player;
 
-public final class DARMessagesChat {
+public class DARMessagesChat {
 
 	public static void playerNotDead(Player player, String target) {
 		player.sendMessage("Player "+target +" is not dead.");
@@ -48,5 +48,8 @@ public final class DARMessagesChat {
 	}
 	public static void youHaveToStandOnShrine(Player player) {
 		player.sendMessage("You have to stand on a shrine.");
+	}
+	public static void youAreAGhost(Player player) {
+		player.sendMessage("You are now a ghost!");
 	}
 }

@@ -4,7 +4,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.getspout.spoutapi.player.SpoutPlayer;
 
-public final class DARMessagesSpout {
+public class DARMessagesSpout {
 
 	private static String title = "Death & Rebirth";
 	private static Material mat = Material.BONE;
@@ -84,6 +84,11 @@ public final class DARMessagesSpout {
 	public static void youHaveToStandOnShrine(Player player) {
 		SpoutPlayer sp = (SpoutPlayer) player;
 		String msg = "No shrine here";
+		sp.sendNotification(title, msg, mat);
+	}
+	public static void youAreAGhost(Player player) {
+		SpoutPlayer sp = (SpoutPlayer) player;
+		String msg = "You are now a ghost";
 		sp.sendNotification(title, msg, mat);
 	}
 }
