@@ -1,9 +1,17 @@
 package muCkk.DeathAndRebirth.Listener;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import muCkk.DeathAndRebirth.DAR;
 import muCkk.DeathAndRebirth.DARHandler;
 import muCkk.DeathAndRebirth.DARShrines;
 import muCkk.DeathAndRebirth.DARSpout;
 import muCkk.DeathAndRebirth.Config.DARProperties;
+import muCkk.DeathAndRebirth.Messages.DARErrors;
 import muCkk.DeathAndRebirth.Messages.DARMessages;
 
 import org.bukkit.Material;
@@ -25,12 +33,11 @@ public class DARPlayerListener extends PlayerListener {
 	private DARHandler ghosts;
 	private DARShrines shrines;
 	private DARProperties config;
-	private DARMessages msg;
-
+	private DAR plugin;
 	
-	public DARPlayerListener(DARProperties config, DARMessages msg, DARHandler ghosts, DARShrines shrines) {
+	public DARPlayerListener(DAR plugin, DARProperties config, DARHandler ghosts, DARShrines shrines) {
+		this.plugin = plugin;
 		this.config = config;
-		this.msg = msg;
 		this.ghosts = ghosts;
 		this.shrines = shrines;
 	}
@@ -38,8 +45,34 @@ public class DARPlayerListener extends PlayerListener {
 	 * Looks for new Players and adds them to the list
 	 */
 	public void onPlayerJoin(final PlayerJoinEvent event) {
-		if(!ghosts.existsPlayer(event.getPlayer())) {
-			ghosts.newPlayer(event.getPlayer());
+		final Player player = event.getPlayer();
+		if(!ghosts.existsPlayer(player)) {
+			ghosts.newPlayer(player);
+		}
+		
+	// *** version checking ***********************************
+	// in own thread because it takes some time and would stop the rest of the server to load
+		if(player.isOp()) {
+			new Thread() {
+				public void run() {
+					try {
+						URL versionURL = new URL("http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/version.txt");
+						BufferedReader reader = new BufferedReader(new InputStreamReader(versionURL.openStream()));
+						
+						String line = reader.readLine();
+						if (!plugin.getDescription().getVersion().equalsIgnoreCase(line)) {
+							DARMessages.newVersion(player, line);
+						}
+						reader.close();
+					} catch (MalformedURLException e) {
+						// versionURL
+						DARErrors.readingURL();
+					} catch (IOException e) {
+						// versionURL.openstream()
+						DARErrors.openingURL();
+					}
+				}
+			}.start();
 		}
 	}
 	
@@ -68,7 +101,7 @@ public class DARPlayerListener extends PlayerListener {
 			DARMessages.playerDied(player);
 			// *** spout stuff ***
 			if (config.isSpoutEnabled()) {
-				DARSpout.setGhostSkin(player);
+				DARSpout.setGhostSkin(player, config.getGhostSkin());
 				player.setDisplayName("Ghost of "+player.getName());
 			}
 		}
@@ -145,9 +178,17 @@ public class DARPlayerListener extends PlayerListener {
 				Block clickedBlock = event.getClickedBlock();
 				if(shrines.isShrine(shrine, clickedBlock, player)) {
 					ghosts.bindSoul(player);
-					msg.boundShrine(player);
+					DARMessages.boundShrine(player);
 				}
 			}
+			return;
+		}
+		if (player.isOp() && event.getAction() == Action.LEFT_CLICK_BLOCK) {
+			String shrine = shrines.getClose(player.getLocation());
+			if (shrine != null) {
+				player.sendMessage("Shrine: "+shrine);
+			}
+			return;
 		}
 	}
 	
