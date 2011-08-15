@@ -1,12 +1,12 @@
 name: Death and Rebirth
 main: muCkk.DeathAndRebirth.DAR
-version: 2.1
+version: 2.2
 author: muCkk
 commands:
-    resurrect:
-        aliases: [res]
+    rebirth:
+        aliases: [reb]
         description: Resurrects a player or yourself
         usage: /<command> [playername]
     dar:
         description: Errects, removes and lists shrines. Resurrects any player. Reloads the config files. Enables or disables the support for each world. Gives the name of the current world. Toggles flying, shrinemode, ghost-interactions and ghost-chat.
-        usage: /<command> <add, rm, list, res, reload, enable, disable, world, fly, shrinemode, ghostinteraction, ghostchat> <name>
+        usage: /<command> <add, rm, list, reb, reload, enable, disable, world, fly, shrinemode, ghostinteraction, ghostchat, dropping> <name>
