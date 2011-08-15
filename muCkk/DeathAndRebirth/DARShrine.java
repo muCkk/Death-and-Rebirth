@@ -5,7 +5,7 @@ import org.bukkit.block.Block;
 public class DARShrine  { 
 	
 	private Block [] blocks;
-	private int [] originalIDs, max, min, tb;
+	private int [] originalIDs, tb;
 	private String world;
 	
 	// tb, rock1, rock2, rock3
@@ -33,30 +33,13 @@ public class DARShrine  {
 		return blocks;
 	}
 	private void setup(Block[] blocks) {
-		max = new int[3];
-		max[0] = blocks[7].getX();
-		max[1] = blocks[3].getY();
-		max[2] = blocks[7].getZ();
-		min = new int[3];
-		min[0] = blocks[6].getX();
-		min[1] = blocks[6].getY();
-		min[2] = blocks[6].getZ();
-		
-		
 		for(int i=0; i < blocks.length; i++) {
 			originalIDs[i] = blocks[i].getTypeId();
 		}
 	}
 	public int[] getIDs() {
 		return originalIDs;
-	}
-	public int[] getMax() {
-		return max;
-	}
-	public int[] getMin() {
-		return min;
-	}
-	
+	}	
 	public int[] getTB() {
 		return tb;
 	}

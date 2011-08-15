@@ -17,10 +17,8 @@ public class DARShrines {
 	private String shrinesFile, shrinesDir;
 	private File yml; 
 	private Configuration config ;
-	private DARMessages msg ;
 	
-	public DARShrines(DARMessages msg, String dir, String fileName) {
-		this.msg = msg;
+	public DARShrines(String dir, String fileName) {
 		this.shrinesDir = dir;
 		this.shrinesFile = fileName;
 		yml = new File(shrinesFile);
@@ -55,23 +53,24 @@ public class DARShrines {
 	 */
 	public void addShrine(DARShrine shrine, String name) {
 		String world = shrine.getWorld();
-		
-		config.setProperty("shrines." +world +"." +name+".max.x", shrine.getMax()[0]);
-		config.setProperty("shrines." +world +"." +name+".max.y", shrine.getMax()[1]);
-		config.setProperty("shrines." +world +"." +name+".max.z", shrine.getMax()[2]);
-		
-		config.setProperty("shrines." +world +"." +name+".min.x", shrine.getMin()[0]);
-		config.setProperty("shrines." +world +"." +name+".min.y", shrine.getMin()[1]);
-		config.setProperty("shrines." +world +"." +name+".min.z", shrine.getMin()[2]);
-		
+				
 		config.setProperty("shrines." +world +"." +name+".tb.x", shrine.getTB()[0]);
 		config.setProperty("shrines." +world +"." +name+".tb.y", shrine.getTB()[1]);
 		config.setProperty("shrines." +world +"." +name+".tb.z", shrine.getTB()[2]);
 		
+		// *** original IDs ********
 		int[] ids = shrine.getIDs();
+		Block [] blocks = shrine.getBlocks();
+		Block block;
 		for (int i = 0; i< ids.length; i++) {
 			config.setProperty("shrines." +world +"." +name+".originalids."+i, ids[i]);
+			block = blocks[i];
+		// *** saving slabs, double slabs and wool ****
+			if(ids[i] == 44 || ids[i] == 43 || ids[i] == 35) {
+				config.setProperty("shrines." +world +"." +name+".originalData."+i, block.getData());
+			}
 		}
+		
 		config.save();
 	}
 	
@@ -92,7 +91,7 @@ public class DARShrines {
 				player.sendMessage(i+1 +". "+names.get(i));
 			}
 		}catch (NullPointerException e) {
-			msg.noShrinesFound(player);
+			DARMessages.noShrinesFound(player);
 		}
 	}
 	
@@ -130,90 +129,41 @@ public class DARShrines {
 			y = config.getInt("shrines." +world +"." +name+".tb.y", 0),
 			z = config.getInt("shrines." +world +"." +name+".tb.z", 0);
 		
-		int[] ids = new int[12];
-		for (int i = 0; i< ids.length; i++) {
-			ids[i] = config.getInt("shrines." +world +"." +name+".originalids."+i, 0);
-		}
 		Block tb = player.getWorld().getBlockAt(x, y, z);
-		
-		tb.setTypeId(ids[0]);
-		tb.getRelative(BlockFace.UP, 1).setTypeId(ids[1]);
-		tb.getRelative(BlockFace.UP, 2).setTypeId(ids[2]);
-		tb.getRelative(BlockFace.UP, 3).setTypeId(ids[3]);
-		tb.getRelative(BlockFace.NORTH_WEST, 1).setTypeId(ids[4]);
-		tb.getRelative(BlockFace.NORTH, 1).setTypeId(ids[5]);
-		tb.getRelative(BlockFace.NORTH_EAST, 1).setTypeId(ids[6]);
-		tb.getRelative(BlockFace.SOUTH_WEST, 1).setTypeId(ids[7]);
-		tb.getRelative(BlockFace.SOUTH, 1).setTypeId(ids[8]);
-		tb.getRelative(BlockFace.SOUTH_EAST, 1).setTypeId(ids[9]);
-		tb.getRelative(BlockFace.WEST, 1).setTypeId(ids[10]);
-		tb.getRelative(BlockFace.EAST, 1).setTypeId(ids[11]);
-		
+		Block [] shrineBlocks = { tb, tb.getRelative(BlockFace.UP, 1), tb.getRelative(BlockFace.UP, 2), tb.getRelative(BlockFace.UP, 3),
+				tb.getRelative(BlockFace.NORTH_WEST, 1), tb.getRelative(BlockFace.NORTH, 1), tb.getRelative(BlockFace.NORTH_EAST, 1),
+				tb.getRelative(BlockFace.SOUTH_WEST, 1), tb.getRelative(BlockFace.SOUTH, 1),tb.getRelative(BlockFace.SOUTH_EAST, 1),
+				tb.getRelative(BlockFace.WEST, 1), tb.getRelative(BlockFace.EAST, 1) };
+		int id;
+		for (int i=0; i<shrineBlocks.length; i++) {
+			id = config.getInt("shrines." +world +"." +name+".originalids."+i, 0);
+			shrineBlocks[i].setTypeId(id);
+			if (id == 44 || id == 43 || id == 35) {
+				shrineBlocks[i].setData((byte) config.getInt("shrines." +world +"." +name+".originalData."+i, 0));
+			}
+		}
 		
 		config.removeProperty("shrines." +world +"." +name);
 		config.save();
 	}
 	
 	/**
-	 * Returns the shrine near a player if there is one
-	 * @param player
-	 * @return DARShrine
-	 */
-//	public String getClose(Player player) {
-//		String world = player.getWorld().getName();
-//		Block pb = player.getLocation().getBlock();
-//		int px = pb.getX();
-//		int py = pb.getY();
-//		int pz = pb.getZ();
-//		int bx,by,bz, x,y,z;
-//		
-//		List<String> names = config.getKeys("shrines." +world);
-//		try {
-//			for (String name : names) {
-//				bx = config.getInt("shrines." +world +"." +name+".tb.x", 0);
-//				by = config.getInt("shrines." +world +"." +name+".tb.y", 0) -4;
-//				bz = config.getInt("shrines." +world +"." +name+".tb.z", 0);
-//				
-//				x = bx - px;
-//				y = by+11;
-//				z = bz - pz;
-//				
-//				if		(	Math.abs(x) < 4 
-//						&&	Math.abs(z) < 4 
-//						&&	by < py 
-//						&&	py < y) {
-//					return name;
-//				}
-//			}
-//		}catch (NullPointerException e) {
-//			// TODO NullPointer: no shrines (getClose)
-//			return null;
-//		}
-//		return null;
-//	}
-	
+	 * Returns the name of the shrine which is near the location
+	 * @param loc Location which gets checked
+	 * @return Name of the shrine as String
+	 */	
 	public String getClose(Location loc) {
-		String world = loc.getWorld().getName();
-		int locX = (int) loc.getX();
-		int locY = (int) loc.getY();
-		int locZ = (int) loc.getZ();
-		int bx,by,bz, x,y,z;
-		
+		String world = loc.getWorld().getName();		
 		List<String> names = config.getKeys("shrines." +world);
 		try {
 			for (String name : names) {
-				bx = config.getInt("shrines." +world +"." +name+".tb.x", 0);
-				by = config.getInt("shrines." +world +"." +name+".tb.y", 0) -4;
-				bz = config.getInt("shrines." +world +"." +name+".tb.z", 0);
+				Location locOfShrine = new Location(loc.getWorld(),
+						config.getInt("shrines." +world +"." +name+".tb.x", 0),
+						config.getInt("shrines." +world +"." +name+".tb.y", 0),
+						config.getInt("shrines." +world +"." +name+".tb.z", 0));
 				
-				x = bx - locX;
-				y = by+11;
-				z = bz - locZ;
-				
-				if		(	Math.abs(x) < 4 
-						&&	Math.abs(z) < 4 
-						&&	by < locY 
-						&&	locY < y) {
+				double dist = loc.distance(locOfShrine);
+				if (dist < 6) {
 					return name;
 				}
 			}
@@ -221,6 +171,7 @@ public class DARShrines {
 			// TODO NullPointer: no shrines (getClose)
 			return null;
 		}
+		
 		return null;
 	}
 	
@@ -307,32 +258,24 @@ public class DARShrines {
 	 * @return true if the player stands on a shrine, else false
 	 */
 	public boolean isOnShrine(Player player) {
-		String world = player.getWorld().getName();
-		Block pb = player.getLocation().getBlock();
-		int px = pb.getX();
-		int py = pb.getY();
-		int pz = pb.getZ();
-		int maxX, maxY, maxZ, minX,minY,minZ;
-		
+		String world = player.getWorld().getName();		
+		List<String> names = config.getKeys("shrines." +world);
 		try {
-			List<String> names = config.getKeys("shrines." +world);
 			for (String name : names) {
-				maxX = config.getInt("shrines." +world +"." +name+".max.x", 0);
-				maxY = config.getInt("shrines." +world +"." +name+".max.y", 0);
-				maxZ = config.getInt("shrines." +world +"." +name+".max.z", 0);
-				minX = config.getInt("shrines." +world +"." +name+".min.x", 0);
-				minY = config.getInt("shrines." +world +"." +name+".min.y", 0);
-				minZ = config.getInt("shrines." +world +"." +name+".min.z", 0);
+				Location locOfShrine = new Location(player.getWorld(),
+						config.getInt("shrines." +world +"." +name+".tb.x", 0),
+						config.getInt("shrines." +world +"." +name+".tb.y", 0),
+						config.getInt("shrines." +world +"." +name+".tb.z", 0));
 				
-				if (	px <= maxX && px >= minX
-					&&	py <= maxY && py >= minY
-					&&	pz <= maxZ && pz >= minZ) {
-						return true;
-					}
+				double dist = player.getLocation().distance(locOfShrine);
+				if (dist < 2) {
+					return true;
+				}
 			}
 		}catch (NullPointerException e) {
 			// TODO NullPointer: no shrines (isOnShrine)
+			return false;
 		}
-		return false;
+		return false;	
 	}
 }
