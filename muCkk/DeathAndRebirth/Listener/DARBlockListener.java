@@ -19,11 +19,9 @@ public class DARBlockListener extends BlockListener {
 	private DARHandler ghosts;
 	private DARGraves graves;
 	private DARProperties config;
-	private DARMessages msg;
 	
-	public DARBlockListener(DARProperties config, DARMessages msg, DARShrines shrines, DARHandler ghosts, DARGraves graves) {
+	public DARBlockListener(DARProperties config, DARShrines shrines, DARHandler ghosts, DARGraves graves) {
 		this.config = config;
-		this.msg = msg;
 		this.shrines = shrines;
 		this.ghosts = ghosts;
 		this.graves = graves;
@@ -33,7 +31,6 @@ public class DARBlockListener extends BlockListener {
 		if(event.isCancelled()) {
 			return;
 		}
-		
 		Player player = event.getPlayer();
 		
 		// check if the world is enabled
@@ -54,7 +51,7 @@ public class DARBlockListener extends BlockListener {
 		// *** FURNACE ***
 		if(type.equals(Material.FURNACE) || type.equals(Material.CHEST)) {
 			if(ghosts.isGhost(player)) {
-				msg.cantDoThat(player);
+				DARMessages.cantDoThat(player);
 				event.setCancelled(true);
 				return;
 			}
@@ -63,7 +60,7 @@ public class DARBlockListener extends BlockListener {
 		if(type.equals(Material.SIGN_POST)) {
 			Block block = event.getBlock();
 			if (graves.isProtected(player.getName(), player.getWorld().getName(), block.getX(), block.getY(), block.getZ())) {
-				msg.graveProtected(player);
+				DARMessages.graveProtected(player);
 				event.setCancelled(true);
 				return;
 			}
@@ -72,7 +69,7 @@ public class DARBlockListener extends BlockListener {
 		String shrine = shrines.getClose(player.getLocation());
 		if (shrine != null) {
 			if(shrines.isShrineArea(shrine, event.getBlock(), player)) {
-				msg.shrineCantBeDestroyed(player);
+				DARMessages.shrineCantBeDestroyed(player);
 				event.setCancelled(true);
 				return;
 			}
@@ -93,7 +90,7 @@ public class DARBlockListener extends BlockListener {
 
 		// *** preventing ghosts from placing blocks ***
 		if(ghosts.isGhost(player)) {
-			msg.cantDoThat(player);
+			DARMessages.cantDoThat(player);
 			event.setBuild(false);
 			event.setCancelled(true);
 			return;
@@ -105,7 +102,7 @@ public class DARBlockListener extends BlockListener {
 		if (shrine != null) {
 			Block block = event.getBlock();
 			if(shrines.isShrineArea(shrine, block, player)) {
-				msg.shrineCantBuild(player);
+				DARMessages.shrineCantBuild(player);
 				event.setBuild(false);
 				event.setCancelled(true);
 			}
