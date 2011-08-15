@@ -7,25 +7,20 @@ import org.getspout.spoutapi.player.AppearanceManager;
 import org.getspout.spoutapi.player.SpoutPlayer;
 import org.getspout.spoutapi.sound.SoundManager;
 
-public final class DARSpout {
+public class DARSpout {
 
-	private static String sound_death = "http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/death.wav";
-	private static String sound_res = "http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/res.wav";
-	
-	private static String skin_ghost = "http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/skins/ghost1.png";
-	
 	/**
 	 * Called when a player dies
 	 * Sets the skin to a ghost skin and plays a sound
 	 * @param player which dies
 	 */
-	public static void playerDied(Player player) {
+	public static void playerDied(Player player, String sound) {
 		SpoutPlayer sp = SpoutManager.getPlayer(player);
 		Plugin spoutPlugin = player.getServer().getPluginManager().getPlugin("SpoutTester");
 		
 		// *** Sound effect ***
 		SoundManager soundM = SpoutManager.getSoundManager();
-		soundM.playCustomSoundEffect(spoutPlugin, sp, sound_death, false);		
+		soundM.playCustomSoundEffect(spoutPlugin, sp, sound, false);		
 		
 		// TODO !!! sky effect when spout releases it
 	}
@@ -35,21 +30,21 @@ public final class DARSpout {
 	 * Resets the skin and plays a sound
 	 * @param player who gets resurrected
 	 */
-	public static void playerRes(Player player) {
+	public static void playerRes(Player player, String sound) {
 		SpoutPlayer sp = SpoutManager.getPlayer(player);
 		
 		// *** Skin ***
 		AppearanceManager appearanceM = SpoutManager.getAppearanceManager();
 		appearanceM.resetGlobalSkin(sp);
-		playResSound(player);
+		playResSound(player,sound);
 		// TODO !!! sky effect when spout releases it		
 	}
 	
-	public static void playResSound(Player player) {
+	public static void playResSound(Player player, String sound) {
 		Plugin spoutPlugin = player.getServer().getPluginManager().getPlugin("SpoutTester");
 		SoundManager soundM = SpoutManager.getSoundManager();
 		SpoutPlayer sPlayer = SpoutManager.getPlayer(player);
-		soundM.playCustomSoundEffect(spoutPlugin, sPlayer, sound_res, false);
+		soundM.playCustomSoundEffect(spoutPlugin, sPlayer, sound, false);
 	}
 
 	/**
@@ -57,7 +52,7 @@ public final class DARSpout {
 	 * The thread is needed because minecraft resets the players skin on respawn.
 	 * @param player which gets a new skin
 	 */
-	public static void setGhostSkin(final Player player) {
+	public static void setGhostSkin(final Player player, final String skin) {
 		// wait for the player to spawn		
 		new Thread() {
 			@Override
@@ -65,13 +60,13 @@ public final class DARSpout {
 				try {
 					Thread.sleep(1500);
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
+					System.out.println("[Death and Rebirth] Error: Could not sleep while setting ghost skin.");
 					e.printStackTrace();
 				}
 				// *** Skin ***
 				SpoutPlayer sPlayer = SpoutManager.getPlayer(player);
 				AppearanceManager appearanceM = SpoutManager.getAppearanceManager();
-				appearanceM.setGlobalSkin(sPlayer, skin_ghost);
+				appearanceM.setGlobalSkin(sPlayer, skin);
 			}
 		}.start();
 	}
