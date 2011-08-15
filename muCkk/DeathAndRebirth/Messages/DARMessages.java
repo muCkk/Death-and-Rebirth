@@ -6,20 +6,18 @@ import org.getspout.spoutapi.SpoutManager;
 public class DARMessages {
 
 	private static boolean spout;
-	
-	public DARMessages(boolean spout) {
-		DARMessages.spout = spout;
+	private static Player player;
+		
+	// *** Config stuff *************************************************
+	public static void save(Player player) {
+		DARMessages.player = player;
 	}
-	
-	public void playerNotDead(Player player, String target) {
-		if (spout && SpoutManager.getPlayer(player).isSpoutCraftEnabled()) {
-			DARMessagesSpout.playerNotDead(player, target);
-		}
-		else {
-			DARMessagesChat.playerNotDead(player, target);
-		}
+
+	public static void setSpout(boolean b) {
+		DARMessages.spout = b;
 	}
-	public void souldNotBound(Player player) {
+	// *** Messages *****************************************************
+	public static void souldNotBound(Player player) {
 		if (spout && SpoutManager.getPlayer(player).isSpoutCraftEnabled()) {
 			DARMessagesSpout.souldNotBound(player);
 		}
@@ -28,7 +26,7 @@ public class DARMessages {
 		}
 	}
 	
-	public void graveProtected(Player player) {
+	public static void graveProtected(Player player) {
 		if (spout && SpoutManager.getPlayer(player).isSpoutCraftEnabled()) {
 			DARMessagesSpout.graveProtected(player);
 		}
@@ -36,7 +34,7 @@ public class DARMessages {
 			DARMessagesChat.graveProtected(player);
 		}
 	}
-	public void shrineCantBuild(Player player) {
+	public static void shrineCantBuild(Player player) {
 		if (spout && SpoutManager.getPlayer(player).isSpoutCraftEnabled()) {
 			DARMessagesSpout.shrineCantBuild(player);
 		}
@@ -44,7 +42,7 @@ public class DARMessages {
 			DARMessagesChat.shrineCantBuild(player);
 		}
 	}
-	public void tooFarAway(Player player) {
+	public static void tooFarAway(Player player) {
 		if (spout && SpoutManager.getPlayer(player).isSpoutCraftEnabled()) {
 			DARMessagesSpout.tooFarAway(player);
 		}
@@ -52,7 +50,7 @@ public class DARMessages {
 			DARMessagesChat.tooFarAway(player);
 		}
 	}
-	public void cantDoThat(Player player) {
+	public static void cantDoThat(Player player) {
 		if (spout && SpoutManager.getPlayer(player).isSpoutCraftEnabled()) {
 			DARMessagesSpout.cantDoThat(player);
 		}
@@ -60,7 +58,7 @@ public class DARMessages {
 			DARMessagesChat.cantDoThat(player);
 		}
 	}
-	public void shrineCantBeDestroyed(Player player) {
+	public static void shrineCantBeDestroyed(Player player) {
 		if (spout && SpoutManager.getPlayer(player).isSpoutCraftEnabled()) {
 			DARMessagesSpout.shrineCantBeDestroyed(player);
 		}
@@ -68,15 +66,7 @@ public class DARMessages {
 			DARMessagesChat.shrineCantBeDestroyed(player);
 		}
 	}
-	public void nameNotFound(Player player)  {
-		if (spout && SpoutManager.getPlayer(player).isSpoutCraftEnabled()) {
-			DARMessagesSpout.nameNotFound(player);
-		}
-		else {
-			DARMessagesChat.nameNotFound(player);
-		}
-	}
-	public void nameAlreadyExists(Player player) {
+	public static void nameAlreadyExists(Player player) {
 		if (spout && SpoutManager.getPlayer(player).isSpoutCraftEnabled()) {
 			DARMessagesSpout.nameAlreadyExists(player);
 		}
@@ -84,7 +74,7 @@ public class DARMessages {
 			DARMessagesChat.nameAlreadyExists(player);
 		}
 	}
-	public void youWereReborn(Player player) {
+	public static void youWereReborn(Player player) {
 		if (spout && SpoutManager.getPlayer(player).isSpoutCraftEnabled()) {
 			DARMessagesSpout.youWereReborn(player);
 		}
@@ -92,15 +82,7 @@ public class DARMessages {
 			DARMessagesChat.youWereReborn(player);
 		}
 	}
-	public void youResurrected(Player player, Player target) {
-		if (spout && SpoutManager.getPlayer(player).isSpoutCraftEnabled()) {
-			DARMessagesSpout.youResurrected(player, target);
-		}
-		else {
-			DARMessagesChat.youResurrected(player, target);
-		}
-	}
-	public void cantAttackGhosts(Player player) {
+	public static void cantAttackGhosts(Player player) {
 		if (spout && SpoutManager.getPlayer(player).isSpoutCraftEnabled()) {
 			DARMessagesSpout.cantAttackGhosts(player);
 		}
@@ -108,7 +90,7 @@ public class DARMessages {
 			DARMessagesChat.cantAttackGhosts(player);
 		}		
 	}
-	public void boundShrine(Player player) {
+	public static void boundShrine(Player player) {
 		if (spout && SpoutManager.getPlayer(player).isSpoutCraftEnabled()) {
 			DARMessagesSpout.boundShrine(player);
 		}
@@ -116,7 +98,7 @@ public class DARMessages {
 			DARMessagesChat.boundShrine(player);
 		}
 	}
-	public void youAreNotDead(Player player) {
+	public static void youAreNotDead(Player player) {
 		if (spout && SpoutManager.getPlayer(player).isSpoutCraftEnabled()) {
 			DARMessagesSpout.youAreNotDead(player);
 		}
@@ -133,40 +115,136 @@ public class DARMessages {
 			DARMessagesChat.youHaveToStandOnShrine(player);
 		}
 	}
+	// *** Console and Player *****************************************
+	public static void nameNotFound()  {
+		if (player != null) {
+			if (spout && SpoutManager.getPlayer(player).isSpoutCraftEnabled()) {
+				DARMessagesSpout.nameNotFound(player);
+			}
+			else {
+				DARMessagesChat.nameNotFound(player);
+			}
+		}
+		else {
+			System.out.println("Name not found!");
+		}
+	}
+	public static void playerNotDead(Player player, String target) {
+		if (player != null) {
+			if (spout && SpoutManager.getPlayer(player).isSpoutCraftEnabled()) {
+				DARMessagesSpout.playerNotDead(player, target);
+			}
+			else {
+				DARMessagesChat.playerNotDead(player, target);
+			}
+		}
+		else {
+			System.out.println("Player is not dead.");
+		}
+		
+	}
+	public static void youResurrected(Player target) {
+		if (player != null) {
+			if (spout && SpoutManager.getPlayer(player).isSpoutCraftEnabled()) {
+				DARMessagesSpout.youResurrected(player, target);
+			}
+			else {
+				DARMessagesChat.youResurrected(player, target);
+			}
+		}
+		else {
+			System.out.println("You resurrected "+target.getName());
+		}
+	}
 	
 	// *** System messages ***
 	// stay in chat form
-	public void shrineAlreadyAtLoc(Player player) {
-		player.sendMessage("There is already a shrine at that location.");
+	
+	// *** console and player ****************************************************
+	public static void noPermission() {
+		if(player != null) {
+			player.sendMessage("You don't have permission to do that.");
+		}
+		else{
+			System.out.println("You don't have permission to do that.");
+		}
+	}	
+	public static void reloadComplete() {
+		if(player != null) {
+			player.sendMessage("[Death and Rebirth] Reload complete.");
+		}
+		else {
+			System.out.println("[Death and Rebirth] Reload complete.");
+		}
 	}
-	public void noPermission(Player player) {
-		player.sendMessage("You don't have permission to do that.");
+	public static void worldEnabled(String world) {
+		if(player != null) {
+			player.sendMessage("Death and Rebirth enabled for world "+world +".");
+		}
+		else {
+			System.out.println("Death and Rebirth enabled for world "+world +".");
+		}
+	}
+	public static void worldDisabled(String world) {
+		if(player != null) {
+			player.sendMessage("Death and Rebirth disabled for world " +world +".");
+		}
+		else {
+			System.out.println("Death and Rebirth disabled for world " +world +".");
+		}
+	}
+	public static void droppingToggle(String string) {
+		if(player != null) {
+			player.sendMessage("Dropping is now "+string);
+		}
+		else {
+			System.out.println("Dropping is now "+string);
+		}
+	}
+	public static void versionCheckToggle(String string) {
+		if(player != null) {
+			player.sendMessage("Version checking is now "+string);
+		}
+		else {
+			System.out.println("Version checking is now "+string);
+		}
+	}
+	public static void flyModeToggle(String string) {
+		if(player != null) {
+			player.sendMessage("Flymode is now "+string);
+		}
+		else {
+			System.out.println("Flymode is now "+string);
+		}
+	}
+	public static void shrineModeToggle(String string) {
+		if(player != null) {
+			player.sendMessage("ShrineOnly is now "+string);
+		}
+		else {
+			System.out.println("ShrineOnly is now "+string);
+		}
+	}
+	public static void blockGhostInteractionToggle(String string) {
+		if(player != null) {
+			player.sendMessage("Block ghost interaction is now "+string);
+		}
+		else {
+			System.out.println("Block ghost interaction is now "+string);
+		}
 	}
 	
-	public void reloadComplete(Player player) {
-		player.sendMessage("[Death and Rebirth] Reload complete.");
+	// *** Player only *********************************************
+	public static void newVersion(Player player, String version) {
+		player.sendMessage("[Death and Rebirth] New version available: "+version);
 	}
-	public void noShrinesFound(Player player) {
+	public static void shrineAlreadyAtLoc(Player player) {
+		player.sendMessage("There is already a shrine at that location.");
+	}	
+	public static void noShrinesFound(Player player) {
 		player.sendMessage("No shrines were found.");
 	}
-	public void worldEnabled(Player player, String world) {
-		player.sendMessage("Death and Rebirth enabled for world "+world +".");
-	}
-	public void worldDisabled(Player player, String world) {
-		player.sendMessage("Death and Rebirth disabled for world " +world +".");
-	}
-
-	public static void flyModeToggle(Player player, String string) {
-		player.sendMessage("Flymode is now "+string);
-	}
-
-	public static void shrineModeToggle(Player player, String string) {
-		player.sendMessage("ShrineOnly is now "+string);
-	}
-
-	public static void blockGhostInteractionToggle(Player player, String string) {
-		player.sendMessage("Block ghost interaction is now "+string);
-	}
+	
 	public static void playerDied(final Player player) {
 		new Thread() {
 			@Override
@@ -174,10 +252,15 @@ public class DARMessages {
 				try {
 					Thread.sleep(1500);
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
+					System.out.println("[Death and Rebirth] Error: Could not sleep while playerDied().");
 					e.printStackTrace();
 				}
-				player.sendMessage("You are now a ghost!");
+				if (spout && SpoutManager.getPlayer(player).isSpoutCraftEnabled()) {
+					DARMessagesSpout.youAreAGhost(player);
+				}
+				else {
+					DARMessagesChat.youAreAGhost(player);
+				}
 			}
 		}.start();
 	}
