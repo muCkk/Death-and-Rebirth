@@ -7,7 +7,14 @@ public final class DARErrors {
 	
 	
 	// ___ ERRORS ___
-	
+
+	// PlayerListener
+	public static void readingURL() {
+		System.out.println(prefixError +"Reading URL");
+	}
+	public static void openingURL() {
+		System.out.println(prefixError +"Opening URL");
+	}
 	
 	//DARHandler
 	public static void corruptGhostFile() {
@@ -48,5 +55,4 @@ public final class DARErrors {
 	public static void foundSpout() {
 		System.out.println(prefix +"Found Spout-plugin!");
 	}
-	
 }
