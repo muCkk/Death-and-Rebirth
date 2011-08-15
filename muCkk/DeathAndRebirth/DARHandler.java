@@ -1,6 +1,8 @@
 package muCkk.DeathAndRebirth;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import muCkk.DeathAndRebirth.Config.DARProperties;
@@ -14,24 +16,32 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.util.config.Configuration;
 
 public class DARHandler {
 
 	private String dir;
+	private HashSet<String> flyingPlayers;
 	private File ghostsFile;
+	private boolean permissions;
+	private HashMap<String, ItemStack[]> dropManager;
+	
 	private DARProperties config;
 	private DARGraves graves;
-	private Configuration yml;
-	private DARMessages msg;
 	
-	public DARHandler(String dir, String fileName, DARProperties config, DARMessages msg, DARGraves graves) {
+	private Configuration yml;
+	
+	public DARHandler(String dir, String fileName, DARProperties config, DARGraves graves, boolean permissions) {
 		this.dir = dir;
 		this.ghostsFile = new File(fileName);
 		this.config = config;
-		this.msg = msg;
 		this.graves = graves;
+		this.permissions = permissions;
+		flyingPlayers = new HashSet<String>();
+		dropManager = new HashMap<String, ItemStack[]>();
 	}
+	
 	
 	/**
 	 * Loads saved data from a file
@@ -42,7 +52,7 @@ public class DARHandler {
             	new File(dir).mkdir();
                 ghostsFile.createNewFile(); 
             } catch (Exception e) {
-            	//TODO: exception
+            	DARErrors.couldNotReadGhostFile();
             	e.printStackTrace();
             }
         } else {
@@ -52,7 +62,7 @@ public class DARHandler {
             yml = new Configuration(ghostsFile);
             yml.load();
         } catch (Exception e) {
-        	//TODO exception
+        	DARErrors.couldNotReadGhostFile();
         	e.printStackTrace();
         }
 	}
@@ -129,7 +139,7 @@ public class DARHandler {
 	 * Manages the death of players.
 	 * @param player which died
 	 */
-	public void died(Player player) {
+	public void died(Player player, ItemStack [] drops) {
 		String pname = player.getName();
 		String world = player.getWorld().getName();
 		
@@ -140,15 +150,31 @@ public class DARHandler {
 		yml.setProperty("players."+pname +"."+world +".location.x", block.getX());
 		yml.setProperty("players."+pname +"."+world +".location.y", block.getY());
 		yml.setProperty("players."+pname +"."+world +".location.z", block.getZ());		
-		
+		save();
+		if (!config.isDroppingEnabled()) {
+			dropManager.put(pname, drops);
+		}
 		player.setDisplayName("Ghost of "+pname);
 		
-		// *** spout stuff ***
+	// *** spout stuff *******************************************
 		if (config.isSpoutEnabled()) {
-			DARSpout.playerDied(player);
+			DARSpout.playerDied(player, config.getDeathSound());
 		}
-				
-				
+	// *******************
+		
+	// *** nocheat stuff *****************************************
+		if(config.isNoCheatEnabled() && permissions) {
+			if (!DAR.permissionHandler.has(player, "nocheat.flying")) {
+				DAR.permissionHandler.addUserPermission(world, pname, "nocheat.flying");
+				DAR.permissionHandler.addUserPermission(world, pname, "nocheat.moving");
+				DAR.permissionHandler.saveAll();
+				DAR.permissionHandler.reload();
+			}
+			else {
+				flyingPlayers.add(pname);
+			}
+		}
+	// ******************************************************************
 		Location location = player.getLocation();
 		location.getBlock().setType(Material.SIGN_POST);
 		Sign sign = (Sign) location.getBlock().getState();
@@ -171,13 +197,31 @@ public class DARHandler {
 		player.getWorld().getBlockAt(getLocation(player)).setType(Material.AIR);
 		
 		graves.deleteGrave(pname, world);
-		msg.youWereReborn(player);
+		DARMessages.youWereReborn(player);
 		
-		// *** spout stuff ***
+	// *** spout stuff ***********************************************
 		if (config.isSpoutEnabled()) {
-			DARSpout.playerRes(player);
+			DARSpout.playerRes(player, config.getResSound());
 		}
+	// *** nocheat stuff **********************************************
+		if(config.isNoCheatEnabled() && permissions) {
+			if(!flyingPlayers.contains(pname)) {
+				DAR.permissionHandler.removeUserPermission(world, pname, "nocheat.flying");
+				DAR.permissionHandler.removeUserPermission(world, pname, "nocheat.moving");
+				DAR.permissionHandler.saveAll();
+				DAR.permissionHandler.reload();
+			}
+		}
+	// *******************************************************************
 		player.setDisplayName(pname);
+		if(!config.isDroppingEnabled()) {
+			PlayerInventory inv = player.getInventory();
+			for (ItemStack item : dropManager.get(pname)) {
+				if (item == null) continue;
+				inv.addItem(item);
+			}
+		}
+		save();
 	}
 	
 	/**
@@ -187,9 +231,9 @@ public class DARHandler {
 	 */
 	public void resurrect(Player player, Player target) {
 		// *** check distance ***
-		Double distance = player.getLocation().distance(target.getLocation());
+		double distance = player.getLocation().distance(target.getLocation());
 		if(distance > config.getInteger("distance")) {
-			msg.tooFarAway(player);
+			DARMessages.tooFarAway(player);
 			return;
 		}
 		
@@ -207,12 +251,13 @@ public class DARHandler {
 			}
 		}		
 		resurrect(target);
-		msg.youResurrected(player, target);
+		DARMessages.save(player);
+		DARMessages.youResurrected(target);
 		target.teleport(getLocation(target));
 		
 		// *** Spout stuff ***
 		if (config.isSpoutEnabled()) {
-			DARSpout.playResSound(player);
+			DARSpout.playResSound(player, config.getResSound());
 		}		
 	}
 	
@@ -296,6 +341,7 @@ public class DARHandler {
 		yml.setProperty("players." +pname +"."+world +".shrine.x", loc.getX());
 		yml.setProperty("players." +pname +"."+world +".shrine.y", loc.getY());
 		yml.setProperty("players." +pname +"."+world +".shrine.z", loc.getZ());
+		save();
 	}
 	
 	/**
@@ -322,7 +368,8 @@ public class DARHandler {
 	}
 
 	/**
-	 * Called when a player teleports or enters a portal
+	 * Called when a player teleports or enters a portal.
+	 * Checks if the player enters a world where he has never been before.
 	 * @param player who teleported or used a portal
 	 */
 	public void worldChange(Player player) {
@@ -337,20 +384,34 @@ public class DARHandler {
 				}
 			}
 		}catch (NullPointerException e) {
-			yml.setProperty("players." +name +"."+worldName +".dead", false);
-			yml.setProperty("players." +name +"."+worldName +".location.x", player.getLocation().getBlockX());
-			yml.setProperty("players." +name +"."+worldName +".location.y", player.getLocation().getBlockY());
-			yml.setProperty("players." +name +"."+worldName +".location.z", player.getLocation().getBlockZ());
-			yml.setProperty("players." +name +"."+worldName +".world", worldName);
-			
-			yml.save();
+//			yml.setProperty("players." +name +"."+worldName +".dead", false);
+//			yml.setProperty("players." +name +"."+worldName +".location.x", player.getLocation().getBlockX());
+//			yml.setProperty("players." +name +"."+worldName +".location.y", player.getLocation().getBlockY());
+//			yml.setProperty("players." +name +"."+worldName +".location.z", player.getLocation().getBlockZ());
+//			yml.setProperty("players." +name +"."+worldName +".world", worldName);
+//			
+//			yml.save();
+			worldChangeHelper(name, worldName, player.getLocation());
 			return;
 		}
-		yml.setProperty("players." +name +"."+worldName +".dead", false);
-		yml.setProperty("players." +name +"."+worldName +".location.x", player.getLocation().getBlockX());
-		yml.setProperty("players." +name +"."+worldName +".location.y", player.getLocation().getBlockY());
-		yml.setProperty("players." +name +"."+worldName +".location.z", player.getLocation().getBlockZ());
-		yml.setProperty("players." +name +"."+worldName +".world", worldName);
+		worldChangeHelper(name, worldName, player.getLocation());
+//		yml.setProperty("players." +name +"."+worldName +".dead", false);
+//		yml.setProperty("players." +name +"."+worldName +".location.x", player.getLocation().getBlockX());
+//		yml.setProperty("players." +name +"."+worldName +".location.y", player.getLocation().getBlockY());
+//		yml.setProperty("players." +name +"."+worldName +".location.z", player.getLocation().getBlockZ());
+//		yml.setProperty("players." +name +"."+worldName +".world", worldName);
+//		
+//		yml.save();
+	}
+	
+	// TODO !!! check if this works now :P
+	
+	private void worldChangeHelper(String playerName, String worldName, Location location) {
+		yml.setProperty("players." +playerName +"."+worldName +".dead", false);
+		yml.setProperty("players." +playerName +"."+worldName +".location.x", location.getBlockX());
+		yml.setProperty("players." +playerName +"."+worldName +".location.y", location.getBlockY());
+		yml.setProperty("players." +playerName +"."+worldName +".location.z", location.getBlockZ());
+		yml.setProperty("players." +playerName +"."+worldName +".world", worldName);
 		
 		yml.save();
 	}
