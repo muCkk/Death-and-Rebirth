@@ -5,9 +5,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import muCkk.DeathAndRebirth.Config.DARProperties;
-import muCkk.DeathAndRebirth.Messages.DARErrors;
-import muCkk.DeathAndRebirth.Messages.DARMessages;
+import muCkk.DeathAndRebirth.config.DARProperties;
+import muCkk.DeathAndRebirth.messages.DARErrors;
+import muCkk.DeathAndRebirth.messages.DARMessages;
+import muCkk.DeathAndRebirth.messages.Messages;
 
 import org.bukkit.Material;
 import org.bukkit.Location;
@@ -26,18 +27,22 @@ public class DARHandler {
 	private File ghostsFile;
 	private boolean permissions;
 	private HashMap<String, ItemStack[]> dropManager;
-	
+		
 	private DARProperties config;
 	private DARGraves graves;
+	private DARSpout spout;
+	private DARMessages message;
 	
 	private Configuration yml;
 	
-	public DARHandler(String dir, String fileName, DARProperties config, DARGraves graves, boolean permissions) {
+	public DARHandler(String dir, String fileName, DARProperties config, DARGraves graves, boolean permissions, DARSpout spout, DARMessages message) {
 		this.dir = dir;
 		this.ghostsFile = new File(fileName);
 		this.config = config;
 		this.graves = graves;
 		this.permissions = permissions;
+		this.spout = spout;
+		this.message = message;
 		flyingPlayers = new HashSet<String>();
 		dropManager = new HashMap<String, ItemStack[]>();
 	}
@@ -110,7 +115,6 @@ public class DARHandler {
 				}
 			}
 		}catch (NullPointerException e) {
-			// TODO NullPointer: no ghosts (existsPlayer)
 			return false;
 		}
 		return false;
@@ -147,18 +151,35 @@ public class DARHandler {
 		
 		Block block = player.getWorld().getBlockAt(player.getLocation());
 		
+		if (config.isLightningDEnabled()) {
+			player.getWorld().strikeLightningEffect(player.getLocation());
+		}
+		
 		yml.setProperty("players."+pname +"."+world +".location.x", block.getX());
 		yml.setProperty("players."+pname +"."+world +".location.y", block.getY());
 		yml.setProperty("players."+pname +"."+world +".location.z", block.getZ());		
 		save();
+		
 		if (!config.isDroppingEnabled()) {
 			dropManager.put(pname, drops);
 		}
-		player.setDisplayName("Ghost of "+pname);
+		
+	// *** change the displayname **************************************
+		String [] ghostName = config.getGhostName().split("%");
+		if(ghostName.length == 3) {
+			player.setDisplayName(ghostName[0] + player.getName() + ghostName[2]);
+		}
+		if(ghostName.length == 2) {
+			player.setDisplayName(ghostName[0] + player.getName());
+		}
+		if(ghostName.length == 1) {
+			player.setDisplayName(ghostName[0]);
+		}
+		else DARErrors.ghostNameWrong();
 		
 	// *** spout stuff *******************************************
 		if (config.isSpoutEnabled()) {
-			DARSpout.playerDied(player, config.getDeathSound());
+			spout.playerDied(player, config.getDeathSound());
 		}
 	// *******************
 		
@@ -174,7 +195,7 @@ public class DARHandler {
 				flyingPlayers.add(pname);
 			}
 		}
-	// ******************************************************************
+	// *** grave stuff ******************************************************************
 		Location location = player.getLocation();
 		location.getBlock().setType(Material.SIGN_POST);
 		Sign sign = (Sign) location.getBlock().getState();
@@ -195,13 +216,16 @@ public class DARHandler {
 		
 		yml.setProperty("players."+pname +"."+world +".dead", false);
 		player.getWorld().getBlockAt(getLocation(player)).setType(Material.AIR);
-		
 		graves.deleteGrave(pname, world);
-		DARMessages.youWereReborn(player);
+		message.send(player, Messages.reborn);
+		
+		if (config.isLightningREnabled()) {
+			player.getWorld().strikeLightningEffect(player.getLocation());
+		}
 		
 	// *** spout stuff ***********************************************
 		if (config.isSpoutEnabled()) {
-			DARSpout.playerRes(player, config.getResSound());
+			spout.playerRes(player, config.getResSound());
 		}
 	// *** nocheat stuff **********************************************
 		if(config.isNoCheatEnabled() && permissions) {
@@ -216,9 +240,13 @@ public class DARHandler {
 		player.setDisplayName(pname);
 		if(!config.isDroppingEnabled()) {
 			PlayerInventory inv = player.getInventory();
-			for (ItemStack item : dropManager.get(pname)) {
-				if (item == null) continue;
-				inv.addItem(item);
+			try {
+				for (ItemStack item : dropManager.get(pname)) {
+					if (item == null) continue;
+					inv.addItem(item);
+				}
+			}catch(NullPointerException e) {
+				// empty inventory on death
 			}
 		}
 		save();
@@ -233,7 +261,7 @@ public class DARHandler {
 		// *** check distance ***
 		double distance = player.getLocation().distance(target.getLocation());
 		if(distance > config.getInteger("distance")) {
-			DARMessages.tooFarAway(player);
+			message.send(player, Messages.tooFarAway);
 			return;
 		}
 		
@@ -251,13 +279,12 @@ public class DARHandler {
 			}
 		}		
 		resurrect(target);
-		DARMessages.save(player);
-		DARMessages.youResurrected(target);
+		message.send(player, Messages.resurrected);
 		target.teleport(getLocation(target));
 		
 		// *** Spout stuff ***
 		if (config.isSpoutEnabled()) {
-			DARSpout.playResSound(player, config.getResSound());
+			spout.playResSound(player, config.getResSound());
 		}		
 	}
 	
@@ -278,56 +305,7 @@ public class DARHandler {
 		return loc;
 	}
 
-	// **************************************************************
-	// *** code from DwarfCraft, found on the bukkit forum - THX! ***
-	// **************************************************************	
-	private boolean CheckItems(Player player, ItemStack costStack)
-    {
-        //make sure we have enough
-        int cost = costStack.getAmount();
-        boolean hasEnough=false;
-        for (ItemStack invStack : player.getInventory().getContents())
-        {
-            if(invStack == null)
-                continue;
-            if (invStack.getTypeId() == costStack.getTypeId()) {
-
-                int inv = invStack.getAmount();
-                if (cost - inv >= 0) {
-                    cost = cost - inv;
-                } else {
-                    hasEnough=true;
-                    break;
-                }
-            }
-        }
-        return hasEnough;
-    }
-    private boolean ConsumeItems(Player player, ItemStack costStack)
-    {
-        if (!CheckItems(player,costStack)) return false;
-        //Loop though each item and consume as needed. We should of already
-        //checked to make sure we had enough with CheckItems.
-        for (ItemStack invStack : player.getInventory().getContents())
-        {
-            if(invStack == null)
-                continue;
-
-            if (invStack.getTypeId() == costStack.getTypeId()) {
-                int inv = invStack.getAmount();
-                int cost = costStack.getAmount();
-                if (cost - inv >= 0) {
-                    costStack.setAmount(cost - inv);
-                    player.getInventory().remove(invStack);
-                } else {
-                    costStack.setAmount(0);
-                    invStack.setAmount(inv - cost);
-                    break;
-                }
-            }
-        }
-        return true;
-    }
+	
 
     /**
      * binds the players soul to a shrine
@@ -384,28 +362,27 @@ public class DARHandler {
 				}
 			}
 		}catch (NullPointerException e) {
-//			yml.setProperty("players." +name +"."+worldName +".dead", false);
-//			yml.setProperty("players." +name +"."+worldName +".location.x", player.getLocation().getBlockX());
-//			yml.setProperty("players." +name +"."+worldName +".location.y", player.getLocation().getBlockY());
-//			yml.setProperty("players." +name +"."+worldName +".location.z", player.getLocation().getBlockZ());
-//			yml.setProperty("players." +name +"."+worldName +".world", worldName);
-//			
-//			yml.save();
 			worldChangeHelper(name, worldName, player.getLocation());
 			return;
 		}
 		worldChangeHelper(name, worldName, player.getLocation());
-//		yml.setProperty("players." +name +"."+worldName +".dead", false);
-//		yml.setProperty("players." +name +"."+worldName +".location.x", player.getLocation().getBlockX());
-//		yml.setProperty("players." +name +"."+worldName +".location.y", player.getLocation().getBlockY());
-//		yml.setProperty("players." +name +"."+worldName +".location.z", player.getLocation().getBlockZ());
-//		yml.setProperty("players." +name +"."+worldName +".world", worldName);
-//		
-//		yml.save();
 	}
 	
-	// TODO !!! check if this works now :P
+	public String getGrave(Player player) {
+		String name = player.getName();
+		String world = player.getWorld().getName();
+		String x,y,z;
+		try {
+			x = yml.getString("players." +name +"."+world +".location.x");
+			y = yml.getString("players." +name +"."+world +".location.y");
+			z = yml.getString("players." +name +"."+world +".location.z");
+		}catch(NullPointerException e) {
+			return Messages.youHaveNoGrave.msg();
+		}
+		return Messages.yourGraveIsHere +": "+x +", "+y+", "+z;
+	}
 	
+// *** private methods ************************************************************************************************************
 	private void worldChangeHelper(String playerName, String worldName, Location location) {
 		yml.setProperty("players." +playerName +"."+worldName +".dead", false);
 		yml.setProperty("players." +playerName +"."+worldName +".location.x", location.getBlockX());
@@ -414,5 +391,56 @@ public class DARHandler {
 		yml.setProperty("players." +playerName +"."+worldName +".world", worldName);
 		
 		yml.save();
+	}
+		
+	// **************************************************************
+	// *** code from DwarfCraft, found on the bukkit forum - THX! ***
+	// **************************************************************	
+	private boolean CheckItems(Player player, ItemStack costStack)
+	{
+	    //make sure we have enough
+	    int cost = costStack.getAmount();
+	    boolean hasEnough=false;
+	    for (ItemStack invStack : player.getInventory().getContents())
+	    {
+	        if(invStack == null)
+	            continue;
+	        if (invStack.getTypeId() == costStack.getTypeId()) {
+	
+	            int inv = invStack.getAmount();
+	            if (cost - inv >= 0) {
+	                cost = cost - inv;
+	            } else {
+	                hasEnough=true;
+	                break;
+	            }
+	        }
+	    }
+	    return hasEnough;
+	}
+	private boolean ConsumeItems(Player player, ItemStack costStack)
+	{
+	    if (!CheckItems(player,costStack)) return false;
+	    //Loop though each item and consume as needed. We should of already
+	    //checked to make sure we had enough with CheckItems.
+	    for (ItemStack invStack : player.getInventory().getContents())
+	    {
+	        if(invStack == null)
+	            continue;
+	
+	        if (invStack.getTypeId() == costStack.getTypeId()) {
+	            int inv = invStack.getAmount();
+	            int cost = costStack.getAmount();
+	            if (cost - inv >= 0) {
+	                costStack.setAmount(cost - inv);
+	                player.getInventory().remove(invStack);
+	            } else {
+	                costStack.setAmount(0);
+	                invStack.setAmount(inv - cost);
+	                break;
+	            }
+	        }
+	    }
+	    return true;
 	}
 }
