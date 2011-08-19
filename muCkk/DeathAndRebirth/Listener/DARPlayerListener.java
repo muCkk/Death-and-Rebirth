@@ -181,6 +181,17 @@ public class DARPlayerListener extends PlayerListener {
 				// Material = null
 			}
 		}
+	// *** selection mode for creating shrines ****************
+		if(player.getName().equalsIgnoreCase(shrines.getSelPlayer()) && shrines.isSelModeEnable() && player.getItemInHand().getTypeId() == 280) {
+			if(event.getAction() == Action.LEFT_CLICK_BLOCK) {
+				shrines.setSel1(event.getClickedBlock().getLocation());
+				player.sendMessage("Position 1 set");
+			}
+			if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+				shrines.setSel2(event.getClickedBlock().getLocation());
+				player.sendMessage("Position 2 set");
+			}
+		}
 		
 	// *** shrine is clicked ***
 		if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
@@ -194,21 +205,9 @@ public class DARPlayerListener extends PlayerListener {
 			}
 			return;
 		}
-
-	// *** selection mode for creating shrines ****************
-		if(player.getName().equalsIgnoreCase(shrines.getSelPlayer()) && shrines.isSelModeEnable() && player.getItemInHand().getTypeId() == 280) {
-			if(event.getAction() == Action.LEFT_CLICK_BLOCK) {
-				shrines.setSel1(event.getClickedBlock().getLocation());
-				player.sendMessage("Position 1 set");
-			}
-			if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-				shrines.setSel2(event.getClickedBlock().getLocation());
-				player.sendMessage("Position 2 set");
-			}
-		}
 		
 	// *** getting the name of a shrine ******************************
-		if (player.isOp() && event.getAction() == Action.LEFT_CLICK_BLOCK) {
+		if (player.isOp() && event.getAction() == Action.LEFT_CLICK_BLOCK && player.getItemInHand().getTypeId() == 280) {
 			String shrine = shrines.getClose(player.getLocation());
 			if (shrine != null) {
 				player.sendMessage("Shrine: "+shrine);
