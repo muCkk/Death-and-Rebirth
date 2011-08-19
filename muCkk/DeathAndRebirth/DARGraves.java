@@ -3,7 +3,7 @@ package muCkk.DeathAndRebirth;
 import java.io.File;
 import java.util.List;
 
-import muCkk.DeathAndRebirth.Messages.DARErrors;
+import muCkk.DeathAndRebirth.messages.DARErrors;
 
 import org.bukkit.util.config.Configuration;
 
@@ -59,7 +59,7 @@ public class DARGraves {
 	}
 	
 	public boolean isProtected(String name, String world, int x, int y, int z) {
-		List<String> graves = yml.getKeys("graves" +world);
+		List<String> graves = yml.getKeys("graves." +world);
 		try {
 			for (String grave : graves) {
 				if(grave.equalsIgnoreCase(name)
@@ -70,7 +70,6 @@ public class DARGraves {
 						return true;
 			}
 		}catch (NullPointerException e) {
-			// TODO NullPointer: no graves (isProtected)
 			return false;
 		}
 		return false;		

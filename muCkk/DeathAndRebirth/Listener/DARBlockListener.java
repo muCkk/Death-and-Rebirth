@@ -1,14 +1,17 @@
-package muCkk.DeathAndRebirth.Listener;
+package muCkk.DeathAndRebirth.listener;
 
 import muCkk.DeathAndRebirth.DARGraves;
 import muCkk.DeathAndRebirth.DARHandler;
-import muCkk.DeathAndRebirth.DARShrines;
-import muCkk.DeathAndRebirth.Config.DARProperties;
-import muCkk.DeathAndRebirth.Messages.DARMessages;
+import muCkk.DeathAndRebirth.config.DARProperties;
+import muCkk.DeathAndRebirth.messages.DARMessages;
+import muCkk.DeathAndRebirth.messages.Messages;
+import muCkk.DeathAndRebirth.shrines.DARShrines;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
@@ -19,12 +22,35 @@ public class DARBlockListener extends BlockListener {
 	private DARHandler ghosts;
 	private DARGraves graves;
 	private DARProperties config;
+	private DARMessages message;
 	
-	public DARBlockListener(DARProperties config, DARShrines shrines, DARHandler ghosts, DARGraves graves) {
+	public DARBlockListener(DARProperties config, DARShrines shrines, DARHandler ghosts, DARGraves graves, DARMessages message) {
 		this.config = config;
 		this.shrines = shrines;
 		this.ghosts = ghosts;
 		this.graves = graves;
+		this.message = message;
+	}
+	
+	public void onBlockBreak(BlockBreakEvent event) {
+	// *** protecting graves ************************************************
+		Material type = event.getBlock().getType(); 
+		Player player = event.getPlayer();
+		if(type.equals(Material.SIGN_POST)) {
+			Block block = event.getBlock();
+			if (graves.isProtected(player.getName(), player.getWorld().getName(), block.getX(), block.getY(), block.getZ())) {
+				Sign sign = (Sign) event.getBlock().getState();
+				message.send(player, Messages.graveProtected);
+				event.setCancelled(true);
+				sign.update(true);
+				return;
+			}
+		}
+		if(ghosts.isGhost(player)) {
+			message.send(player, Messages.cantDoThat);
+			event.setCancelled(true);
+			return;
+		}
 	}
 	
 	public void onBlockDamage(BlockDamageEvent event) {
@@ -38,38 +64,12 @@ public class DARBlockListener extends BlockListener {
 			return;
 		}
 		
-		// *** preventing ghosts from destroying blocks ***
-		if(ghosts.isGhost(player)) {
-//			TODO !!! removed message temporarily because of spam			
-//			msg.cantDoThat(player);
-			event.setCancelled(true);
-			return;
-		}
-		// ***************************************************
 		
-		Material type = event.getBlock().getType(); 
-		// *** FURNACE ***
-		if(type.equals(Material.FURNACE) || type.equals(Material.CHEST)) {
-			if(ghosts.isGhost(player)) {
-				DARMessages.cantDoThat(player);
-				event.setCancelled(true);
-				return;
-			}
-		}
-		// *** SIGN_POST ***		
-		if(type.equals(Material.SIGN_POST)) {
-			Block block = event.getBlock();
-			if (graves.isProtected(player.getName(), player.getWorld().getName(), block.getX(), block.getY(), block.getZ())) {
-				DARMessages.graveProtected(player);
-				event.setCancelled(true);
-				return;
-			}
-		}
 		// *** shrine is being damaged ***
 		String shrine = shrines.getClose(player.getLocation());
 		if (shrine != null) {
-			if(shrines.isShrineArea(shrine, event.getBlock(), player)) {
-				DARMessages.shrineCantBeDestroyed(player);
+			if(shrines.isShrineArea(shrine, event.getBlock())) {
+				message.send(player, Messages.shrineProtectedDestroy);
 				event.setCancelled(true);
 				return;
 			}
@@ -90,7 +90,7 @@ public class DARBlockListener extends BlockListener {
 
 		// *** preventing ghosts from placing blocks ***
 		if(ghosts.isGhost(player)) {
-			DARMessages.cantDoThat(player);
+			message.send(player, Messages.cantDoThat);
 			event.setBuild(false);
 			event.setCancelled(true);
 			return;
@@ -101,8 +101,8 @@ public class DARBlockListener extends BlockListener {
 		String shrine = shrines.getClose(player.getLocation());
 		if (shrine != null) {
 			Block block = event.getBlock();
-			if(shrines.isShrineArea(shrine, block, player)) {
-				DARMessages.shrineCantBuild(player);
+			if(shrines.isShrineArea(shrine, block)) {
+				message.send(player, Messages.shrineProtectedBuild);
 				event.setBuild(false);
 				event.setCancelled(true);
 			}
