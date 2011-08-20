@@ -45,6 +45,7 @@ public class DAR extends JavaPlugin {
 	public static PermissionHandler permissionHandler;
 	  
 	public void onDisable() {
+		ghosts.onDisable(this);
 		config.save();
 		ghosts.save();
 		graves.save();
@@ -107,14 +108,12 @@ public class DAR extends JavaPlugin {
 		}
 	// *** check for citizens ************************************
 		Plugin citizensPlugin = getServer().getPluginManager().getPlugin("Citizens");
-		if (citizensPlugin != null) {
-			config.setCitizens(true);
-		}
+		if (citizensPlugin != null)	config.setCitizens(true);
+		else						config.setCitizens(false);
 	// *** checking for nocheat *************************
 		Plugin nocheatPlugin = getServer().getPluginManager().getPlugin("NoCheat");
-		if(nocheatPlugin != null) {
-			config.setNoCheat(true);
-		}
+		if(nocheatPlugin != null)	config.setNoCheat(true);
+		else						config.setNoCheat(false); 
 	}
 	
 	private boolean setupPermissions() {
@@ -261,7 +260,6 @@ public class DAR extends JavaPlugin {
 					return false;
 				}
 				shrines.update(player, name);
-				message.send(player, Messages.update);
 				return true;
 			}
 
@@ -273,16 +271,21 @@ public class DAR extends JavaPlugin {
 					return false;
 				}
 				if(shrines.exists(name, player.getWorld().getName())) {
-					message.send(player, Messages.nameAlreadyExists);
+					message.chat(player, Messages.nameAlreadyExists.msg());
+					return true;
+				}
+				
+				if(!shrines.checkSelection()) {
+					message.chat(player, Messages.noSelectionMade.msg());
 					return true;
 				}
 				
 				if (shrines.locationIsAlreadyShrine()) {
-					message.send(player, Messages.shrineAlreadyThere);
+					message.chat(player, Messages.shrineAlreadyThere.msg());
 					return true;
 				}
 				shrines.addShrine(name);
-				
+				message.chat(player, Messages.shrineAdded.msg());
 				return true;
 			}
 			
@@ -294,10 +297,11 @@ public class DAR extends JavaPlugin {
 					return false;
 				}
 				if(!shrines.exists(name, player.getWorld().getName())) {
-					message.send(player, Messages.nameNotFound);
+					message.chat(player, Messages.nameNotFound.msg());
 					return true;
 				}
 				shrines.removeShrine(name, player);
+				message.chat(player, Messages.shrineRemoved.msg());
 				return true;
 			}
 		// *** listing shrines *********************************************************
@@ -349,7 +353,7 @@ public class DAR extends JavaPlugin {
 				graves.load();
 				ghosts.load();
 				shrines.load();
-				message.send(player, Messages.reloadComplete);
+				message.chat(player, Messages.reloadComplete.msg());
 				return true;
 			}
 
@@ -375,7 +379,7 @@ public class DAR extends JavaPlugin {
 					return false;
 				}
 				config.setBoolean(name, true);
-				message.send(player, Messages.worldEnabled, ": "+name);
+				message.chat(player, Messages.worldEnabled.msg()+ ": "+name);
 				return true;
 			}
 			
@@ -386,18 +390,18 @@ public class DAR extends JavaPlugin {
 					return false;
 				}
 				config.setBoolean(name, false);
-				message.send(player, Messages.worldDisabled, ": "+name);
+				message.chat(player, Messages.worldDisabled.msg()+ ": "+name);
 				return true;
 			}
 		// *** toggling dropping *************************************************************************
 			if (arg.equalsIgnoreCase("dropping")) {
 				if(config.isDroppingEnabled()) {
 					config.setDropping(false);
-					message.send(player, Messages.droppingToggle, "disabled");
+					message.chat(player, Messages.droppingToggle.msg()+ " disabled");
 				}
 				else {
 					config.setDropping(true);
-					message.send(player, Messages.droppingToggle, "enabled");
+					message.chat(player, Messages.droppingToggle.msg()+ " enabled");
 				}
 				return true;
 			}
@@ -405,11 +409,11 @@ public class DAR extends JavaPlugin {
 			if (arg.equalsIgnoreCase("versioncheck")) {
 				if(config.isVersionCheckEnabled()) {
 					config.setVersionCheck(false);
-					message.send(player, Messages.versionCheckToggle, "disabled");
+					message.chat(player, Messages.versionCheckToggle.msg()+ " disabled");
 				}
 				else {
 					config.setVersionCheck(true);
-					message.send(player, Messages.versionCheckToggle, "enabled");
+					message.chat(player, Messages.versionCheckToggle.msg()+ " enabled");
 				}
 				return true;
 			}
@@ -417,11 +421,11 @@ public class DAR extends JavaPlugin {
 			if (arg.equalsIgnoreCase("fly")) {
 				if(config.isFlyingEnabled()) {
 					config.setFly(false);
-					message.send(player, Messages.flymodeToggle, "disabled");
+					message.chat(player, Messages.flymodeToggle.msg()+ " disabled");
 				}
 				else {
 					config.setFly(true);
-					message.send(player, Messages.flymodeToggle, "enabled");
+					message.chat(player, Messages.flymodeToggle.msg()+ " enabled");
 				}
 				return true;
 			}
@@ -429,11 +433,11 @@ public class DAR extends JavaPlugin {
 			if (arg.equalsIgnoreCase("shrinemode")) {
 				if(config.isShrineOnlyEnabled()) {
 					config.setShrineOnly(false);
-					message.send(player, Messages.shrinemodeToggle, "disabled");
+					message.chat(player, Messages.shrinemodeToggle.msg()+ " disabled");
 				}
 				else {
 					config.setShrineOnly(true);
-					message.send(player, Messages.shrinemodeToggle, "enabled");
+					message.chat(player, Messages.shrinemodeToggle.msg()+ " enabled");
 				}
 				return true;
 			}
@@ -441,11 +445,11 @@ public class DAR extends JavaPlugin {
 			if (arg.equalsIgnoreCase("ghostinteraction")) {
 				if(config.isBlockGhostInteractionEnabled()) {
 					config.setBlockGhostInteraction(false);
-					message.send(player, Messages.blockghostToggle, "disabled");
+					message.chat(player, Messages.blockghostToggle.msg()+ " disabled");
 				}
 				else {
 					config.setBlockGhostInteraction(true);
-					message.send(player, Messages.blockghostToggle, "enabled");
+					message.chat(player, Messages.blockghostToggle.msg()+ " enabled");
 				}
 				return true;
 			}
@@ -453,11 +457,11 @@ public class DAR extends JavaPlugin {
 			if (arg.equalsIgnoreCase("ghostchat")) {
 				if(config.isGhostChatEnabled()) {
 					config.setGhostChat(false);
-					message.send(player, Messages.ghostNoChat, "disabled");
+					message.chat(player, Messages.chatToggle.msg()+ " disabled");
 				}
 				else {
 					config.setGhostChat(true);
-					message.send(player, Messages.ghostNoChat, "enabled");
+					message.chat(player, Messages.chatToggle.msg()+ " enabled");
 				}
 				return true;
 			}
