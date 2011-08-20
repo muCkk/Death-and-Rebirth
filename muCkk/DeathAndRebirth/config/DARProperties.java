@@ -104,10 +104,13 @@ public class DARProperties extends Properties {
 	}
 
 	public void load() {
+		clear();
 		File file = new File(this.fileName);
 		if (file.exists()) {
 			try {
-				load(new FileInputStream(this.fileName));
+				FileInputStream input = new FileInputStream(this.fileName); 
+				load(input);
+				input.close();
 			} catch (IOException ex) {
 				DARErrors.loadingConfig();
 			}
