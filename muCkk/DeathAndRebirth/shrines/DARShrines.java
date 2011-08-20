@@ -86,22 +86,7 @@ public class DARShrines {
 		yml.setProperty("shrines." +worldName +"." +name+".min.x", minX);
 		yml.setProperty("shrines." +worldName +"." +name+".min.y", minY);
 		yml.setProperty("shrines." +worldName +"." +name+".min.z", minZ);
-				
-//		Block block;
-//		counter = 0;
-//		for (int j = minY; j <= maxY; j++) {
-//			for (int k = minZ; k <= maxZ; k++){
-//				for (int i = minX; i<=maxX; i++) {
-//					block = world.getBlockAt(i, j, k);
-//					int id = block.getTypeId();
-//					yml.setProperty("shrines." +worldName +"." +name+".originalIDs."+counter, id);
-//					if(id == 44 || id == 43 || id == 35) {
-//						yml.setProperty("shrines." +worldName +"." +name+".originalData."+counter, block.getData());
-//					}
-//					counter++;
-//				}
-//			}
-//		}
+		
 		selection1 = null;
 		selection2 = null;
 		yml.save();
@@ -113,7 +98,6 @@ public class DARShrines {
 	 * @param name
 	 * @param player
 	 */
-	// TODO anpassen an neues shrine system
 	public void removeShrine(String name, Player player) {
 		String worldName = player.getWorld().getName();
 		
@@ -124,6 +108,8 @@ public class DARShrines {
 	public void update(Player player, String name) {
 		World world = player.getWorld();
 		String worldName = world.getName();
+		if (yml.getKeys("shrines." + worldName +"." + name +"." + "tb") == null) return;
+		
 		double	minX = yml.getInt("shrines." + worldName +"." + name +"." + "tb.x", 0) - 1,
 				minY = yml.getInt("shrines." + worldName +"." + name +"." + "tb.y", 0) - 1,
 				minZ = yml.getInt("shrines." + worldName +"." + name +"." + "tb.z", 0) - 1,
@@ -137,6 +123,7 @@ public class DARShrines {
 		yml.removeProperty("shrines." + worldName +"." + name +".tb");
 		selection1 = null;
 		selection2 = null;
+		message.chat(player, Messages.update.msg());
 		yml.save();
 	}
 	
@@ -157,7 +144,7 @@ public class DARShrines {
 				player.sendMessage(i+1 +". "+names.get(i));
 			}
 		}catch (NullPointerException e) {
-			message.send(player, Messages.noShrinesFound);
+			message.chat(player, Messages.noShrinesFound.msg());
 		}
 	}
 	
@@ -266,6 +253,12 @@ public class DARShrines {
 			return true;
 		}
 		else return false;
+	}
+	
+	public boolean checkSelection() {
+		if (selection1 == null || selection2 == null) return false;
+		else return true;
+		
 	}
 	
 	public void setSel1(Location loc) {
