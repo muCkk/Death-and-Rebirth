@@ -26,7 +26,8 @@ public class DARSpout {
 	 */
 	public void playerDied(Player player, String sound) {
 		SpoutPlayer sp = SpoutManager.getPlayer(player);
-		Plugin spoutPlugin = player.getServer().getPluginManager().getPlugin("SpoutTester");
+		if(!sp.isSpoutCraftEnabled()) return;
+		Plugin spoutPlugin = player.getServer().getPluginManager().getPlugin("Death and Rebirth");
 	
 		
 		// *** Sound effect ***
@@ -41,6 +42,7 @@ public class DARSpout {
 	 */
 	public void playerRes(Player player, String sound) {
 		SpoutPlayer sp = SpoutManager.getPlayer(player);
+		if(!sp.isSpoutCraftEnabled()) return;
 		
 		// *** Skin ***
 		AppearanceManager appearanceM = SpoutManager.getAppearanceManager();
@@ -58,9 +60,10 @@ public class DARSpout {
 	}
 	
 	public void playResSound(Player player, String sound) {
-		Plugin spoutPlugin = player.getServer().getPluginManager().getPlugin("SpoutTester");
-		SoundManager soundM = SpoutManager.getSoundManager();
 		SpoutPlayer sPlayer = SpoutManager.getPlayer(player);
+		if(!sPlayer.isSpoutCraftEnabled()) return;
+		Plugin spoutPlugin = player.getServer().getPluginManager().getPlugin("Death and Rebirth");
+		SoundManager soundM = SpoutManager.getSoundManager();
 		soundM.playCustomSoundEffect(spoutPlugin, sPlayer, sound, false);
 	}
 
@@ -70,7 +73,10 @@ public class DARSpout {
 	 * @param player which gets a new skin
 	 */
 	public void setGhostSkin(final Player player, final String skin) {
-		// wait for the player to spawn		
+		final SpoutPlayer sPlayer = SpoutManager.getPlayer(player);
+		if(!sPlayer.isSpoutCraftEnabled()) return;
+
+		// wait for the player to spawn
 		new Thread() {
 			@Override
 			public void run() {				
@@ -81,11 +87,10 @@ public class DARSpout {
 					e.printStackTrace();
 				}
 				// *** Skin ***
-				SpoutPlayer sPlayer = SpoutManager.getPlayer(player);
+				
 				AppearanceManager appearanceM = SpoutManager.getAppearanceManager();
 				SkyManager sky = SpoutManager.getSkyManager();
 				appearanceM.setGlobalSkin(sPlayer, skin);
-				System.out.println("skin: "+skin);
 				if(config.changeColors()) {
 					float [] skycol = config.getGhostSky();
 					float [] fogcol = config.getGhostFog();
