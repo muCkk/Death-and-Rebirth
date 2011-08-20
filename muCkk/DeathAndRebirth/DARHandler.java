@@ -165,17 +165,7 @@ public class DARHandler {
 		}
 		
 	// *** change the displayname **************************************
-		String [] ghostName = config.getGhostName().split("%");
-		if(ghostName.length == 3) {
-			player.setDisplayName(ghostName[0] + player.getName() + ghostName[2]);
-		}
-		if(ghostName.length == 2) {
-			player.setDisplayName(ghostName[0] + player.getName());
-		}
-		if(ghostName.length == 1) {
-			player.setDisplayName(ghostName[0]);
-		}
-		else DARErrors.ghostNameWrong();
+		changeDisplayName(player);
 		
 	// *** spout stuff *******************************************
 		if (config.isSpoutEnabled()) {
@@ -206,11 +196,28 @@ public class DARHandler {
 		graves.addGrave(pname,block.getX(), block.getY(), block.getZ(), l1, pname, world);
 	}
 	
+	public void changeDisplayName(Player player) {
+		String [] ghostName = config.getGhostName().split("%");
+		switch (ghostName.length) {
+		case 1:
+			player.setDisplayName(ghostName[0]);
+			break;
+		case 2:
+			player.setDisplayName(ghostName[0] + player.getName());
+			break;
+		case 3:
+			player.setDisplayName(ghostName[0] + player.getName() + ghostName[2]);
+			break;
+		default:
+			DARErrors.ghostNameWrong();
+			break;
+		}
+	}
 	/**
 	 * Brings players back to life
 	 * @param player to be resurrected
 	 */
-	public void resurrect(Player player) {
+	public void resurrect(final Player player) {
 		String pname = player.getName();
 		String world = player.getWorld().getName();
 		
@@ -238,19 +245,22 @@ public class DARHandler {
 		}
 	// *******************************************************************
 		player.setDisplayName(pname);
-		if(!config.isDroppingEnabled()) {
-			PlayerInventory inv = player.getInventory();
-			try {
-				for (ItemStack item : dropManager.get(pname)) {
-					if (item == null) continue;
-					inv.addItem(item);
-				}
-			}catch(NullPointerException e) {
-				// empty inventory on death
-			}
-		}
 		save();
+		new Thread() {
+			@Override
+			public void run() {				
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					System.out.println("[Death and Rebirth] Error: Could not sleep while giving drops.");
+					e.printStackTrace();
+				}
+				giveDrops(player);
+			}
+		}.start();
+		
 	}
+	
 	
 	/**
 	 * Called when a player tries to resurrect someone.
@@ -274,7 +284,8 @@ public class DARHandler {
 			costStack.setAmount(amount);
 			
 			if(!ConsumeItems(player, costStack)) {
-				player.sendMessage("You need "+amount +" "+Material.getMaterial(itemID).name() +" to resurrect someone.");
+//				player.sendMessage("You need "+amount +" "+Material.getMaterial(itemID).name() +" to resurrect someone.");
+				message.chat(player, Messages.notEnoughItems.msg() +" "+amount +" "+Material.getMaterial(itemID).name());
 				return;
 			}
 		}		
@@ -382,6 +393,42 @@ public class DARHandler {
 		return Messages.yourGraveIsHere +": "+x +", "+y+", "+z;
 	}
 	
+	/**
+	 * Gives a player his drops back
+	 * @param player which gets his items
+	 */
+	public void giveDrops(Player player) {
+		if(!config.isDroppingEnabled()) {
+			PlayerInventory inv = player.getInventory();
+			try {
+				for (ItemStack item : dropManager.get(player.getName())) {
+					if (item == null) continue;
+					inv.addItem(item);
+				}
+			}catch(NullPointerException e) {
+				// empty inventory on death
+			}
+		}
+	}
+	
+	/**
+	 * Gives ghosts their drops back
+	 * @param plugin plugin which is using the method
+	 */
+	public void onDisable(DAR plugin) {
+		if(!config.isDroppingEnabled()) {
+			List<String> names = yml.getKeys("players.");
+			for (String name : names) {
+				List<String> worlds = yml.getKeys("players."+name);
+				for (String world : worlds) {
+					if (yml.getBoolean("players."+name+"."+world+".dead", false)) {
+						Player player = plugin.getServer().getPlayer(name);
+						giveDrops(player);
+					}
+				}
+			}
+		}
+	}
 // *** private methods ************************************************************************************************************
 	private void worldChangeHelper(String playerName, String worldName, Location location) {
 		yml.setProperty("players." +playerName +"."+worldName +".dead", false);
@@ -408,6 +455,7 @@ public class DARHandler {
 	        if (invStack.getTypeId() == costStack.getTypeId()) {
 	
 	            int inv = invStack.getAmount();
+	            if (cost == inv) return true;
 	            if (cost - inv >= 0) {
 	                cost = cost - inv;
 	            } else {
