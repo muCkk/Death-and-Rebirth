@@ -22,6 +22,7 @@ public enum Messages {
 	cantAttackGhosts		("Can't attack ghosts"),
 	
 	// chat form only
+	notEnoughItems			("Resurrection is not possible. You need"),
 	noPermission			("No permission."),
 	yourGraveIsHere			("Your grave is here"),
 	youHaveNoGrave			("You have no grave."),
@@ -31,7 +32,10 @@ public enum Messages {
 	nameNotFound			("Name not found."),
 	reloadComplete			("Reload complete."),
 	shrineAlreadyThere		("There is already a shrine at that location."),
+	shrineAdded				("Shrine added."),
+	shrineRemoved			("Shrine removed."),
 	noShrinesFound			("No shrines were found."),
+	noSelectionMade			("You have to select an area to create a shrine."),
 	update					("Shrine updated."),
 	
 	newVersion				("Death and Rebirth - A new version is available"),
