@@ -107,8 +107,8 @@ public class DARPlayerListener extends PlayerListener {
 			// *** spout stuff ***
 			if (config.isSpoutEnabled()) {
 				spout.setGhostSkin(player, config.getGhostSkin());
-				player.setDisplayName("Ghost of "+player.getName());
 			}
+			ghosts.changeDisplayName(player);
 		}
 	}
 	
