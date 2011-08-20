@@ -10,7 +10,9 @@ import muCkk.DeathAndRebirth.messages.Messages;
 import muCkk.DeathAndRebirth.shrines.DARShrines;
 
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -125,7 +127,21 @@ public class DAREntityListener extends EntityListener {
 					 return;
 				 }
 			 }
+			 // attacks with a bow
+			 if (damager instanceof Projectile) {
+				 Projectile arrow = (Projectile) damager;
+				 LivingEntity shooter = arrow.getShooter();
+				 if (shooter instanceof Player) {
+					 Player attacker = (Player) shooter;
+					 if (ghosts.isGhost(attacker)) {
+						 message.send(attacker, Messages.cantDoThat);
+						 event.setCancelled(true);
+						 return;
+					 }
+				 }
+			 }
 		}
+		
 		
 		// *** a ghost gets damage ***
 		Entity entity = event.getEntity();
