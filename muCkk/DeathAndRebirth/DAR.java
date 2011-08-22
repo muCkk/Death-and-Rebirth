@@ -1,13 +1,17 @@
 package muCkk.DeathAndRebirth;
 
 import muCkk.DeathAndRebirth.config.DARProperties;
+import muCkk.DeathAndRebirth.ghost.DARGhosts;
+import muCkk.DeathAndRebirth.ghost.DARGraves;
+import muCkk.DeathAndRebirth.ghost.DARShrines;
 import muCkk.DeathAndRebirth.listener.DARBlockListener;
 import muCkk.DeathAndRebirth.listener.DAREntityListener;
 import muCkk.DeathAndRebirth.listener.DARPlayerListener;
 import muCkk.DeathAndRebirth.messages.DARErrors;
 import muCkk.DeathAndRebirth.messages.DARMessages;
 import muCkk.DeathAndRebirth.messages.Messages;
-import muCkk.DeathAndRebirth.shrines.DARShrines;
+import muCkk.DeathAndRebirth.otherPlugins.Perms;
+import muCkk.DeathAndRebirth.otherPlugins.Spout;
 
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -20,9 +24,6 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.nijiko.permissions.PermissionHandler;
-import com.nijikokun.bukkit.Permissions.Permissions;
-
 public class DAR extends JavaPlugin {
 
 	private String dir				=	"plugins/Death and Rebirth";
@@ -33,16 +34,13 @@ public class DAR extends JavaPlugin {
 	private String gravesFile		=	dataDir+"/graves";
 	private String shrinesFile 		=	dataDir+"/shrines.yml";
 	
-	private boolean permissions;
-	
-	private DARHandler ghosts;
+	private DARGhosts ghosts;
 	private DARProperties config;
 	private DARGraves graves;
 	private DARShrines shrines;
-	private DARSpout spout;
+	private Spout spout;
 	private DARMessages message;
-	
-	public static PermissionHandler permissionHandler;
+	public static Perms perms;
 	  
 	public void onDisable() {
 		ghosts.onDisable(this);
@@ -56,19 +54,20 @@ public class DAR extends JavaPlugin {
 		
 		config = new DARProperties(dir, propertiesFile);
 		config.load();
-		spout = new DARSpout(config);
+		spout = new Spout(config);
 		message = new DARMessages(dataDir, messageFile);
 		message.load();
 		checkThirdPartyPlugins();
-		permissions = setupPermissions();
+		Perms.setup(this);
 		
 		graves = new DARGraves(dataDir, gravesFile);
 		graves.load();
-		ghosts = new DARHandler(dataDir, handlerFile, config, graves, permissions, spout, message);
+		ghosts = new DARGhosts(dataDir, handlerFile, config, graves, spout, message);
 		ghosts.load();
+		spout.setGhosts(ghosts);
 		shrines = new DARShrines(dataDir, shrinesFile, message, config);
 		
-		// *** Listener stuff ***
+	// Listener
 		PluginManager pm = getServer().getPluginManager();
 		
 		DARPlayerListener playerlistener = new DARPlayerListener(this, config, ghosts, shrines, spout,message);
@@ -95,7 +94,7 @@ public class DAR extends JavaPlugin {
 	}
 	
 	private void checkThirdPartyPlugins() {
-	// *** check for spout ****************************************
+	// check for spout
 		Plugin spoutPlugin = getServer().getPluginManager().getPlugin("Spout");
 		if (spoutPlugin != null) {
 			DARErrors.foundSpout();
@@ -106,29 +105,14 @@ public class DAR extends JavaPlugin {
 			message.setSpout(false);
 			config.setSpout(false);
 		}
-	// *** check for citizens ************************************
+	// check for citizens
 		Plugin citizensPlugin = getServer().getPluginManager().getPlugin("Citizens");
 		if (citizensPlugin != null)	config.setCitizens(true);
 		else						config.setCitizens(false);
-	// *** checking for nocheat *************************
+	// checking for nocheat
 		Plugin nocheatPlugin = getServer().getPluginManager().getPlugin("NoCheat");
 		if(nocheatPlugin != null)	config.setNoCheat(true);
 		else						config.setNoCheat(false); 
-	}
-	
-	private boolean setupPermissions() {
-	    if (permissionHandler != null) {
-	        return true;
-	    }
-	    
-	    Plugin permissionsPlugin = this.getServer().getPluginManager().getPlugin("Permissions");
-	    
-	    if (permissionsPlugin == null) {
-	        return false;
-	    }
-	    
-	    permissionHandler = ((Permissions) permissionsPlugin).getHandler();
-	    return true;
 	}
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
@@ -149,19 +133,22 @@ public class DAR extends JavaPlugin {
 		/**
 		 * rebirth | reb
 		 * resurrects a nearby player  
-		 * or the player itself
+		 * or the player himself
 		 */
 		if(cmd.getName().equalsIgnoreCase("rebirth") || cmd.getName().equalsIgnoreCase("reb")) {			
-			// *** permission check ***
-			if(permissionHandler != null) {
-				if (!DAR.permissionHandler.has(player, "dar.res")) {
-					message.send(player, Messages.noPermission);
-					return true;
-				 }
-			}
+		// permission check
+			if (!Perms.hasPermission(player, "dar.res")) {
+				message.send(player, Messages.noPermission);
+				return true;
+			 }
+		// resurrection
 			try {
 				Player target = sender.getServer().getPlayer(args[0]);
 				if(ghosts.isGhost(target)) {
+					if(player.getName().equalsIgnoreCase(target.getName())) {
+						message.send(player, Messages.cantResurrectYourself);
+						return true;
+					}
 					ghosts.resurrect(player, target);
 					return true;
 				}
@@ -169,7 +156,7 @@ public class DAR extends JavaPlugin {
 					message.send(player, Messages.playerNotDead);
 					return true;	
 				}
-				// *** player resurrects itself ***
+		//  player resurrects himself
 			}catch (ArrayIndexOutOfBoundsException e) {
 				if(!ghosts.isGhost(player)) {
 					message.send(player, Messages.youAreNotDead);
@@ -201,20 +188,18 @@ public class DAR extends JavaPlugin {
 		 * shrine <add, rm, list, pos1, pos2, select>
 		 */
 		if (cmd.getName().equalsIgnoreCase("shrine")) {
-		// *** check permission ********************************************************************
-			if (permissionHandler != null) {
-				if (!DAR.permissionHandler.has(player, "dar.admin")) {
-					message.send(player, Messages.noPermission);
-					return true;
-				 }
-			}
+		// check permission
+			if (!Perms.hasPermission(player, "dar.admin")) {
+				message.send(player, Messages.noPermission);
+				return true;
+			 }			
 		// ** defaulting to OP system ***
-			else {
-				if(!player.isOp()) {
-					message.send(player, Messages.noPermission);
-					return true;
-				}
-			}
+//			else {
+//				if(!player.isOp()) {
+//					message.send(player, Messages.noPermission);
+//					return true;
+//				}
+//			}
 			
 			String arg = "";
 			String name = "";
@@ -225,7 +210,7 @@ public class DAR extends JavaPlugin {
 			}
 			
 			
-		// *** selecting a shrine area *******************************************************************
+		// selecting a shrine area
 			if (arg.equalsIgnoreCase("pos1") || arg.equals("pos2")) {
 				Block tb = player.getTargetBlock(null, 100);
 				if (arg.equalsIgnoreCase("pos1")) {
@@ -263,7 +248,7 @@ public class DAR extends JavaPlugin {
 				return true;
 			}
 
-		// *** adding shrines *********************************************************************************
+		// adding shrines
 			if (arg.equalsIgnoreCase("add")) {
 				try {
 					name = args[1];
@@ -271,25 +256,25 @@ public class DAR extends JavaPlugin {
 					return false;
 				}
 				if(shrines.exists(name, player.getWorld().getName())) {
-					message.chat(player, Messages.nameAlreadyExists.msg());
+					message.sendChat(player, Messages.nameAlreadyExists);
 					return true;
 				}
 				
 				if(!shrines.checkSelection()) {
-					message.chat(player, Messages.noSelectionMade.msg());
+					message.sendChat(player, Messages.noSelectionMade);
 					return true;
 				}
 				
 				if (shrines.locationIsAlreadyShrine()) {
-					message.chat(player, Messages.shrineAlreadyThere.msg());
+					message.sendChat(player, Messages.shrineAlreadyThere);
 					return true;
 				}
 				shrines.addShrine(name);
-				message.chat(player, Messages.shrineAdded.msg());
+				message.sendChat(player, Messages.shrineAdded);
 				return true;
 			}
 			
-		// *** removing shrines *****************************************************************
+		// removing shrines
 			if (arg.equalsIgnoreCase("rm")) {
 				try {
 					name = args[1];
@@ -297,14 +282,14 @@ public class DAR extends JavaPlugin {
 					return false;
 				}
 				if(!shrines.exists(name, player.getWorld().getName())) {
-					message.chat(player, Messages.nameNotFound.msg());
+					message.sendChat(player, Messages.nameNotFound);
 					return true;
 				}
 				shrines.removeShrine(name, player);
-				message.chat(player, Messages.shrineRemoved.msg());
+				message.sendChat(player, Messages.shrineRemoved);
 				return true;
 			}
-		// *** listing shrines *********************************************************
+		// listing shrines
 			if(arg.equalsIgnoreCase("list")) {
 				int page;
 				try {
@@ -324,20 +309,20 @@ public class DAR extends JavaPlugin {
 		 */
 		if(cmd.getName().equalsIgnoreCase("dar")) {
 			
-		// *** check permission ********************************************************************
-			if (permissionHandler != null) {
-				if (!DAR.permissionHandler.has(player, "dar.admin")) {
+		// check permission
+			if (sender instanceof Player) {
+				if (!Perms.hasPermission(player, "dar.admin")) {
 					message.send(player, Messages.noPermission);
 					return true;
 				 }
 			}
-		// ** defaulting to OP system ***
-			else {
-				if(!player.isOp()) {
-					message.send(player, Messages.noPermission);
-					return true;
-				}
-			}
+		// defaulting to OP system
+//			else {
+//				if(!player.isOp()) {
+//					message.send(player, Messages.noPermission);
+//					return true;
+//				}
+//			}
 			
 			String arg = "";
 			String name = "";
@@ -347,17 +332,17 @@ public class DAR extends JavaPlugin {
 				return false;
 			}
 			
-		// *** reloading all config files **********************************************************
+		// reloading all config files
 			if(arg.equalsIgnoreCase("reload")) {
 				config.load();
 				graves.load();
 				ghosts.load();
 				shrines.load();
-				message.chat(player, Messages.reloadComplete.msg());
+				message.sendChat(player, Messages.reloadComplete);
 				return true;
 			}
 
-		// *** giving the world name *******************************************************************
+		// giving the world name
 			if(arg.equalsIgnoreCase("world")) {
 				String world = player.getWorld().getName();
 				player.sendMessage("You are in world: "+world);
@@ -371,7 +356,7 @@ public class DAR extends JavaPlugin {
 				player.sendMessage("Death and Rebirth is "+bool);
 				return true;
 			}
-		// *** enabling and disabling support for the world *******************************************
+		// enabling and disabling support for the world
 			if (arg.equalsIgnoreCase("enable")) {
 				try {
 					name = args[1];
@@ -379,7 +364,7 @@ public class DAR extends JavaPlugin {
 					return false;
 				}
 				config.setBoolean(name, true);
-				message.chat(player, Messages.worldEnabled.msg()+ ": "+name);
+				message.sendChat(player, Messages.worldEnabled, " "+name);
 				return true;
 			}
 			
@@ -390,83 +375,131 @@ public class DAR extends JavaPlugin {
 					return false;
 				}
 				config.setBoolean(name, false);
-				message.chat(player, Messages.worldDisabled.msg()+ ": "+name);
+				message.sendChat(player, Messages.worldDisabled, " "+name);
 				return true;
 			}
-		// *** toggling dropping *************************************************************************
+		// toggling dropping
 			if (arg.equalsIgnoreCase("dropping")) {
 				if(config.isDroppingEnabled()) {
 					config.setDropping(false);
-					message.chat(player, Messages.droppingToggle.msg()+ " disabled");
+					message.sendChat(player, Messages.droppingToggle, " disabled");
 				}
 				else {
 					config.setDropping(true);
-					message.chat(player, Messages.droppingToggle.msg()+ " enabled");
+					message.sendChat(player, Messages.droppingToggle, " enabled");
 				}
 				return true;
 			}
-		// *** toggling version checking ******************************************************************
+		// toggling version checking
 			if (arg.equalsIgnoreCase("versioncheck")) {
 				if(config.isVersionCheckEnabled()) {
 					config.setVersionCheck(false);
-					message.chat(player, Messages.versionCheckToggle.msg()+ " disabled");
+					message.sendChat(player, Messages.versionCheckToggle, " disabled");
 				}
 				else {
 					config.setVersionCheck(true);
-					message.chat(player, Messages.versionCheckToggle.msg()+ " enabled");
+					message.sendChat(player, Messages.versionCheckToggle, " enabled");
 				}
 				return true;
 			}
-		// *** toggling fly mode ***************************************************************************
+		// toggling fly mode
 			if (arg.equalsIgnoreCase("fly")) {
 				if(config.isFlyingEnabled()) {
 					config.setFly(false);
-					message.chat(player, Messages.flymodeToggle.msg()+ " disabled");
+					message.sendChat(player, Messages.flymodeToggle, " disabled");
 				}
 				else {
 					config.setFly(true);
-					message.chat(player, Messages.flymodeToggle.msg()+ " enabled");
+					message.sendChat(player, Messages.flymodeToggle, " enabled");
 				}
 				return true;
 			}
-		// *** toggling shrine  mode ***************************************************************************
+		// toggling shrine  mode
 			if (arg.equalsIgnoreCase("shrinemode")) {
 				if(config.isShrineOnlyEnabled()) {
 					config.setShrineOnly(false);
-					message.chat(player, Messages.shrinemodeToggle.msg()+ " disabled");
+					message.sendChat(player, Messages.shrinemodeToggle, " disabled");
 				}
 				else {
 					config.setShrineOnly(true);
-					message.chat(player, Messages.shrinemodeToggle.msg()+ " enabled");
+					message.sendChat(player, Messages.shrinemodeToggle, " enabled");
 				}
 				return true;
 			}
-		// *** toggling blockGhostInteraction ********************************************************************
+		// toggling blockGhostInteraction
 			if (arg.equalsIgnoreCase("ghostinteraction")) {
 				if(config.isBlockGhostInteractionEnabled()) {
 					config.setBlockGhostInteraction(false);
-					message.chat(player, Messages.blockghostToggle.msg()+ " disabled");
+					message.sendChat(player, Messages.blockghostToggle, " disabled");
 				}
 				else {
 					config.setBlockGhostInteraction(true);
-					message.chat(player, Messages.blockghostToggle.msg()+ " enabled");
+					message.sendChat(player, Messages.blockghostToggle, " enabled");
 				}
 				return true;
 			}
-		// *** toggling ghost chat **********************************************************************************
+		// toggling ghost chat
 			if (arg.equalsIgnoreCase("ghostchat")) {
 				if(config.isGhostChatEnabled()) {
 					config.setGhostChat(false);
-					message.chat(player, Messages.chatToggle.msg()+ " disabled");
+					message.sendChat(player, Messages.chatToggle, " disabled");
 				}
 				else {
 					config.setGhostChat(true);
-					message.chat(player, Messages.chatToggle.msg()+ " enabled");
+					message.sendChat(player, Messages.chatToggle, " enabled");
 				}
 				return true;
 			}
 			
-		// *** resurrecting players ***************************************************
+		// lightning toggles
+			if (arg.equalsIgnoreCase("lightningD")) {
+				if(config.isLightningDEnabled()) {
+					config.setLightningD(false);
+					message.sendChat(player, Messages.lightningDT, " disabled");
+				}
+				else {
+					config.setLightningD(true);
+					message.sendChat(player, Messages.lightningDT, " enabled");
+				}
+				return true;
+			}
+			
+			if (arg.equalsIgnoreCase("lightningR")) {
+				if(config.isLightningREnabled()) {
+					config.setLightningR(false);
+					message.sendChat(player, Messages.lightningRT, " disabled");
+				}
+				else {
+					config.setLightningR(true);
+					message.sendChat(player, Messages.lightningRT, " enabled");
+				}
+				return true;
+			}
+		// grave sign toggle
+			if (arg.equalsIgnoreCase("signs")) {
+				if(config.isSignsEnabled()) {
+					config.setGraveSigns(false);
+					message.sendChat(player, Messages.signsToggle, " disabled");
+				}
+				else {
+					config.setGraveSigns(true);
+					message.sendChat(player, Messages.signsToggle, " enabled");
+				}
+				return true;
+			}
+		// reverseSpawning toggle
+			if (arg.equalsIgnoreCase("spawn")) {
+				if(config.isReverseSpawningEnabled()) {
+					config.setReverseSpawning(false);
+					message.sendChat(player, Messages.spawningToggle, " disabled");
+				}
+				else {
+					config.setReverseSpawning(true);
+					message.sendChat(player, Messages.spawningToggle, " enabled");
+				}
+				return true;
+			}
+		// resurrecting players
 			if (arg.equalsIgnoreCase("reb")) {
 				try {
 					name = args[1];
@@ -475,13 +508,13 @@ public class DAR extends JavaPlugin {
 				}
 				
 				Player target = getServer().getPlayer(name);
-			// *** check if the player is dead ***
+			// check if the player is dead
 				if (!ghosts.isGhost(target)) {
 					message.send(player, Messages.playerNotDead);
 					return true;
 				}
 				
-			// *** resurrection ***
+			// resurrection 
 				ghosts.resurrect(target);
 				message.send(player, Messages.resurrected, name);
 				return true;
