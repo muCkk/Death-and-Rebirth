@@ -19,7 +19,8 @@ public class DARProperties extends Properties {
 	
 	private String	ghostSkin = "http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/skins/ghost1.png",
 			deathSound = "http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/death.wav",
-			resSound = "http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/res.wav";	
+			resSound = "http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/res.wav",
+			ghostPermissionsGroup = "";	
 	
 	private String info =
 			  " __________ INFORMATIONS __________\n\n"
@@ -31,10 +32,13 @@ public class DARProperties extends Properties {
 			+ " fly: (true/false) Defines if ghosts can fly.\n"
 			+ " ghostChat: (true/false) Enables or disables if ghosts can chat.\n"
 			+ " ghostName: Edit how the playername will be displayed. User %player% for the original playername.\n"
+			+ " ghostPermissionsGroup: Set the permissions group for ghosts.\n"
+			+ " graveSigns: (true/false) Toggles if grave signs are placed upon death.\n"
 			+ " lightningOnDeath: (true/false) Toggles lightning on death.\n"
 			+ " lightningOnRebirth: (true/false) Toggles lightning on rebirth.\n"
 			+ " needItem: (true/false) Defines if an item is needed to resurrect players.\n"
 			+ " itemID: ID of the item which will be consumed.\n"
+			+ " reverseSpawning: If set to true the player will spawn at his shrine and has to resurrect at his corpse.\n"
 			+ " shrineRadius: Radius of shriens. Default 3.\n"
 			+ " shrineOnly: (true/false) If set to true dead players have to walk to a shrine. Deactivates soul binding.\n"
 			+ " versionCheck: (true/false) Checks for updates and sends OPs a message on join.\n"
@@ -96,7 +100,9 @@ public class DARProperties extends Properties {
 					dropping = true,
 					changeColors = true,
 					lightningOnDeath = true,
-					lightningOnRebirth = true;
+					lightningOnRebirth = true,
+					graveSigns = true,
+					reverseSpawning = false;
 	
 	public DARProperties(String dir, String fileName) {
 		this.dir = dir;
@@ -132,6 +138,8 @@ public class DARProperties extends Properties {
 		getBoolean("ghostChat", ghostChat);
 		getBoolean("lightningOnDeath", lightningOnDeath);
 		getBoolean("lightningOnRebirth", lightningOnRebirth);
+		getBoolean("graveSigns", graveSigns);
+		getBoolean("reverseSpawning", reverseSpawning);
 		
 		getBoolean("noCheat", noCheat);
 		getBoolean("citizens", citizens);
@@ -140,6 +148,7 @@ public class DARProperties extends Properties {
 		getString("deathSound", deathSound);
 		getString("resSound", resSound);
 		getString("ghostName", ghostName);
+		getString("ghostPermissionsGroup", ghostPermissionsGroup);
 		
 		getBoolean("changeColors", changeColors);
 		getString("ghostSky", ghostSky);
@@ -190,7 +199,12 @@ public class DARProperties extends Properties {
 		put(key, value ? "true" : "false");
 		return value;
 	}
-	
+	public boolean isSignsEnabled() {
+		return getBoolean("graveSigns");
+	}
+	public boolean isReverseSpawningEnabled() {
+		return getBoolean("reverseSpawning");
+	}
 	public String getGhostName() {
 		return getProperty("ghostName");
 	}
@@ -241,7 +255,9 @@ public class DARProperties extends Properties {
 	public String getResSound() {
 		return getProperty("resSound");
 	}
-	
+	public String getGhostPermGroup() {
+		return getProperty("ghostPermissionsGroup");
+	}
 	
 	
 	public boolean changeColors() {
@@ -397,6 +413,24 @@ public class DARProperties extends Properties {
 		}
 		else {
 			put("lightningOnRebirth", "false");
+		}
+		save();
+	}
+	public void setGraveSigns(boolean b) {
+		if (b) {
+			put("graveSigns", "true");
+		}
+		else {
+			put("graveSigns", "false");
+		}
+		save();
+	}
+	public void setReverseSpawning(boolean b) {
+		if (b) {
+			put("reverseSpawning", "true");
+		}
+		else {
+			put("reverseSpawning", "false");
 		}
 		save();
 	}
