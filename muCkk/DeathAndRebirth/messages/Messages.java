@@ -13,6 +13,7 @@ public enum Messages {
 	playerNotDead			("Player is not dead"),
 	playerDied				("You are now a ghost"), 
 	ghostNoChat				("No one can hear you"),
+	cantResurrectYourself	("That can't be done"),
 	
 	// for players - plugin protection
 	//	max length:			("12345678901234567890123456")
@@ -46,7 +47,11 @@ public enum Messages {
 	flymodeToggle			("Flying"),
 	shrinemodeToggle		("Shrine only"),
 	blockghostToggle		("Block ghost interactions"),
-	chatToggle				("Ghost chatting");
+	chatToggle				("Ghost chatting"),
+	lightningDT				("Lightning effect on death"),
+	lightningRT				("Lightning effect on rebirth"),
+	signsToggle				("Grave-Signs are now"),
+	spawningToggle			("Reverse spawning is now");	
 	
 	private String msg;
 	Messages(String msg) {
