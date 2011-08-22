@@ -2,12 +2,12 @@ package muCkk.DeathAndRebirth.listener;
 
 import java.io.File;
 
-import muCkk.DeathAndRebirth.DAR;
-import muCkk.DeathAndRebirth.DARHandler;
 import muCkk.DeathAndRebirth.config.DARProperties;
+import muCkk.DeathAndRebirth.ghost.DARGhosts;
+import muCkk.DeathAndRebirth.ghost.DARShrines;
 import muCkk.DeathAndRebirth.messages.DARMessages;
 import muCkk.DeathAndRebirth.messages.Messages;
-import muCkk.DeathAndRebirth.shrines.DARShrines;
+import muCkk.DeathAndRebirth.otherPlugins.Perms;
 
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -26,15 +26,16 @@ import com.citizens.npcs.NPCManager;
 
 public class DAREntityListener extends EntityListener {
 
-	private DARHandler ghosts;
+	private DARGhosts ghosts;
 	private DARProperties config;
 	private DARShrines shrines;
 	private DARMessages message;
 	
-	public DAREntityListener(DARProperties config, DARHandler ghosts, DARShrines shrines, DARMessages message) {
+	public DAREntityListener(DARProperties config, DARGhosts ghosts, DARShrines shrines, DARMessages message) {
 		this.config = config;
 		this.ghosts = ghosts;
 		this.shrines = shrines;
+		this.message = message;
 	}
 	
 	/**
@@ -45,16 +46,21 @@ public class DAREntityListener extends EntityListener {
 		if(!(entity instanceof Player)) return;
 		Player player = (Player) entity;
 	
+	// check for death in the void 
+		String damageCause = "";
+		try {
+			damageCause = entity.getLastDamageCause().getCause().toString();
+			}catch (NullPointerException e) {
+				// happens if there is no cause (/kill, /suicide ...)
+			}
 	// check if the world is enabled
-		if(!config.isEnabled(entity.getWorld().getName()) || entity.getLastDamageCause().getCause().toString().equalsIgnoreCase("VOID")) {
+		if(!config.isEnabled(entity.getWorld().getName()) ||  damageCause.equalsIgnoreCase("VOID")) {
 			return;
 		}
-	// check for ignore
-		if (DAR.permissionHandler != null) {
-			if (!DAR.permissionHandler.has(player, "dar.ignore") || !DAR.permissionHandler.has(player, "dar.res")) {
-				return;
-			 }
-		}
+	// check for ignore	
+		if (Perms.hasPermission(player, "dar.ignore") || !Perms.hasPermission(player, "dar.res")) {
+			return;
+		 }
 		
 	// *** ignoring NPCs from citizens ***
 		if (config.isCitizensEnabled()) {
@@ -65,7 +71,7 @@ public class DAREntityListener extends EntityListener {
 
 	// checking items
 		ItemStack [] playerDrops = new ItemStack[event.getDrops().size()];
-		if (!config.isDroppingEnabled()) {
+		if (!config.isDroppingEnabled() || Perms.hasPermission(player, "dar.nodrop")) {
 			int i = 0;
 			for (ItemStack item : event.getDrops()) {
 				if (item == null) continue;
