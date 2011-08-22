@@ -44,7 +44,7 @@ public class DARMessages {
         } catch (Exception e) {
         }
 	}
-		
+//	********************************************************************************************	
 	public void send(Player player, Messages msg) {
 		String ownMessage = yml.getString(msg.toString());
 		if (ownMessage == null) {
@@ -70,17 +70,25 @@ public class DARMessages {
 			else					chat(player, message);
 		}
 	}
-	
-	public void setSpout(boolean b) {
-		this.spoutEnabled = b;
+//	*******************
+	public void sendChat(Player player, Messages msg) {
+		String ownMessage = yml.getString(msg.toString());
+		if (ownMessage == null)	chat(player, msg.msg());
+		else					chat(player, ownMessage);
 	}
 	
-	// *** private methods ***
-	private boolean checkSpout(Player player) {
-		if (player == null) return false;
-		else 				return (spoutEnabled && SpoutManager.getPlayer(player).isSpoutCraftEnabled());
+	public void sendChat(Player player, Messages msg, String arg) {
+		String ownMessage = yml.getString(msg.toString());
+		if (ownMessage == null) {
+			String message = msg.msg()+" "+arg;
+			chat(player, message);
+		}
+		else {
+			String message = ownMessage+" "+arg;
+			chat(player, message);
+		}
 	}
-	
+//	************************************************************************************
 	private void spout(Player player, String msg) {
 		SpoutPlayer sp = (SpoutPlayer) player;
 		sp.sendNotification(title, msg, mat);
@@ -89,6 +97,16 @@ public class DARMessages {
 	public void chat(Player player, String msg) {
 		if(player != null)	player.sendMessage(msg);
 		else				System.out.println(msg);
+	}
+//	********************************************************************************
+	public void setSpout(boolean b) {
+		this.spoutEnabled = b;
+	}
+	
+	// *** private methods ***
+	private boolean checkSpout(Player player) {
+		if (player == null) return false;
+		else 				return (spoutEnabled && SpoutManager.getPlayer(player).isSpoutCraftEnabled());
 	}
 	
 	public void playerDied(final Player player) {
@@ -105,7 +123,7 @@ public class DARMessages {
 					spout(player, Messages.playerDied.msg());
 				}
 				else {
-					chat(player, Messages.playerDied.msg());
+					send(player, Messages.playerDied);
 				}
 			}
 		}.start();
