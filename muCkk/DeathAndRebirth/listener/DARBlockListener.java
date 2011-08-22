@@ -1,11 +1,11 @@
 package muCkk.DeathAndRebirth.listener;
 
-import muCkk.DeathAndRebirth.DARGraves;
-import muCkk.DeathAndRebirth.DARHandler;
 import muCkk.DeathAndRebirth.config.DARProperties;
+import muCkk.DeathAndRebirth.ghost.DARGhosts;
+import muCkk.DeathAndRebirth.ghost.DARGraves;
+import muCkk.DeathAndRebirth.ghost.DARShrines;
 import muCkk.DeathAndRebirth.messages.DARMessages;
 import muCkk.DeathAndRebirth.messages.Messages;
-import muCkk.DeathAndRebirth.shrines.DARShrines;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -19,12 +19,12 @@ import org.bukkit.event.block.BlockPlaceEvent;
 public class DARBlockListener extends BlockListener {
 
 	private DARShrines shrines;
-	private DARHandler ghosts;
+	private DARGhosts ghosts;
 	private DARGraves graves;
 	private DARProperties config;
 	private DARMessages message;
 	
-	public DARBlockListener(DARProperties config, DARShrines shrines, DARHandler ghosts, DARGraves graves, DARMessages message) {
+	public DARBlockListener(DARProperties config, DARShrines shrines, DARGhosts ghosts, DARGraves graves, DARMessages message) {
 		this.config = config;
 		this.shrines = shrines;
 		this.ghosts = ghosts;
