@@ -1,0 +1,20 @@
+Informations:
+--------------------
+This is a plugin for Bukkit which provides a different style of death.
+Detailed informations can be found here:
+http://forums.bukkit.org/threads/30713/
+
+
+Dependencies:
+--------------------
+Bukkit
+http://bukkit.org/
+
+Citizens
+http://forums.bukkit.org/threads/7173/
+
+Permissions
+http://forums.bukkit.org/threads/18430/
+
+Spout
+http://forums.bukkit.org/threads/29259/
