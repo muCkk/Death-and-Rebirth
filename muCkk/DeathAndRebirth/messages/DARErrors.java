@@ -62,7 +62,14 @@ public final class DARErrors {
 		System.out.println(prefixError+"Could not save grave-file!");
 	}
 	
-	
+	// Drops
+	public static void couldNotReadDropsFile() {
+		System.out.println(prefixError+"Could not read drops file!");
+	}
+	// Spout
+	public static void couldNotReadSpoutFile() {
+		System.out.println(prefixError+"Could not read spout file!");
+	}
 	// ___ MESSAGES ___
 	
 	//DARShrines
