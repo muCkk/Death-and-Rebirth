@@ -16,7 +16,6 @@ import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -32,6 +31,7 @@ public class DARGhosts {
 	private DARGraves graves;
 	private Spout spout;
 	private DARMessages message;
+	private DARDrops dardrops;
 	
 	private Configuration yml;
 	
@@ -42,7 +42,8 @@ public class DARGhosts {
 		this.graves = graves;
 		this.spout = spout;
 		this.message = message;
-		dropManager = new HashMap<String, ItemStack[]>();
+		this.dropManager = new HashMap<String, ItemStack[]>();
+		this.dardrops = new DARDrops(dir);
 	}
 	
 	
@@ -75,6 +76,7 @@ public class DARGhosts {
 	 */
 	public void save() {
 		yml.save();
+		dardrops.save();
 	}
 	
 	/**
@@ -159,12 +161,19 @@ public class DARGhosts {
 		save();
 		
 	// drop-management
-		if (!config.isDroppingEnabled()) dropManager.put(pname, drops);
-		else if(Perms.hasPermission(player, "dar.nodrop")) dropManager.put(pname, drops); 
+		
+		if (!config.isDroppingEnabled()) {
+			dropManager.put(pname, drops);
+			dardrops.add(player, drops);  
+		}
+		else if(Perms.hasPermission(player, "dar.nodrop")) {
+			dropManager.put(pname, drops);
+			dardrops.add(player, drops);
+		}
 		
 		
 	// change the displayname
-		getGhostDisplayName(player);
+		setDisplayName(player);
 		
 	// spout related
 		if (config.isSpoutEnabled()) {
@@ -173,30 +182,21 @@ public class DARGhosts {
 
 	// grave related
 		String l1 = "R.I.P";
-		if (config.isSignsEnabled()) {
-			Location location = player.getLocation();
-			location.getBlock().setType(Material.SIGN_POST);
-			Sign sign = (Sign) location.getBlock().getState();
-			sign.setLine(1, l1);
-			sign.setLine(2, pname);
-			sign.update(true);
-		}
-		graves.addGrave(pname,block.getX(), block.getY(), block.getZ(), l1, pname, world);
+//		if (config.isSignsEnabled()) {
+//			Location location = player.getLocation();
+//			location.getBlock().setType(Material.SIGN_POST);
+//			Sign sign = (Sign) location.getBlock().getState();
+//			sign.setLine(1, l1);
+//			sign.setLine(2, pname);
+//			sign.update(true);
+//		}
+		graves.addGrave(pname,block, l1, world);
+//		graves.addGrave(pname,block.getX(), block.getY(), block.getZ(), l1, pname, world);
 	}
 	
 	public String getGhostDisplayName(Player player) {
-		String [] ghostName = config.getGhostName().split("%");
-		switch (ghostName.length) {
-		case 1:
-			return ghostName[0];
-		case 2:
-			return (ghostName[0] + player.getName());
-		case 3:
-			return (ghostName[0] + player.getName() + ghostName[2]);
-		default:
-			DARErrors.ghostNameWrong();
-			return player.getName();
-		}
+		String newName = config.getGhostName().replace("%player", player.getName());
+		return newName;
 	}
 	/**
 	 * Brings players back to life
@@ -207,19 +207,21 @@ public class DARGhosts {
 		String world = player.getWorld().getName();
 		
 		yml.setProperty("players."+pname +"."+world +".dead", false);
-		if (config.isSignsEnabled())	player.getWorld().getBlockAt(getLocation(player)).setType(Material.AIR);
-		graves.deleteGrave(pname, world);
+//		if (config.isSignsEnabled())	player.getWorld().getBlockAt(getLocation(player)).setType(Material.AIR);
+		graves.deleteGrave(player.getWorld().getBlockAt(getLocation(player)), pname, world);
 		message.send(player, Messages.reborn);
 		
+	// check if lightning is enabled
 		if (config.isLightningREnabled()) {
 			player.getWorld().strikeLightningEffect(player.getLocation());
 		}
+		
+		player.setDisplayName(pname);
 		
 	// spout related
 		if (config.isSpoutEnabled()) {
 			spout.playerRes(player, config.getResSound());
 		}
-		player.setDisplayName(pname);
 		save();
 		
 			new Thread() {
@@ -309,6 +311,14 @@ public class DARGhosts {
 		save();
 	}
 	
+	public void unbind(Player player) {
+		String pname = player.getName();
+		String world = player.getWorld().getName();
+		yml.removeProperty("players." +pname +"."+world +".shrine.x");
+		yml.removeProperty("players." +pname +"."+world +".shrine.y");
+		yml.removeProperty("players." +pname +"."+world +".shrine.z");
+	}
+	
 	/**
 	 * Gets the shrine the player clicked
 	 * @param player to be checked
@@ -374,14 +384,30 @@ public class DARGhosts {
 	 * @param player which gets his items
 	 */
 	public void giveDrops(Player player) {
+		//TODO testen: leeres inventory
 		PlayerInventory inv = player.getInventory();
-		try {
-			for (ItemStack item : dropManager.get(player.getName())) {
-				if (item == null) continue;
+		ItemStack [] stack = dropManager.get(player.getName());
+		if (stack != null) {
+			try {
+				for (ItemStack item : stack) {
+					if (item == null) continue;
+					inv.addItem(item);
+				}
+			}catch(NullPointerException e) {
+				// empty inventory on death
+			}
+		}
+		else {
+			for (ItemStack item : dardrops.get(player)) {
 				inv.addItem(item);
 			}
-		}catch(NullPointerException e) {
-			// empty inventory on death
+		}
+	}
+	
+	public void setDisplayName(Player player) {
+		String ghostName = config.getGhostName();
+		if (ghostName != "") {
+			player.setDisplayName(ghostName.replace("%player%", player.getName()));
 		}
 	}
 	
