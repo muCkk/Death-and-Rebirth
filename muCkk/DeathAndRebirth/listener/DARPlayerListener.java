@@ -40,10 +40,12 @@ public class DARPlayerListener extends PlayerListener {
 	private DAR plugin;
 	private Spout spout;
 	private DARMessages message;
+	private double flySpeed;
 	
 	public DARPlayerListener(DAR plugin, DARProperties config, DARGhosts ghosts, DARShrines shrines, Spout spout, DARMessages message) {
 		this.plugin = plugin;
 		this.config = config;
+		flySpeed = config.getFlySpeed();
 		this.ghosts = ghosts;
 		this.shrines = shrines;
 		this.spout = spout;
@@ -108,6 +110,7 @@ public class DARPlayerListener extends PlayerListener {
 			if (config.isReverseSpawningEnabled()) {
 				Location loc = ghosts.getBoundShrine(player);
 				if (loc != null) event.setRespawnLocation(loc);
+				else event.setRespawnLocation((shrines.getNearestShrineSpawn(player.getLocation())));
 			}
 			else event.setRespawnLocation(ghosts.getLocation(player));
 			message.send(player, Messages.playerDied);	
@@ -115,7 +118,7 @@ public class DARPlayerListener extends PlayerListener {
 			if (config.isSpoutEnabled()) {
 				spout.setDeathOptions(player, config.getGhostSkin());
 			}
-			player.setDisplayName(ghosts.getGhostDisplayName(player));
+			ghosts.setDisplayName(player);
 		}
 	}
 	
@@ -144,7 +147,7 @@ public class DARPlayerListener extends PlayerListener {
 		if(!player.isSneaking() || !ghosts.isGhost(player)) {
 			return;
 		}		
-		player.setVelocity(player.getLocation().getDirection().multiply(1));		
+		player.setVelocity(player.getLocation().getDirection().multiply(flySpeed));		
 	}
 	
 	/**
@@ -214,7 +217,21 @@ public class DARPlayerListener extends PlayerListener {
 		if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
 			String shrine = shrines.getClose(player.getLocation());
 			if (shrine != null) {
+				if (!shrines.checkBinding(shrine, player.getWorld().getName())) {
+					message.send(player, Messages.cantBindSoul);
+					return;
+				}
 				Block clickedBlock = event.getClickedBlock();
+				Location boundShrine = ghosts.getBoundShrine(player);
+				if (boundShrine != null) {
+					// shrines.isShrineArea(shrine, ghosts.getBoundShrine(player).getBlock())
+					Location bshrine = shrines.getNearestShrine(ghosts.getBoundShrine(player));
+					if((shrines.getNearestShrine(player.getLocation() ) ).distance(bshrine) < 2) {
+						ghosts.unbind(player);
+						message.send(player, Messages.unbindSoul);
+						return;
+					}
+				}
 				if(shrines.isShrineArea(shrine, clickedBlock)) {
 					ghosts.bindSoul(player);
 					message.send(player, Messages.soulNowBound);
