@@ -7,13 +7,15 @@ public enum Messages {
 	cantDoThat				("You can't do that"), 
 	reborn					("You were reborn"), 
 	resurrected				("Resurrecting "), 
-	soulNowBound			("Your soul is now bound"), 
+	soulNowBound			("Your soul is now bound"),
+	unbindSoul				("Soul unbound"),
 	haveToStandOnShrine		("No shrine here"),
 	youAreNotDead			("You are not dead"),
 	playerNotDead			("Player is not dead"),
 	playerDied				("You are now a ghost"), 
 	ghostNoChat				("No one can hear you"),
 	cantResurrectYourself	("That can't be done"),
+	cantBindSoul			("Soul can't be bound here"),
 	
 	// for players - plugin protection
 	//	max length:			("12345678901234567890123456")
@@ -42,7 +44,8 @@ public enum Messages {
 	newVersion				("Death and Rebirth - A new version is available"),
 	worldEnabled			("World enabled"),
 	worldDisabled			("World disabled"),
-	droppingToggle			("Dropping"),			
+	droppingToggle			("Dropping"),
+	pvpDroppingToggle		("PvP dropping is now"),
 	versionCheckToggle		("Version check"),
 	flymodeToggle			("Flying"),
 	shrinemodeToggle		("Shrine only"),
@@ -51,7 +54,8 @@ public enum Messages {
 	lightningDT				("Lightning effect on death"),
 	lightningRT				("Lightning effect on rebirth"),
 	signsToggle				("Grave-Signs are now"),
-	spawningToggle			("Reverse spawning is now");	
+	spawningToggle			("Reverse spawning is now"),
+	bindingToggle			("Soulbinding for this shrine is now");	
 	
 	private String msg;
 	Messages(String msg) {
