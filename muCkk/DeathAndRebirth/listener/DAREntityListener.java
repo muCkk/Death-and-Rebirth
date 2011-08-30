@@ -1,6 +1,8 @@
 package muCkk.DeathAndRebirth.listener;
 
 import java.io.File;
+import java.util.List;
+import java.util.Random;
 
 import muCkk.DeathAndRebirth.config.DARProperties;
 import muCkk.DeathAndRebirth.ghost.DARGhosts;
@@ -71,16 +73,36 @@ public class DAREntityListener extends EntityListener {
 
 	// checking items
 		ItemStack [] playerDrops = new ItemStack[event.getDrops().size()];
-		if (!config.isDroppingEnabled() || Perms.hasPermission(player, "dar.nodrop")) {
+		List<ItemStack> drops = event.getDrops();
+		if ( (!config.isDroppingEnabled() && !config.isPvPDropEnabled()) || Perms.hasPermission(player, "dar.nodrop")) {
 			int i = 0;
-			for (ItemStack item : event.getDrops()) {
+			for (ItemStack item : drops) {
 				if (item == null) continue;
 				playerDrops[i] = item;
 				i++;
 			}
-			event.getDrops().clear();
+			drops.clear();
 		}
-		ghosts.died(player, playerDrops);
+		if (entity.getLastDamageCause() instanceof EntityDamageByEntityEvent && config.isPvPDropEnabled()) {
+			 Entity damager = ((EntityDamageByEntityEvent)entity.getLastDamageCause()).getDamager();
+			 if (damager instanceof Player) {
+//				 Player attacker = (Player) damager;
+				 ItemStack droppedItem = null;
+				 Random generator = new Random(827823476);
+				 int nr = generator.nextInt(playerDrops.length +1);
+				 droppedItem = drops.get(nr);
+				 while(droppedItem == null) {
+					 nr = generator.nextInt(playerDrops.length +1);
+					 droppedItem = drops.get(nr);
+				 }
+				 for (int i=0; i<drops.size(); i++) {
+					 if (i==nr) continue;
+					 drops.remove(i);
+				 }
+			 }
+			 ghosts.died(player, playerDrops);
+		}
+		else ghosts.died(player, playerDrops);
 	}
 	
 	/**
@@ -164,6 +186,8 @@ public class DAREntityListener extends EntityListener {
 					 }
 				}
 				// *************************************************
+				// TODO do evil citizens still do damage?
+				event.setDamage(0);
 				event.setCancelled(true);
 			}
 		}
