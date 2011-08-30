@@ -19,8 +19,7 @@ public class DARProperties extends Properties {
 	
 	private String	ghostSkin = "http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/skins/ghost1.png",
 			deathSound = "http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/death.wav",
-			resSound = "http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/res.wav",
-			ghostPermissionsGroup = "";	
+			resSound = "http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/res.wav";
 	
 	private String info =
 			  " __________ INFORMATIONS __________\n\n"
@@ -30,6 +29,7 @@ public class DARProperties extends Properties {
 			+ " distance: Maximal distance to the dead player.\n"
 			+ " dropping: (true/false) True: players drop their items upon death. False: players don't drop items and receive them after resurrection.\n"
 			+ " fly: (true/false) Defines if ghosts can fly.\n"
+			+ " flySpeed: Defines how fasts ghosts will fly. Default is 0.75, 1 is already quite fast and can cause lag on the server if new chunks have to be generated.\n"
 			+ " ghostChat: (true/false) Enables or disables if ghosts can chat.\n"
 			+ " ghostName: Edit how the playername will be displayed. User %player% for the original playername.\n"
 			+ " ghostPermissionsGroup: Set the permissions group for ghosts.\n"
@@ -38,6 +38,7 @@ public class DARProperties extends Properties {
 			+ " lightningOnRebirth: (true/false) Toggles lightning on rebirth.\n"
 			+ " needItem: (true/false) Defines if an item is needed to resurrect players.\n"
 			+ " itemID: ID of the item which will be consumed.\n"
+			+ " pvpDrop: If this is enabled players will drop one random item if they are killed by a player. This option overrides 'dropping'.\n"
 			+ " reverseSpawning: If set to true the player will spawn at his shrine and has to resurrect at his corpse.\n"
 			+ " shrineRadius: Radius of shriens. Default 3.\n"
 			+ " shrineOnly: (true/false) If set to true dead players have to walk to a shrine. Deactivates soul binding.\n"
@@ -62,10 +63,7 @@ public class DARProperties extends Properties {
 			+ " Defaults:\n"
 			+ " ghostSky: 0.8;0;0\n"
 			+ " ghostFog: 0.8;0;0\n"
-			+ " ghostClouds: 0;0;0\n"
-			+ " normalSky: 0.66;0.8;1\n"
-			+ " normalFog: 0.66;0.8;1\n"
-			+ " normalClouds: 1;1;1"			
+			+ " ghostClouds: 0;0;0"			
 			+ " \n\n"
 			
 			+ " __________ Do not edit following settings __________\n"
@@ -80,13 +78,11 @@ public class DARProperties extends Properties {
 			amount = 1,
 			itemID = 288,
 			shrineRadius = 3;
+	private double flySpeed = 0.75;
 	private String 
 			ghostSky = "0.8;0;0",
 			ghostFog = "0.8;0;0",
 			ghostClouds = "0;0;0",
-			normalSky = "0.66;0.8;1",
-			normalFog = "0.66;0.8;1",
-			normalClouds = "1;1;1",
 			ghostName = "Ghost of %player%";
 			
 	private boolean needItem = false,
@@ -102,7 +98,8 @@ public class DARProperties extends Properties {
 					lightningOnDeath = true,
 					lightningOnRebirth = true,
 					graveSigns = true,
-					reverseSpawning = false;
+					reverseSpawning = false,
+					pvpDrop;
 	
 	public DARProperties(String dir, String fileName) {
 		this.dir = dir;
@@ -134,13 +131,15 @@ public class DARProperties extends Properties {
 		getInteger("shrineRadius", shrineRadius);
 		getBoolean("blockGhostInteraction", ghostInteraction);
 		getBoolean("fly", fly);
+		getDouble("flySpeed", flySpeed);
 		getBoolean("shrineOnly", shrineOnly);
 		getBoolean("ghostChat", ghostChat);
 		getBoolean("lightningOnDeath", lightningOnDeath);
 		getBoolean("lightningOnRebirth", lightningOnRebirth);
 		getBoolean("graveSigns", graveSigns);
 		getBoolean("reverseSpawning", reverseSpawning);
-		
+		getBoolean("pvpDrop", pvpDrop);
+
 		getBoolean("noCheat", noCheat);
 		getBoolean("citizens", citizens);
 		
@@ -148,15 +147,11 @@ public class DARProperties extends Properties {
 		getString("deathSound", deathSound);
 		getString("resSound", resSound);
 		getString("ghostName", ghostName);
-		getString("ghostPermissionsGroup", ghostPermissionsGroup);
 		
 		getBoolean("changeColors", changeColors);
 		getString("ghostSky", ghostSky);
 		getString("ghostFog", ghostFog);
 		getString("ghostClouds", ghostClouds);
-		getString("normalSky", normalSky);
-		getString("normalFog", normalFog);
-		getString("normalClouds", normalClouds);
 		save();
 	}
 
@@ -180,6 +175,16 @@ public class DARProperties extends Properties {
 	public int getInteger(String key) {
 		return Integer.parseInt(getProperty(key));
 	}
+	public double getDouble(String key, double value) {
+		if(contains(key)) {
+			return Double.parseDouble(getProperty(key));
+		}
+		put(key, String.valueOf(value));
+		return value;
+	}
+	public double getDouble(String key) {
+		return Double.parseDouble(getProperty(key));
+	}
 	public String getString(String key, String value) {
 		if (containsKey(key)) {
 			return getProperty(key);
@@ -202,6 +207,9 @@ public class DARProperties extends Properties {
 	public boolean isSignsEnabled() {
 		return getBoolean("graveSigns");
 	}
+	public boolean isPvPDropEnabled() {
+		return getBoolean("pvpDrop");
+	}
 	public boolean isReverseSpawningEnabled() {
 		return getBoolean("reverseSpawning");
 	}
@@ -222,6 +230,9 @@ public class DARProperties extends Properties {
 	}
 	public boolean isFlyingEnabled() {
 		return getBoolean("fly");
+	}
+	public double getFlySpeed() {
+		return Double.parseDouble(getProperty("flySpeed"));
 	}
 	public boolean isShrineOnlyEnabled() {
 		return getBoolean("shrineOnly");
@@ -281,15 +292,6 @@ public class DARProperties extends Properties {
 		return makeFloat(getProperty("ghostClouds"));
 	}
 	
-	public float[] getnormalSky() {
-		return makeFloat(getProperty("normalSky"));
-	}
-	public float[] getnormalClouds() {
-		return makeFloat(getProperty("normalClouds"));
-	}
-	public float[] getnormalFog() {
-		return makeFloat(getProperty("normalFog"));
-	}
 	private float[] makeFloat(String string) {
 		float [] array = new float[3];
 		String [] strings = string.split(";");
@@ -431,6 +433,16 @@ public class DARProperties extends Properties {
 		}
 		else {
 			put("reverseSpawning", "false");
+		}
+		save();
+	}
+	
+	public void setPvPDrop(boolean b) {
+		if (b) {
+			put("pvpDrop", "true");
+		}
+		else {
+			put("pvpDrop", "false");
 		}
 		save();
 	}
