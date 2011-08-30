@@ -86,6 +86,7 @@ public class DARShrines {
 		yml.setProperty("shrines." +worldName +"." +name+".min.x", minX);
 		yml.setProperty("shrines." +worldName +"." +name+".min.y", minY);
 		yml.setProperty("shrines." +worldName +"." +name+".min.z", minZ);
+		yml.setProperty("shrines." +worldName +"." +name+".binding", "true");
 		
 		selection1 = null;
 		selection2 = null;
@@ -141,7 +142,8 @@ public class DARShrines {
 			
 			player.sendMessage("List of shrines in world "+world +" (Page "+page+"/"+pages+")");
 			for (int i=page-1; i<page*6 && i< names.size(); i++) {
-				player.sendMessage(i+1 +". "+names.get(i));
+				if (yml.getBoolean("shrines."+world+"."+names.get(i)+".binding", true)) player.sendMessage(i+1 +". "+names.get(i) +" (Soulbinding)");
+				else player.sendMessage(i+1 +". "+names.get(i));
 			}
 		}catch (NullPointerException e) {
 			message.sendChat(player, Messages.noShrinesFound);
@@ -194,6 +196,55 @@ public class DARShrines {
 		return null;
 	}
 	
+	/**
+	 * Returns the nearest shrine or null if there is no shrine
+	 * @param loc Location to check
+	 * @return Location of the shrine
+	 */
+	public Location getNearestShrine(Location loc) {
+		int x,y,z;
+		double distance = Double.MAX_VALUE;
+		String worldName = loc.getWorld().getName();
+		List<String> shrines = yml.getKeys("shrines."+worldName);
+		Location shrineLoc, returnLoc = null;
+		
+		if (shrines == null) return null;
+		
+		for (String shrine : shrines) {
+			x = yml.getInt("shrines."+worldName+"."+shrine+"."+"min.x", 0) + 
+					( (yml.getInt("shrines."+worldName+"."+shrine+"."+"max.x", 0) - yml.getInt("shrines."+worldName+"."+shrine+"."+"min.x", 0)) / 2);
+			y = yml.getInt("shrines."+worldName+"."+shrine+"."+"min.y", 0)+2;
+			z = yml.getInt("shrines."+worldName+"."+shrine+"."+"min.z", 0) + 
+					( (yml.getInt("shrines."+worldName+"."+shrine+"."+"max.z", 0) - yml.getInt("shrines."+worldName+"."+shrine+"."+"min.z", 0)) / 2);
+			shrineLoc = new Location(loc.getWorld(), x, y, z);
+			if(loc.distance(shrineLoc) < distance) {
+				returnLoc = shrineLoc.clone();
+				distance = loc.distance(shrineLoc);
+			}
+		}
+		return returnLoc;
+	}
+	public Location getNearestShrineSpawn(Location loc) {
+		int x,y,z;
+		double distance = Double.MAX_VALUE;
+		String worldName = loc.getWorld().getName();
+		List<String> shrines = yml.getKeys("shrines."+worldName);
+		Location shrineLoc, returnLoc = null;
+		
+		if (shrines == null) return null;
+		
+		for (String shrine : shrines) {
+			x = yml.getInt("shrines."+worldName+"."+shrine+"."+"min.x", 0) - 1;
+			y = yml.getInt("shrines."+worldName+"."+shrine+"."+"min.y", 0) + 2;
+			z = yml.getInt("shrines."+worldName+"."+shrine+"."+"min.z", 0) - 1;
+			shrineLoc = new Location(loc.getWorld(), x, y, z);
+			if(loc.distance(shrineLoc) < distance) {
+				returnLoc = shrineLoc.clone();
+				distance = loc.distance(shrineLoc);
+			}
+		}
+		return returnLoc;
+	}
 	/**
 	 * Checks if the block is part of the given shrine
 	 * @param name of the shrine to be checked
@@ -253,6 +304,21 @@ public class DARShrines {
 			return true;
 		}
 		else return false;
+	}
+	
+	public boolean checkBinding(String name, String worldName) {
+		return yml.getBoolean("shrines."+worldName+"."+name+".binding", true);
+	}
+	
+	public String setBinding(String name, String world) {
+		if (yml.getBoolean("shrines."+world+"."+name+".binding", true)) {
+			yml.setProperty("shrines."+world+"."+name+".binding", false);
+			return "disabled";
+		}
+		else {
+			yml.setProperty("shrines."+world+"."+name+".binding", true);
+			return "enabled";
+		}
 	}
 	
 	public boolean checkSelection() {
