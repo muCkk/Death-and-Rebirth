@@ -54,13 +54,13 @@ public class DAR extends JavaPlugin {
 		
 		config = new DARProperties(dir, propertiesFile);
 		config.load();
-		spout = new Spout(config);
+		spout = new Spout(config, dataDir);
 		message = new DARMessages(dataDir, messageFile);
 		message.load();
 		checkThirdPartyPlugins();
 		Perms.setup(this);
 		
-		graves = new DARGraves(dataDir, gravesFile);
+		graves = new DARGraves(dataDir, gravesFile, config);
 		graves.load();
 		ghosts = new DARGhosts(dataDir, handlerFile, config, graves, spout, message);
 		ghosts.load();
@@ -110,9 +110,9 @@ public class DAR extends JavaPlugin {
 		if (citizensPlugin != null)	config.setCitizens(true);
 		else						config.setCitizens(false);
 	// checking for nocheat
-		Plugin nocheatPlugin = getServer().getPluginManager().getPlugin("NoCheat");
-		if(nocheatPlugin != null)	config.setNoCheat(true);
-		else						config.setNoCheat(false); 
+//		Plugin nocheatPlugin = getServer().getPluginManager().getPlugin("NoCheat");
+//		if(nocheatPlugin != null)	config.setNoCheat(true);
+//		else						config.setNoCheat(false); 
 	}
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
@@ -185,21 +185,14 @@ public class DAR extends JavaPlugin {
 		}
 		
 		/**
-		 * shrine <add, rm, list, pos1, pos2, select>
+		 * shrine <add, rm, list, pos1, pos2, select, binding> <name>
 		 */
 		if (cmd.getName().equalsIgnoreCase("shrine")) {
 		// check permission
 			if (!Perms.hasPermission(player, "dar.admin")) {
 				message.send(player, Messages.noPermission);
 				return true;
-			 }			
-		// ** defaulting to OP system ***
-//			else {
-//				if(!player.isOp()) {
-//					message.send(player, Messages.noPermission);
-//					return true;
-//				}
-//			}
+			 }
 			
 			String arg = "";
 			String name = "";
@@ -299,7 +292,18 @@ public class DAR extends JavaPlugin {
 				}
 				shrines.list(player, page);
 				return true;
-			}			
+			}
+		// toggling soulbinding
+			if (arg.equalsIgnoreCase("binding")) {
+				String shrineName = "";
+				try {
+					shrineName = args[1];
+				}catch (ArrayIndexOutOfBoundsException e) {
+					return false;
+				}
+				message.sendChat(player, Messages.bindingToggle, shrines.setBinding(shrineName, player.getWorld().getName()));
+				return true;
+			}
 		}
 		
 		
@@ -316,13 +320,6 @@ public class DAR extends JavaPlugin {
 					return true;
 				 }
 			}
-		// defaulting to OP system
-//			else {
-//				if(!player.isOp()) {
-//					message.send(player, Messages.noPermission);
-//					return true;
-//				}
-//			}
 			
 			String arg = "";
 			String name = "";
@@ -387,6 +384,18 @@ public class DAR extends JavaPlugin {
 				else {
 					config.setDropping(true);
 					message.sendChat(player, Messages.droppingToggle, " enabled");
+				}
+				return true;
+			}
+		// toggling pvpDrop
+			if (arg.equalsIgnoreCase("pvpdrop")) {
+				if(config.isPvPDropEnabled()) {
+					config.setPvPDrop(false);
+					message.sendChat(player, Messages.pvpDroppingToggle, " disabled");
+				}
+				else {
+					config.setPvPDrop(true);
+					message.sendChat(player, Messages.pvpDroppingToggle, " enabled");
 				}
 				return true;
 			}
