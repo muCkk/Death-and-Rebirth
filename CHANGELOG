@@ -1,0 +1,133 @@
+Version 2.5
+	economy support for: iConomy 4, 5, & 6+, BOSEconomy 6 & 7, Essentials Economy 2.2.17+, MultiCurrency
+	mcMMO support
+	new config (config.yml). the old one (config.txt) will be converted (and can be deleted if you want to)
+	updated language files (need translators!)
+	invisibility for ghosts (ghosts can see each other)
+	permission node dar.res removed
+	added permission dar.reb which is needed to resurrect other players
+	ghosts can now resurrect themselves where they spawn after death by right clicking. for example: reverse spawning is enabled, this means a ghost will spawn at a shrine. he now can decide if he runs to his corpse to get all his items back, or resurrect at the shrine directly (with the corresponding consequences).
+	changed the way the plugin handles mob arena (and similar plugins)
+	grave-signs won't be placed in lava now
+	new code how dropped items are handled. inventory isn't shuffled anymore. should fix some bugs.
+	/dar enable can now be used without specifying a world
+	fixed tools and armor are magically repaired after death
+	fixed bug in worlds without shrines
+	fixed resurrection sound
+	fixed error on respawn
+	general code improvement
+	
+Version 2.4
+    the default system changed a bit: players will now spawn at the neares or soulbound shrine. using /reb removes 15% of their items. there is a blacklist which excludes certain items from being removed.
+        default values are
+            dropping: false
+            pvpDrop: true
+            reverseSpawning: true 
+    added resurrection time (default 10 seconds). if the player moves the resurrection is canceled.
+    added a notification for ghosts if they enter a shrine area. this only applies if the "shrineOnly" option is true. by default it's deactivated.
+    shrines now have a spawn point. they can be set (at the location you are standing) by using /shrine setSpawn <name>. this is useful for large shrines such as cathedrals or graveyards
+    MobArena is now supported
+    spout: the texturepack for ghosts is now changeable
+    spout: ghosts hear now ghast noises
+    fixed: dead players who join don't get the right skin and sky colors
+    fixed: if the ghost name is left empty it's treated like this feature is turned off
+    fixed: enabling worlds with spaces in their names 
+
+Version 2.3.6
+    players can now unbind their souls
+    if reverse spawning is enabled: players will spawn at the nearest shrine if their soul is not bound anywhere instead of spawning at the spawn point
+    grave signs are now removed properly (half steps etc. wont get destroyed)
+    fly speed of ghosts is now configurable. the default value was redruced
+    new option: pvpdrop. if it's enabled a player will drop one random item if another player kills him. this overrides the dropping option
+    soulbinding can now be turned off for each shrine individually (toggle: /shrine binding name). resurrection is always possible
+    if ghostName ist left blank in the config, it's handled like it's disabled buggy
+    added new messages
+    fixed nodrop: items are now saved in a file and will be regained even if the server crashes or restarts without stopping
+    fixed displayname/title(spout) related problems. if you have custom names they should reset properly now
+    fixed resetting sky colors 
+
+Version 2.3.5
+    added support for build in permissions system of bukkit. as a consequence, nocheat will prevent the flymode
+    added a reverse-spawning option
+    added an option to disable signs
+    new messages (for you translators out there)
+    spout name and skin is saved and restored after rebirth (e.g.if you use playereditor)
+    added permission node "dar.nodrop"
+    fixed lightning toggles
+    fixed self-rebirth
+    fixed bug on killing someone with a command
+    fixed onDisable not working properly
+    fixed /dar not working in the console 
+
+Version 2.3.4
+    fixed: message bug
+    fixed: "Could not pass event ENTITY_DAMAGE" bug
+    fixed: permissions bug (dar.res not working properly) 
+
+Version 2.3.3 CraftBukkitUpToDate support
+    new messages
+    if dropping is disabled all ghosts get their items back on server shutdown (else they would be lost)
+    fixed checking of amount not working properly
+    fixed message bug with spout
+    fixed a bug causing an error while adding shrines
+    fixed a bug where ghosts could attack with a bow 
+
+Version 2.3.2
+    fixed crashing when running spout
+    fixed ghost toggle message
+    fixed reload not working
+    fixed checking of citizens and nocheat 
+
+Version 2.3.1
+    fixed /shrine select not working correctly
+    admins now need to click with a stick to get a shrines name 
+
+Version 2.3
+    new command: /shrine
+    new shrine system
+    new command: /mygrave
+    multi-language support
+    different sky color for ghosts (configurable)
+    lightning effect on death and on rebirth (configurable)
+    new permissions node: dar.ignore
+    shrine radius is now configurable
+    config gets saved on changes (to prevent damages on crashes)
+    D&R is now saver against the influence of other plugins (for example: EssentialsSpawn, AdminCMD, Towny)
+    players don't become ghosts if they die in the void
+    fixed grave bug (grave-signs lost the inscription)
+    fixed skin bug (no change on death)
+    rewritten message code (for multi-language support)
+    cleaned up the code a bit 
+
+Version 2.2
+    works with bukkit #1060
+    code improvements (messages and shrines)
+    dar-command now works in the console
+    res is now reb to prevent problems with Towny
+    added automatic version check
+    added NoCheat support
+    skins and sounds are now changeable in the config
+    slabs and wool will be now resetted correctly when using /dar rm
+    added the possibility to left-click shrines for ops which will return the name of the shrine
+    added dropping system 
+
+Version 2.1
+    shrines are now save from explosions
+    flying for ghosts
+    NPCs from citizens are ignored
+    new configuration options (fly, ghost interaction, shrine mode, ghost chat)
+    bugfix: no chat messages were displayed 
+
+Version 2.0
+    added Spout and multiworld support
+    Permissions is no longer needed (but still supported)
+    Changed /shrine to /dar and added new arguments
+    Bugfixes 
+
+Version 1.1
+    Players can now bin their souls by right clicking a shrine. /res will then work everywhere and teleport them to the shrine (if they are dead)
+    Ghosts can't be attacked by players and players not by ghosts
+    Ghosts can't interact with blocks (they are still able to use doors, buttons and levers) 
+
+Version 1.0
+    first release 

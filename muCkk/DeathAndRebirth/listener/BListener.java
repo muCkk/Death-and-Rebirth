@@ -1,10 +1,10 @@
 package muCkk.DeathAndRebirth.listener;
 
-import muCkk.DeathAndRebirth.config.DARProperties;
-import muCkk.DeathAndRebirth.ghost.DARGhosts;
-import muCkk.DeathAndRebirth.ghost.DARGraves;
-import muCkk.DeathAndRebirth.ghost.DARShrines;
-import muCkk.DeathAndRebirth.messages.DARMessages;
+import muCkk.DeathAndRebirth.DAR;
+import muCkk.DeathAndRebirth.config.Config;
+import muCkk.DeathAndRebirth.ghost.Ghosts;
+import muCkk.DeathAndRebirth.ghost.Graves;
+import muCkk.DeathAndRebirth.ghost.Shrines;
 import muCkk.DeathAndRebirth.messages.Messages;
 
 import org.bukkit.Material;
@@ -16,20 +16,20 @@ import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
 
-public class DARBlockListener extends BlockListener {
+public class BListener extends BlockListener {
 
-	private DARShrines shrines;
-	private DARGhosts ghosts;
-	private DARGraves graves;
-	private DARProperties config;
-	private DARMessages message;
+	private DAR plugin;
+	private Shrines shrines;
+	private Ghosts ghosts;
+	private Graves graves;
+	private Config config;
 	
-	public DARBlockListener(DARProperties config, DARShrines shrines, DARGhosts ghosts, DARGraves graves, DARMessages message) {
+	public BListener(DAR plugin, Config config, Shrines shrines, Ghosts ghosts, Graves graves) {
+		this.plugin = plugin;
 		this.config = config;
 		this.shrines = shrines;
 		this.ghosts = ghosts;
 		this.graves = graves;
-		this.message = message;
 	}
 	
 	public void onBlockBreak(BlockBreakEvent event) {
@@ -40,14 +40,14 @@ public class DARBlockListener extends BlockListener {
 			Block block = event.getBlock();
 			if (graves.isProtected(player.getName(), player.getWorld().getName(), block.getX(), block.getY(), block.getZ())) {
 				Sign sign = (Sign) event.getBlock().getState();
-				message.send(player, Messages.graveProtected);
+				plugin.message.send(player, Messages.graveProtected);
 				event.setCancelled(true);
 				sign.update(true);
 				return;
 			}
 		}
 		if(ghosts.isGhost(player)) {
-			message.send(player, Messages.cantDoThat);
+			plugin.message.send(player, Messages.cantDoThat);
 			event.setCancelled(true);
 			return;
 		}
@@ -69,7 +69,7 @@ public class DARBlockListener extends BlockListener {
 		String shrine = shrines.getClose(player.getLocation());
 		if (shrine != null) {
 			if(shrines.isShrineArea(shrine, event.getBlock())) {
-				message.send(player, Messages.shrineProtectedDestroy);
+				plugin.message.send(player, Messages.shrineProtectedDestroy);
 				event.setCancelled(true);
 				return;
 			}
@@ -90,7 +90,7 @@ public class DARBlockListener extends BlockListener {
 
 		// *** preventing ghosts from placing blocks ***
 		if(ghosts.isGhost(player)) {
-			message.send(player, Messages.cantDoThat);
+			plugin.message.send(player, Messages.cantDoThat);
 			event.setBuild(false);
 			event.setCancelled(true);
 			return;
@@ -102,7 +102,7 @@ public class DARBlockListener extends BlockListener {
 		if (shrine != null) {
 			Block block = event.getBlock();
 			if(shrines.isShrineArea(shrine, block)) {
-				message.send(player, Messages.shrineProtectedBuild);
+				plugin.message.send(player, Messages.shrineProtectedBuild);
 				event.setBuild(false);
 				event.setCancelled(true);
 			}

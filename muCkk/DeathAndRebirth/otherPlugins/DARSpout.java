@@ -1,10 +1,12 @@
 package muCkk.DeathAndRebirth.otherPlugins;
 
 import java.io.File;
+import java.util.Random;
 
-import muCkk.DeathAndRebirth.config.DARProperties;
-import muCkk.DeathAndRebirth.ghost.DARGhosts;
-import muCkk.DeathAndRebirth.messages.DARErrors;
+import muCkk.DeathAndRebirth.config.CFG;
+import muCkk.DeathAndRebirth.config.Config;
+import muCkk.DeathAndRebirth.ghost.Ghosts;
+import muCkk.DeathAndRebirth.messages.Errors;
 
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -14,23 +16,20 @@ import org.getspout.spoutapi.SpoutManager;
 import org.getspout.spoutapi.player.AppearanceManager;
 import org.getspout.spoutapi.player.SkyManager;
 import org.getspout.spoutapi.player.SpoutPlayer;
+import org.getspout.spoutapi.sound.SoundEffect;
 import org.getspout.spoutapi.sound.SoundManager;
 
-public class Spout {
+public class DARSpout {
 
-	private DARProperties config;
-//	private HashMap<String, String> skinSaver;
-//	private HashMap<String, String> titleSaver;
-	private DARGhosts ghosts;
+	private Config config;
+	private Ghosts ghosts;
 	
 	private String dir;
 	private File spoutFile;
 	private Configuration yml;
 	
-	public Spout(DARProperties config, String dir) {
+	public DARSpout(Config config, String dir) {
 		this.config = config;
-//		skinSaver = new HashMap<String, String>();
-//		titleSaver = new HashMap<String, String>();
 		this.dir = dir;
 		this.spoutFile = new File(dir+"/spout");
 		load();
@@ -42,17 +41,17 @@ public class Spout {
             	new File(dir).mkdir();
                 spoutFile.createNewFile(); 
             } catch (Exception e) {
-            	DARErrors.couldNotReadSpoutFile();
+            	Errors.couldNotReadSpoutFile();
             	e.printStackTrace();
             }
         } else {
-        	DARErrors.gravesLoaded();
+        	// loaded
         }
 		try {
             yml = new Configuration(spoutFile);
             yml.load();
         } catch (Exception e) {
-        	DARErrors.couldNotReadSpoutFile();
+        	Errors.couldNotReadSpoutFile();
         	e.printStackTrace();
         }
 	}
@@ -64,7 +63,7 @@ public class Spout {
 		yml.save();
 	}
 	
-	public void setGhosts(DARGhosts ghosts) {
+	public void setGhosts(Ghosts ghosts) {
 		this.ghosts = ghosts;
 	}
 	/**
@@ -95,18 +94,23 @@ public class Spout {
 		AppearanceManager appearanceM = SpoutManager.getAppearanceManager();
 		String skin = yml.getString(player.getName()+".skin");
 		if (skin != null) appearanceM.setGlobalSkin(sp, skin);
+		
 		resetTtitle(player);
+
+		String textPack = config.getString(CFG.GHOST_TEXTPACK);
+		if(!textPack.equalsIgnoreCase("")) sp.resetTexturePack();
+		
 		SkyManager sky = SpoutManager.getSkyManager();
-		if(config.changeColors()) {
+		if(config.getBoolean(CFG.CHANGE_COLORS)) {
 			sky.setCloudColor(sp, Color.remove());
 			sky.setFogColor(sp, Color.remove());
 			sky.setSkyColor(sp, Color.remove());
 		}
-		playResSound(player,sound);		
+		playRebirthSound(player,sound);		
 	}
 	
 	public void setTitle(Player player) {
-		if (config.getGhostName() == "") return;
+		if (!config.getString(CFG.GHOST_NAME).equalsIgnoreCase("")) return;
 		SpoutPlayer sp = SpoutManager.getPlayer(player);
 		AppearanceManager appearanceM = SpoutManager.getAppearanceManager();
 		yml.setProperty(player.getName()+".title", appearanceM.getTitle(sp, sp));
@@ -115,18 +119,25 @@ public class Spout {
 	}
 	
 	public void resetTtitle(Player player) {
-		if (config.getGhostName() == "") return;
+		if (!config.getString(CFG.GHOST_NAME).equalsIgnoreCase("")) return;
 		SpoutPlayer sp = SpoutManager.getPlayer(player);
 		AppearanceManager appearanceM = SpoutManager.getAppearanceManager();
 		appearanceM.setGlobalTitle(sp, yml.getString(player.getName()+".title"));
 	}
 	
+	public void playRebirthSound(Player player, String sound) {
+		SpoutPlayer sPlayer = SpoutManager.getPlayer(player);
+		if(!sPlayer.isSpoutCraftEnabled()) return;
+		Plugin spoutPlugin = player.getServer().getPluginManager().getPlugin("Death and Rebirth");
+		SoundManager soundM = SpoutManager.getSoundManager();
+		soundM.playGlobalCustomSoundEffect(spoutPlugin, sound, false, player.getLocation());
+	}
 	public void playResSound(Player player, String sound) {
 		SpoutPlayer sPlayer = SpoutManager.getPlayer(player);
 		if(!sPlayer.isSpoutCraftEnabled()) return;
 		Plugin spoutPlugin = player.getServer().getPluginManager().getPlugin("Death and Rebirth");
 		SoundManager soundM = SpoutManager.getSoundManager();
-		soundM.playCustomSoundEffect(spoutPlugin, sPlayer, sound, false);
+		soundM.playGlobalCustomSoundEffect(spoutPlugin, sound, false, player.getLocation());
 	}
 
 	/**
@@ -143,27 +154,54 @@ public class Spout {
 			@Override
 			public void run() {				
 				try {
-					Thread.sleep(1500);
+					Thread.sleep(1000);
 				} catch (InterruptedException e) {
-					System.out.println("[Death and Rebirth] Error: Could not sleep while setting ghost skin.");
-					e.printStackTrace();
+					Errors.couldNotSleepSkin();
 				}
-				// *** Skin ***
-				
+				// Get all those managers
 				AppearanceManager appearanceM = SpoutManager.getAppearanceManager();
 				SkyManager sky = SpoutManager.getSkyManager();
+				
+				// skin
 				String skinUrl = appearanceM.getSkinUrl(sPlayer, sPlayer);
 				if ( skinUrl != null) yml.setProperty(player.getName()+".skin", skinUrl);
 				setTitle(player);
 				yml.save();
 				appearanceM.setGlobalSkin(sPlayer, skin);
-				if(config.changeColors()) {
-					float [] skycol = config.getGhostSky();
-					float [] fogcol = config.getGhostFog();
-					float [] cloudcol = config.getGhostClouds();
+				
+				// texturepack
+				String textPack = config.getString(CFG.GHOST_TEXTPACK);
+				if(!textPack.equalsIgnoreCase("")) sPlayer.setTexturePack(textPack);
+				
+				// colors
+				if(config.getBoolean(CFG.CHANGE_COLORS)) {
+					float [] skycol = config.getFloatColor(CFG.GHOST_SKY);
+					float [] fogcol = config.getFloatColor(CFG.GHOST_FOG);
+					float [] cloudcol = config.getFloatColor(CFG.GHOST_CLOUDS);
 					sky.setCloudColor(sPlayer, new Color(cloudcol[0], cloudcol[1], cloudcol[2]));
 					sky.setFogColor(sPlayer, new Color(fogcol[0], fogcol[1], fogcol[2]));
 					sky.setSkyColor(sPlayer, new Color(skycol[0], skycol[1], skycol[2]));
+				}
+				
+				// sound effect
+				if (config.getBoolean(CFG.GHOST_SOUND_EFFECTS)) {
+					new Thread() {
+						@Override
+						public void run() {
+							final SoundManager soundM = SpoutManager.getSoundManager();
+							Random rand = new Random();
+							int r = rand.nextInt(12)+3;
+							while(ghosts.isGhost(sPlayer)) {
+								soundM.playSoundEffect(sPlayer, SoundEffect.GHAST_MOAN, player.getLocation(), 10, 100);
+								r = rand.nextInt(12)+3;
+								try {
+									sleep(r*1000);
+								} catch (InterruptedException e) {
+									Errors.couldNotSleepSound();
+								}
+							}
+						}
+					}.start();
 				}
 			}
 		}.start();

@@ -5,21 +5,21 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 
 import muCkk.DeathAndRebirth.DAR;
-import muCkk.DeathAndRebirth.config.DARProperties;
-import muCkk.DeathAndRebirth.ghost.DARGhosts;
-import muCkk.DeathAndRebirth.ghost.DARShrines;
-import muCkk.DeathAndRebirth.messages.DARErrors;
-import muCkk.DeathAndRebirth.messages.DARMessages;
+import muCkk.DeathAndRebirth.config.CFG;
+import muCkk.DeathAndRebirth.config.Config;
+import muCkk.DeathAndRebirth.ghost.Ghosts;
+import muCkk.DeathAndRebirth.ghost.Shrines;
+import muCkk.DeathAndRebirth.messages.Errors;
 import muCkk.DeathAndRebirth.messages.Messages;
-import muCkk.DeathAndRebirth.otherPlugins.Spout;
+import net.minecraft.server.Packet29DestroyEntity;
 
-//import org.bukkit.Location;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-//import org.bukkit.block.BlockFace;
+import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerChatEvent;
@@ -31,25 +31,25 @@ import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.inventory.ItemStack;
 
-public class DARPlayerListener extends PlayerListener {
+public class PListener extends PlayerListener {
 
-	private DARGhosts ghosts;
-	private DARShrines shrines;
-	private DARProperties config;
+	private Ghosts ghosts;
+	private Shrines shrines;
+	private Config config;
 	private DAR plugin;
-	private Spout spout;
-	private DARMessages message;
 	private double flySpeed;
 	
-	public DARPlayerListener(DAR plugin, DARProperties config, DARGhosts ghosts, DARShrines shrines, Spout spout, DARMessages message) {
+	private ArrayList<String> checkList;
+	
+	public PListener(DAR plugin, Config config, Ghosts ghosts, Shrines shrines) {
 		this.plugin = plugin;
 		this.config = config;
-		flySpeed = config.getFlySpeed();
+		this.flySpeed = config.getDouble(CFG.FLY_SPEED);
 		this.ghosts = ghosts;
 		this.shrines = shrines;
-		this.spout = spout;
-		this.message = message;
+		checkList = new ArrayList<String>();
 	}
 	/**
 	 * Looks for new Players and adds them to the list
@@ -59,9 +59,19 @@ public class DARPlayerListener extends PlayerListener {
 		if(!ghosts.existsPlayer(player)) {
 			ghosts.newPlayer(player);
 		}
+	// if dead players join
+		if(ghosts.isGhost(player)) {
+			ghosts.setDisplayName(player, true);
+			if(config.getBoolean(CFG.INVISIBILITY)) ghosts.vanish(player);
+			if (config.getBoolean(CFG.SPOUT_ENABLED)) {
+				plugin.darSpout.setDeathOptions(player, config.getString(CFG.GHOST_SKIN));
+			}
+			plugin.message.send(player, Messages.playerDied);
+		}
+		else if(config.getBoolean(CFG.INVISIBILITY)) hideGhosts(player); 
 		
 	// version checking
-	// in own thread because it takes some time and would stop the rest of the server to load
+	// in it's own thread because it takes some time and would stop the rest of the world to load
 		if(player.isOp()) {
 			new Thread() {
 				public void run() {
@@ -71,18 +81,29 @@ public class DARPlayerListener extends PlayerListener {
 						
 						String line = reader.readLine();
 						if (!plugin.getDescription().getVersion().equalsIgnoreCase(line)) {
-							message.sendChat(player, Messages.newVersion, ": " + line);
+							plugin.message.sendChat(player, Messages.newVersion, ": " + line);
 						}
 						reader.close();
 					} catch (MalformedURLException e) {
 						// versionURL
-						DARErrors.readingURL();
+						Errors.readingURL();
+						e.printStackTrace();
 					} catch (IOException e) {
 						// versionURL.openstream()
-						DARErrors.openingURL();
+						Errors.openingURL();
+						e.printStackTrace();
 					}
 				}
 			}.start();
+		}
+	}
+	
+	// if otherplayer is a ghost make him invisible
+	private void hideGhosts(Player player) {
+		Player[] onlinePlayers = player.getServer().getOnlinePlayers();
+		for (Player otherPlayer : onlinePlayers) {
+			if (otherPlayer == player || !ghosts.isGhost(otherPlayer)) continue;
+			((CraftPlayer) player).getHandle().netServerHandler.sendPacket(new Packet29DestroyEntity(((CraftPlayer) otherPlayer).getEntityId()));
 		}
 	}
 	
@@ -91,8 +112,8 @@ public class DARPlayerListener extends PlayerListener {
 	 */
 	public void onPlayerChat(PlayerChatEvent event) {
 		Player player = event.getPlayer();
-		if(ghosts.isGhost(player) && !config.isGhostChatEnabled()) {
-			message.send(player, Messages.ghostNoChat);
+		if(ghosts.isGhost(player) && !config.getBoolean(CFG.GHOST_CHAT)) {
+			plugin.message.send(player, Messages.ghostNoChat);
 			event.setCancelled(true);
 		}
 	}
@@ -102,24 +123,51 @@ public class DARPlayerListener extends PlayerListener {
 	 */
 	public void onPlayerRespawn(PlayerRespawnEvent event) {
 		Player player = event.getPlayer();
-		// check if the world is enabled
+	// check if the world is enabled
 		if(!config.isEnabled(player.getWorld().getName())) {
 			return;
 		}
 		if(ghosts.isGhost(player)) {
-			if (config.isReverseSpawningEnabled()) {
+			// reverse spawning
+			Location nearestShrine = shrines.getNearestShrineSpawn(player.getLocation());
+			Location corpse = ghosts.getLocation(player);
+			if (!config.getBoolean(CFG.CORPSE_SPAWNING)) {
 				Location loc = ghosts.getBoundShrine(player);
+				
 				if (loc != null) event.setRespawnLocation(loc);
-				else event.setRespawnLocation((shrines.getNearestShrineSpawn(player.getLocation())));
+				else if(nearestShrine != null) event.setRespawnLocation(nearestShrine);
+				giveGhostCompass(player, corpse);
 			}
-			else event.setRespawnLocation(ghosts.getLocation(player));
-			message.send(player, Messages.playerDied);	
-		//  spout related
-			if (config.isSpoutEnabled()) {
-				spout.setDeathOptions(player, config.getGhostSkin());
+			// corpse spawning
+			else {
+				event.setRespawnLocation(corpse);
+				if (nearestShrine != null) giveGhostCompass(player, nearestShrine);
 			}
-			ghosts.setDisplayName(player);
+			plugin.message.send(player, Messages.playerDied);	
+	//  spout related
+			if (config.getBoolean(CFG.SPOUT_ENABLED)) {
+				plugin.darSpout.setDeathOptions(player, config.getString(CFG.GHOST_SKIN));
+			}
+			ghosts.setDisplayName(player, true);
 		}
+	}
+	
+	private void giveGhostCompass(final Player player, final Location loc) {
+		new Thread() {
+			@Override
+			public void run() {
+				try {
+					sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				
+				ItemStack compass = new ItemStack(345);
+				compass.setAmount(1);
+				player.getInventory().addItem(compass);
+				player.setCompassTarget(loc);
+			}
+		}.start();
 	}
 	
 	/**
@@ -138,16 +186,35 @@ public class DARPlayerListener extends PlayerListener {
 	/**
 	 * Flying for ghosts
 	 */
-	public void onPlayerMove(PlayerMoveEvent event) {
-		if (!config.isFlyingEnabled()) return;
+	public void onPlayerMove(PlayerMoveEvent event) {		
+		final Player player = event.getPlayer();			
 		
-		Player player = event.getPlayer();			
-		
-	// flying for ghosts
-		if(!player.isSneaking() || !ghosts.isGhost(player)) {
-			return;
-		}		
-		player.setVelocity(player.getLocation().getDirection().multiply(flySpeed));		
+		if(ghosts.isGhost(player)) {
+		// inform ghost if he is on a shrine
+			if(!checkList.contains(player.getName())) {
+				if ((event.getFrom().getBlockX() != event.getTo().getBlockX()) || (event.getFrom().getBlockY() != event.getTo().getBlockY()) || (event.getFrom().getBlockZ() != event.getTo().getBlockZ())) {
+					if(!checkList.contains(player.getName())) {
+						if(shrines.isOnShrine(player)) { 
+							plugin.message.send(player, Messages.shrineArea);
+							checkList.add(player.getName());
+							// 5 second delay before that player gets checked again
+							plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+								@Override
+								public void run() {
+									checkList.remove(player.getName());
+								}
+							}, 100L);
+						}
+						
+					}
+				}
+			}
+		// flying for ghosts
+			if(player.isSneaking() &&  config.getBoolean(CFG.FLY)) {		
+				player.setVelocity(player.getLocation().getDirection().multiply(flySpeed));
+				return;
+			}
+		}
 	}
 	
 	/**
@@ -167,17 +234,31 @@ public class DARPlayerListener extends PlayerListener {
 		if (ghosts.isGhost(player)) {
 			Block block = event.getClickedBlock();
 			
-			// resurrection
+		// resurrection
 			if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-				if(config.isReverseSpawningEnabled()) {
-					Location locDeath = ghosts.getLocation(player);
+				Location locDeath = ghosts.getLocation(player);
+			// reverse spawning
+				if(!config.getBoolean(CFG.CORPSE_SPAWNING)) {
 					if (event.getClickedBlock().getLocation().distance(locDeath) < 3) ghosts.resurrect(player);
-					else return;
+					else {
+						String shrine = shrines.getClose(player.getLocation());
+						if (shrine != null) {
+							ghosts.resurrect(player);
+							ghosts.removeItems(player);
+							player.setHealth(config.getInt(CFG.HEALTH));
+						}
+					}
 				}
+			// corpse spawning
 				else {
 					String shrine = shrines.getClose(player.getLocation());
-					if (shrine != null) {
-						ghosts.resurrect(player);
+					if (shrine != null) ghosts.resurrect(player);
+					else {
+						if (event.getClickedBlock().getLocation().distance(locDeath) < 3) {
+							ghosts.resurrect(player);
+							ghosts.removeItems(player);
+							player.setHealth(config.getInt(CFG.HEALTH));
+						}
 					}
 				}
 			return;
@@ -185,7 +266,7 @@ public class DARPlayerListener extends PlayerListener {
 			
 			// normal interactions		
 			
-			if (config.isBlockGhostInteractionEnabled()) {
+			if (config.getBoolean(CFG.BLOCK_GHOST_INTERACTION)) {
 				event.setCancelled(true);
 				return;
 			}
@@ -193,7 +274,7 @@ public class DARPlayerListener extends PlayerListener {
 				Material type = block.getType(); 			
 				if(			type.equals(Material.FURNACE)
 						||	type.equals(Material.CHEST)) {
-					message.send(player, Messages.cantDoThat);
+					plugin.message.send(player, Messages.cantDoThat);
 					event.setCancelled(true);
 					return;
 				}
@@ -217,24 +298,27 @@ public class DARPlayerListener extends PlayerListener {
 		if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
 			String shrine = shrines.getClose(player.getLocation());
 			if (shrine != null) {
+			// check if soul can be bound at this shrine
 				if (!shrines.checkBinding(shrine, player.getWorld().getName())) {
-					message.send(player, Messages.cantBindSoul);
+					plugin.message.send(player, Messages.cantBindSoul);
 					return;
 				}
 				Block clickedBlock = event.getClickedBlock();
 				Location boundShrine = ghosts.getBoundShrine(player);
+			// soul is bound
 				if (boundShrine != null) {
-					// shrines.isShrineArea(shrine, ghosts.getBoundShrine(player).getBlock())
 					Location bshrine = shrines.getNearestShrine(ghosts.getBoundShrine(player));
+			// unbinding
 					if((shrines.getNearestShrine(player.getLocation() ) ).distance(bshrine) < 2) {
 						ghosts.unbind(player);
-						message.send(player, Messages.unbindSoul);
+						plugin.message.send(player, Messages.unbindSoul);
 						return;
 					}
 				}
+			// binding
 				if(shrines.isShrineArea(shrine, clickedBlock)) {
 					ghosts.bindSoul(player);
-					message.send(player, Messages.soulNowBound);
+					plugin.message.send(player, Messages.soulNowBound);
 				}
 			}
 			return;

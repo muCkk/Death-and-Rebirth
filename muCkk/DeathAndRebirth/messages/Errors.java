@@ -1,6 +1,6 @@
 package muCkk.DeathAndRebirth.messages;
 
-public final class DARErrors {
+public final class Errors {
 
 	private static String prefix = "[Death and Rebirth] ";
 	private static String prefixError = "[Death and Rebirth] ERROR: ";
@@ -8,6 +8,10 @@ public final class DARErrors {
 	
 	// ___ ERRORS ___
 
+	public static void couldNotReadFile(String file) {
+		System.out.println(prefixError+"Could not read "+file);
+	}
+	
 	// Config
 	public static void savingConfig() {
 		System.out.println(prefixError +"Could not save config!");
@@ -50,6 +54,9 @@ public final class DARErrors {
 	public static void ghostNameWrong() {
 		System.out.println(prefixError+"Wrong ghostName option. Check if it's set right.");
 	}
+	public static void whileRessing() {
+		System.out.println(prefixError+"While resurrecting.");
+	}
 	
 	//DARSigns
 	public static void corruptSignsFile() {
@@ -70,11 +77,20 @@ public final class DARErrors {
 	public static void couldNotReadSpoutFile() {
 		System.out.println(prefixError+"Could not read spout file!");
 	}
+	public static void couldNotSleepSkin() {
+		System.out.println(prefixError+"Could not sleep while setting ghost skin.");
+	}
+	public static void couldNotSleepSound() {
+		System.out.println(prefixError+"Could not sleep - ghostSoundEffect");
+	}
 	// ___ MESSAGES ___
 	
 	//DARShrines
 	public static void shrinesLoaded() {
 		System.out.println(prefix+"Shrines loaded.");
+	}
+	public static void shrinesLoadError() {
+		System.out.println(prefixError+"Could not load shrines file.");
 	}
 	
 	//DARGraves

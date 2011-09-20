@@ -8,7 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Properties;
 
-import muCkk.DeathAndRebirth.messages.DARErrors;
+import muCkk.DeathAndRebirth.messages.Errors;
 
 public class DARProperties extends Properties {
 	static final long serialVersionUID = 1L;
@@ -19,10 +19,23 @@ public class DARProperties extends Properties {
 	
 	private String	ghostSkin = "http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/skins/ghost1.png",
 			deathSound = "http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/death.wav",
-			resSound = "http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/res.wav";
+			resSound = "http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/res.wav",
+			ghostTextPack = "",
+			resurrectionS = "";
 	
 	private String info =
-			  " __________ INFORMATIONS __________\n\n"
+			  " __________ INFORMATIONS __________\n\n\n\n"
+			
+			
+			
+			
+			+ "# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+			+ "# !!! THIS IS THE OLD CONFIG - USE THE config.yml FILE !!!\n"
+			+ "# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n\n"
+			
+			
+			
+			
 			+ " __________ Basic Options __________\n"
 			+ " amount: Amount needed of that item to reserruct.\n"
 			+ " blockGhostInteraction: (true/false) If set to true ghosts can't use doors, buttons and levers.\n"
@@ -32,21 +45,27 @@ public class DARProperties extends Properties {
 			+ " flySpeed: Defines how fasts ghosts will fly. Default is 0.75, 1 is already quite fast and can cause lag on the server if new chunks have to be generated.\n"
 			+ " ghostChat: (true/false) Enables or disables if ghosts can chat.\n"
 			+ " ghostName: Edit how the playername will be displayed. User %player% for the original playername.\n"
-			+ " ghostPermissionsGroup: Set the permissions group for ghosts.\n"
 			+ " graveSigns: (true/false) Toggles if grave signs are placed upon death.\n"
+			+ " health: Amount of health a player gets if he uses /reb. Must be between 1 and 20 (20 max, 0 dead).\n"
+			+ " itemID: ID of the item which will be consumed.\n"
 			+ " lightningOnDeath: (true/false) Toggles lightning on death.\n"
 			+ " lightningOnRebirth: (true/false) Toggles lightning on rebirth.\n"
+			+ " invisibility: (true/false) Toggles invisibility for ghosts.\n"
 			+ " needItem: (true/false) Defines if an item is needed to resurrect players.\n"
-			+ " itemID: ID of the item which will be consumed.\n"
+			+ " percent: Number of items which will be removed when using /reb in percent.\n"
 			+ " pvpDrop: If this is enabled players will drop one random item if they are killed by a player. This option overrides 'dropping'.\n"
 			+ " reverseSpawning: If set to true the player will spawn at his shrine and has to resurrect at his corpse.\n"
+			+ " shrineNotification: If set to true a ghost will receive a notification if he enters a shrine area.\n"
 			+ " shrineRadius: Radius of shriens. Default 3.\n"
 			+ " shrineOnly: (true/false) If set to true dead players have to walk to a shrine. Deactivates soul binding.\n"
+			+ " time: Time it takes to resurrect somebody.\n"
 			+ " versionCheck: (true/false) Checks for updates and sends OPs a message on join.\n"
 			+ " worldName: (true/false) Switch Death and Rebirth on and off for each world.\n\n"			
 
-			+ " __________ Skin & Sounds __________\n"
+			+ " __________ (Spout) Skin, Sounds & Texture-Pack __________\n"
 			+ " Colons have a leading backslash! Example: http\\:www.foo.com/bar.png\n"
+			+ " ghostSoundEffects: (true/false) If enabled ghosts will hear noises from ghasts.\n"
+			+ " ghostTextPack: URL to the texturepack used for ghosts.\n"
 			+ " ghostSkin: URL to the skin used for ghosts. Defaults:\n"
 			+ " Preview 1: http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/skins/ghost1_preview.png \n"
 			+ " "+ ghostSkin +"\n"
@@ -54,10 +73,11 @@ public class DARProperties extends Properties {
 			+ " http\\://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/skins/ghost2.png \n"
 			+ " deathSound: URL to the sound played on death. Default:\n"
 			+ " "+ deathSound +"\n"
-			+ " resSound: URL to the sound played on resurrection.Default:\n"
+			+ " resurrectionS: Sound played when someone tries to resurrect a player.\n"
+			+ " resSound: URL to the sound played on rebirth. Default:\n"
 			+ " "+ resSound+"\n\n"
 			
-			+ " __________ Colors __________\n"
+			+ " __________ (Spout) Colors __________\n"
 			+ " Colors are defined using RGB values from 0 to 1. So 1;1;1 would be white, 1;0;0 would be red. Separate the values with ;\n"
 			+ " changeColors: (true/false) Defines if the colors will get changed for ghosts. Default true.\n"
 			+ " Defaults:\n"
@@ -68,7 +88,7 @@ public class DARProperties extends Properties {
 			
 			+ " __________ Do not edit following settings __________\n"
 			+ " citizens: (true/false) This option is checked automatically and is set to true if you use Citizens.\n"
-			+ " noCheat: (true/false) This option is checked automatically and is set to true if you use NoCheat.\n\n"
+			+ " mobArena:(true/false) This option is checked automatically and is set to true if you use MobArena.\n"
 			+ "\n"
 			+ "\n"
 			+ "\n"
@@ -77,7 +97,10 @@ public class DARProperties extends Properties {
 	private int distance = 10,
 			amount = 1,
 			itemID = 288,
-			shrineRadius = 3;
+			shrineRadius = 3,
+			time = 10,
+			percent = 15,
+			health = 10;	
 	private double flySpeed = 0.75;
 	private String 
 			ghostSky = "0.8;0;0",
@@ -92,18 +115,23 @@ public class DARProperties extends Properties {
 					ghostChat = true,
 					versionCheck = true,
 					citizens = false,
-					noCheat = false,
-					dropping = true,
+					mobArena = false,
+					dropping = false,
 					changeColors = true,
 					lightningOnDeath = true,
 					lightningOnRebirth = true,
 					graveSigns = true,
-					reverseSpawning = false,
-					pvpDrop;
+					reverseSpawning = true,
+					pvpDrop=true,
+					shrineNotification = false,
+					ghostSoundEffects = true,
+					invisibility = true,
+					configExists = false;
 	
-	public DARProperties(String dir, String fileName) {
+	public DARProperties(String dir) {
 		this.dir = dir;
-		this.fileName = fileName;
+		this.fileName = dir+"/config.txt";
+		load();
 	}
 
 	public void load() {
@@ -113,53 +141,67 @@ public class DARProperties extends Properties {
 			try {
 				FileInputStream input = new FileInputStream(this.fileName); 
 				load(input);
+				configExists = true;
 				input.close();
 			} catch (IOException ex) {
-				DARErrors.loadingConfig();
+				Errors.loadingConfig();
 			}
 		} else {
+			configExists = false;
 			File directory = new File(dir);
 			if (!directory.exists())
 				directory.mkdir();
 		}
-		getBoolean("versionCheck", versionCheck);
-		getBoolean("needItem", needItem);
-		getBoolean("dropping", dropping);
+		if(!configExists) return;
+	// Setting defualt values
 		getInteger("amount", amount);
-		getInteger("itemID", itemID);
-		getInteger("distance", distance);
-		getInteger("shrineRadius", shrineRadius);
 		getBoolean("blockGhostInteraction", ghostInteraction);
+		getBoolean("changeColors", changeColors);
+		getBoolean("citizens", citizens);
+		getString("deathSound", deathSound);
+		getInteger("distance", distance);
+		getBoolean("dropping", dropping);
 		getBoolean("fly", fly);
 		getDouble("flySpeed", flySpeed);
-		getBoolean("shrineOnly", shrineOnly);
 		getBoolean("ghostChat", ghostChat);
-		getBoolean("lightningOnDeath", lightningOnDeath);
-		getBoolean("lightningOnRebirth", lightningOnRebirth);
-		getBoolean("graveSigns", graveSigns);
-		getBoolean("reverseSpawning", reverseSpawning);
-		getBoolean("pvpDrop", pvpDrop);
-
-		getBoolean("noCheat", noCheat);
-		getBoolean("citizens", citizens);
-		
-		getString("ghostSkin", ghostSkin);
-		getString("deathSound", deathSound);
-		getString("resSound", resSound);
 		getString("ghostName", ghostName);
-		
-		getBoolean("changeColors", changeColors);
+		getString("ghostSkin", ghostSkin);
+		getString("ghostTextPack", ghostTextPack);
+		getBoolean("ghostSoundEffects", ghostSoundEffects);
 		getString("ghostSky", ghostSky);
 		getString("ghostFog", ghostFog);
 		getString("ghostClouds", ghostClouds);
+		getBoolean("graveSigns", graveSigns);
+		getInteger("health", health);
+		getInteger("itemID", itemID);
+		getBoolean("lightningOnDeath", lightningOnDeath);
+		getBoolean("lightningOnRebirth", lightningOnRebirth);
+		getBoolean("invisibility", invisibility);
+		getBoolean("mobArena", mobArena);
+		getBoolean("needItem", needItem);
+		getInteger("percent", percent);
+		getBoolean("pvpDrop", pvpDrop);
+		getString("resSound", resSound);
+		getString("resurrectionS", resurrectionS);
+		getBoolean("reverseSpawning", reverseSpawning);
+		getBoolean("shrineNotification", shrineNotification);
+		getBoolean("shrineOnly", shrineOnly);
+		getInteger("shrineRadius", shrineRadius);
+		getInteger("time", time);
+		getBoolean("versionCheck", versionCheck);
+		
 		save();
 	}
 
+	public boolean configExists() {
+		return configExists;
+	}
+	
 	public void save() {
 		try {
 			store(new FileOutputStream(this.fileName), info);
 		} catch (IOException ex) {
-			DARErrors.savingConfig();
+			Errors.savingConfig();
 			ex.printStackTrace();
 		}
 	}
@@ -204,6 +246,8 @@ public class DARProperties extends Properties {
 		put(key, value ? "true" : "false");
 		return value;
 	}
+	
+// special getters
 	public boolean isSignsEnabled() {
 		return getBoolean("graveSigns");
 	}
@@ -225,6 +269,9 @@ public class DARProperties extends Properties {
 	public boolean isCitizensEnabled() {
 		return getBoolean("citizens");
 	}
+	public boolean isMobArenaEnabled() {
+		return getBoolean("mobArena");
+	}
 	public boolean isBlockGhostInteractionEnabled() {
 		return getBoolean("blockGhostInteraction");
 	}
@@ -243,9 +290,6 @@ public class DARProperties extends Properties {
 	public boolean isVersionCheckEnabled() {
 		return getBoolean("versionCheck");
 	}
-	public boolean isNoCheatEnabled() {
-		return getBoolean("noCheat");
-	}
 	public boolean isDroppingEnabled() {
 		return getBoolean("dropping");
 	}
@@ -255,36 +299,51 @@ public class DARProperties extends Properties {
 	public boolean isLightningREnabled() {
 		return getBoolean("lightningOnRebirth");
 	}
-	
-	
+	public int getTime() {
+		return getInteger("time");
+	}
+	public int getPercent() {
+		return getInteger("percent");
+	}
 	public String getGhostSkin() {
 		return getProperty("ghostSkin");
 	}
 	public String getDeathSound() {
 		return getProperty("deathSound");
 	}
-	public String getResSound() {
+	public String getRebSound() {
 		return getProperty("resSound");
 	}
-	public String getGhostPermGroup() {
-		return getProperty("ghostPermissionsGroup");
+	public String getResSound() {
+		return getProperty("resurrectionS");
 	}
-	
-	
 	public boolean changeColors() {
 		return getBoolean("changeColors");
 	}
-	/**
-	 *  Sky color for ghosts
-	 * @return float array
-	 */
+	public int getShrineRadius() {
+		return getInteger("shrineRadius");
+	}
+	public int getHealth() {
+		return getInteger("health");
+	}
+	public boolean isShrineMsgEnabled() {
+		return getBoolean("shrineNotification");
+	}
+	public String getTextPack() {
+		return getProperty("ghostTextPack");
+	}
+	public boolean isGhostSoundEnabled() {
+		return getBoolean("ghostSoundEffects");
+	}
+	public boolean invisEnabled() {
+		return getBoolean("invisibility");
+	}
+	
+	
+	
 	public float[] getGhostSky() {
 		return makeFloat(getProperty("ghostSky"));
 	}
-	/**
-	 * Fog color for ghosts
-	 * @return float array
-	 */
 	public float[] getGhostFog() {
 		return makeFloat(getProperty("ghostFog"));
 	}
@@ -299,9 +358,6 @@ public class DARProperties extends Properties {
 			array[i] = Float.valueOf(strings[i]);
 		}
 		return array;
-	}
-	public int getShrineRadius() {
-		return getInteger("shrineRadius");
 	}
 	// *** setter  ***********************************************************
 	
@@ -334,7 +390,15 @@ public class DARProperties extends Properties {
 		}
 		save();
 	}
-	
+	public void setMobArena(boolean b) {
+		if (b) {
+			put("mobArena", "true");
+		}
+		else {
+			put("mobArena", "false");
+		}
+		save();
+	}
 	public void setFly(boolean b) {
 		if (b) {
 			put("fly", "true");
@@ -379,15 +443,6 @@ public class DARProperties extends Properties {
 		}
 		else {
 			put("versionCheck", "false");
-		}
-		save();
-	}
-	public void setNoCheat(boolean b) {
-		if (b) {
-			put("noCheat", "true");
-		}
-		else {
-			put("noCheat", "false");
 		}
 		save();
 	}
@@ -443,6 +498,15 @@ public class DARProperties extends Properties {
 		}
 		else {
 			put("pvpDrop", "false");
+		}
+		save();
+	}
+	public void setInvis(boolean b) {
+		if (b) {
+			put("invisibility", "true");
+		}
+		else {
+			put("invisibility", "false");
 		}
 		save();
 	}

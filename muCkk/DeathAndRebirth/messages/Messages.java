@@ -6,7 +6,7 @@ public enum Messages {
 	tooFarAway				("You are too far away"), 
 	cantDoThat				("You can't do that"), 
 	reborn					("You were reborn"), 
-	resurrected				("Resurrecting "), 
+	resurrected				("Resurrecting"), 
 	soulNowBound			("Your soul is now bound"),
 	unbindSoul				("Soul unbound"),
 	haveToStandOnShrine		("No shrine here"),
@@ -16,6 +16,10 @@ public enum Messages {
 	ghostNoChat				("No one can hear you"),
 	cantResurrectYourself	("That can't be done"),
 	cantBindSoul			("Soul can't be bound here"),
+	resurrecting			("Resurrecting"),
+	shrineArea				("Entering a shrine area"),
+	lostMoney				("You lost"),
+	skillDropped			("%skill% skill dropped"),
 	
 	// for players - plugin protection
 	//	max length:			("12345678901234567890123456")
@@ -54,10 +58,12 @@ public enum Messages {
 	lightningDT				("Lightning effect on death"),
 	lightningRT				("Lightning effect on rebirth"),
 	signsToggle				("Grave-Signs are now"),
-	spawningToggle			("Reverse spawning is now"),
-	bindingToggle			("Soulbinding for this shrine is now");	
+	spawningToggle			("Corpse spawning is now"),
+	bindingToggle			("Soulbinding for this shrine is now"),
+	invisToggle				("Invisibility for ghosts is now");	
 	
 	private String msg;
+	
 	Messages(String msg) {
 		this.msg = msg;
 	}

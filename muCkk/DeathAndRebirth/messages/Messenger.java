@@ -8,7 +8,7 @@ import org.bukkit.util.config.Configuration;
 import org.getspout.spoutapi.SpoutManager;
 import org.getspout.spoutapi.player.SpoutPlayer;
 
-public class DARMessages {
+public class Messenger {
 
 	private boolean spoutEnabled;
 	private String dir;
@@ -18,10 +18,11 @@ public class DARMessages {
 	private static String title = "Death & Rebirth";
 	private static Material mat = Material.BONE;
 
-	public DARMessages(String dir, String fileS) {
+	public Messenger(String dir) {
 		this.dir = dir;
-		this.file = new File(fileS);
+		this.file = new File(dir+"/messages.yml");
 		this.spoutEnabled = false;
+		load();
 	}
 	
 	public void save() {
@@ -36,7 +37,7 @@ public class DARMessages {
             } catch (Exception ex) {
             }
         } else {
-        	DARErrors.messagesLoaded();
+        	Errors.messagesLoaded();
         }
 		try {
             yml = new Configuration(file);
@@ -52,6 +53,19 @@ public class DARMessages {
 			else					chat(player, msg.msg());
 		}
 		else {
+			if (checkSpout(player)) spout(player, ownMessage);
+			else					chat(player, ownMessage);
+		}
+	}
+	
+	public void sendSkill(Player player, Messages msg, String skillType) {
+		String ownMessage = yml.getString(msg.msg());
+		if (ownMessage == null) {
+			if (checkSpout(player)) spout(player, msg.msg().replace("%skill%", skillType));
+			else					chat(player, msg.msg().replace("%skill%", skillType));
+		}
+		else {
+			ownMessage = ownMessage.replace("%skill%", skillType);
 			if (checkSpout(player)) spout(player, ownMessage);
 			else					chat(player, ownMessage);
 		}

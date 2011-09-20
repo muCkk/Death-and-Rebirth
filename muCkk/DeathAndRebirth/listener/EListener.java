@@ -4,10 +4,11 @@ import java.io.File;
 import java.util.List;
 import java.util.Random;
 
-import muCkk.DeathAndRebirth.config.DARProperties;
-import muCkk.DeathAndRebirth.ghost.DARGhosts;
-import muCkk.DeathAndRebirth.ghost.DARShrines;
-import muCkk.DeathAndRebirth.messages.DARMessages;
+import muCkk.DeathAndRebirth.DAR;
+import muCkk.DeathAndRebirth.config.CFG;
+import muCkk.DeathAndRebirth.config.Config;
+import muCkk.DeathAndRebirth.ghost.Ghosts;
+import muCkk.DeathAndRebirth.ghost.Shrines;
 import muCkk.DeathAndRebirth.messages.Messages;
 import muCkk.DeathAndRebirth.otherPlugins.Perms;
 
@@ -22,22 +23,23 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityListener;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.util.config.Configuration;
 
 import com.citizens.npcs.NPCManager;
 
-public class DAREntityListener extends EntityListener {
+public class EListener extends EntityListener {
 
-	private DARGhosts ghosts;
-	private DARProperties config;
-	private DARShrines shrines;
-	private DARMessages message;
+	private DAR plugin;
+	private Ghosts ghosts;
+	private Config config;
+	private Shrines shrines;
 	
-	public DAREntityListener(DARProperties config, DARGhosts ghosts, DARShrines shrines, DARMessages message) {
+	public EListener(DAR plugin, Config config, Ghosts ghosts, Shrines shrines) {
+		this.plugin = plugin;
 		this.config = config;
 		this.ghosts = ghosts;
 		this.shrines = shrines;
-		this.message = message;
 	}
 	
 	/**
@@ -47,7 +49,10 @@ public class DAREntityListener extends EntityListener {
 		Entity entity = event.getEntity();
 		if(!(entity instanceof Player)) return;
 		Player player = (Player) entity;
-	
+		
+		// other plugins which avoid death - for example mob arena
+		if (player.getHealth() > 0) return;
+		
 	// check for death in the void 
 		String damageCause = "";
 		try {
@@ -61,48 +66,56 @@ public class DAREntityListener extends EntityListener {
 		}
 	// check for ignore	
 		if (Perms.hasPermission(player, "dar.ignore") || !Perms.hasPermission(player, "dar.res")) {
+			System.out.println("permissions fail");
 			return;
 		 }
 		
-	// *** ignoring NPCs from citizens ***
-		if (config.isCitizensEnabled()) {
-			if (checkForNPC(entity)) {
-				return;
-			}
-		}		
-
-	// checking items
-		ItemStack [] playerDrops = new ItemStack[event.getDrops().size()];
-		List<ItemStack> drops = event.getDrops();
-		if ( (!config.isDroppingEnabled() && !config.isPvPDropEnabled()) || Perms.hasPermission(player, "dar.nodrop")) {
-			int i = 0;
-			for (ItemStack item : drops) {
-				if (item == null) continue;
-				playerDrops[i] = item;
-				i++;
-			}
-			drops.clear();
+	// check for citizen NPCs
+		if (config.getBoolean(CFG.CITIZENS_ENABLED)) {
+			if (checkForNPC(entity)) return;
 		}
-		if (entity.getLastDamageCause() instanceof EntityDamageByEntityEvent && config.isPvPDropEnabled()) {
+		
+	// checking items
+		List<ItemStack> drops = event.getDrops();
+		PlayerInventory inv = player.getInventory();
+		// PVP kill
+		if (entity.getLastDamageCause() instanceof EntityDamageByEntityEvent && config.getBoolean(CFG.PVP_DROP) && drops.size() > 0) {
 			 Entity damager = ((EntityDamageByEntityEvent)entity.getLastDamageCause()).getDamager();
 			 if (damager instanceof Player) {
-//				 Player attacker = (Player) damager;
+			// find one random item which will be dropped
 				 ItemStack droppedItem = null;
 				 Random generator = new Random(827823476);
-				 int nr = generator.nextInt(playerDrops.length +1);
+				 int nr = generator.nextInt(drops.size());
+				 int stopper = 0;
+			
 				 droppedItem = drops.get(nr);
-				 while(droppedItem == null) {
-					 nr = generator.nextInt(playerDrops.length +1);
+				 
+				 while(droppedItem == null && stopper < 30) {
+					 nr = generator.nextInt(drops.size());
 					 droppedItem = drops.get(nr);
+					 stopper++;
 				 }
-				 for (int i=0; i<drops.size(); i++) {
-					 if (i==nr) continue;
-					 drops.remove(i);
-				 }
+				 
+				 player.getWorld().dropItemNaturally(player.getLocation(), droppedItem);
+				 inv.remove(droppedItem);
+				 drops.clear();
+//				 for (int i=0; i<drops.size(); i++) {
+//					 if (i==nr) continue;
+//					 drops.remove(i);
+//				 }
+				 
+				 ghosts.died(player, inv);
+				 return;
 			 }
-			 ghosts.died(player, playerDrops);
 		}
-		else ghosts.died(player, playerDrops);
+		
+		// dropping OFF   OR    dar.nodrop 
+		if (!config.getBoolean(CFG.DROPPING) || Perms.hasPermission(player, "dar.nodrop")) {
+			drops.clear();
+			ghosts.died(player, inv);
+			return;
+		}
+		ghosts.died(player, inv);
 	}
 	
 	/**
@@ -150,7 +163,7 @@ public class DAREntityListener extends EntityListener {
 			 if (damager instanceof Player) {
 				 Player attacker = (Player) damager;
 				 if(ghosts.isGhost(attacker)) {
-					 message.send(attacker, Messages.cantDoThat);
+					 plugin.message.send(attacker, Messages.cantDoThat);
 					 event.setCancelled(true);
 					 return;
 				 }
@@ -162,7 +175,7 @@ public class DAREntityListener extends EntityListener {
 				 if (shooter instanceof Player) {
 					 Player attacker = (Player) shooter;
 					 if (ghosts.isGhost(attacker)) {
-						 message.send(attacker, Messages.cantDoThat);
+						 plugin.message.send(attacker, Messages.cantDoThat);
 						 event.setCancelled(true);
 						 return;
 					 }
@@ -182,11 +195,11 @@ public class DAREntityListener extends EntityListener {
 					 Entity damager = ((EntityDamageByEntityEvent)event).getDamager();
 					 if (damager instanceof Player) {
 						 Player attacker = (Player) damager;
-						 message.send(attacker, Messages.cantAttackGhosts);
+						 plugin.message.send(attacker, Messages.cantAttackGhosts);
 					 }
 				}
 				// *************************************************
-				// TODO do evil citizens still do damage?
+				// TODO evil citizens do damage
 				event.setDamage(0);
 				event.setCancelled(true);
 			}
@@ -231,6 +244,7 @@ public class DAREntityListener extends EntityListener {
 			}
 		} catch (Exception e) {
         	System.out.println("[Death and Rebirth] Error while checking for NPCs");
+        	e.printStackTrace();
         }
 		
 		return false;

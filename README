@@ -2,19 +2,28 @@ Informations:
 --------------------
 This is a plugin for Bukkit which provides a different style of death.
 Detailed informations can be found here:
-http://forums.bukkit.org/threads/30713/
+http://dev.bukkit.org/server-mods/death-and-rebirth/
 
 
 Dependencies:
 --------------------
-Bukkit
+Bukkit v841
 http://bukkit.org/
 
-Citizens
-http://forums.bukkit.org/threads/7173/
+CraftBukkit v1060
+http://bukkit.org/
 
-Permissions
+Citizens v1.0.9d
+http://dev.bukkit.org/server-mods/citizens/
+
+iConomy v6.0.4b
+http://dev.bukkit.org/server-mods/iconomy/
+
+mcMMO v1.1.14
+http://dev.bukkit.org/server-mods/mcmmo/
+
+Permissions v3.1.6
 http://forums.bukkit.org/threads/18430/
 
-Spout
-http://forums.bukkit.org/threads/29259/
+Spout API v131 
+http://dev.bukkit.org/server-mods/spout/

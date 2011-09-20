@@ -3,9 +3,10 @@ package muCkk.DeathAndRebirth.ghost;
 import java.io.File;
 import java.util.List;
 
-import muCkk.DeathAndRebirth.config.DARProperties;
-import muCkk.DeathAndRebirth.messages.DARErrors;
-import muCkk.DeathAndRebirth.messages.DARMessages;
+import muCkk.DeathAndRebirth.DAR;
+import muCkk.DeathAndRebirth.config.CFG;
+import muCkk.DeathAndRebirth.config.Config;
+import muCkk.DeathAndRebirth.messages.Errors;
 import muCkk.DeathAndRebirth.messages.Messages;
 
 import org.bukkit.Location;
@@ -14,23 +15,22 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.util.config.Configuration;
 
-public class DARShrines {
+public class Shrines {
 	
 	private String shrinesDir;
 	private File file; 
 	private Configuration yml ;
-	private DARMessages message;
-	private DARProperties config;
-	
+	private Config config;
+	private DAR plugin;
 	private Location selection1, selection2;
 	private boolean selectionMode;
 	private String selectionPlayer;
 	
-	public DARShrines(String dir, String fileName, DARMessages message, DARProperties config) {
+	public Shrines(DAR plugin, String dir, Config config) {
+		this.plugin = plugin;
 		this.shrinesDir = dir;
-		this.message = message;
 		this.config = config;
-		file = new File(fileName);
+		file = new File(dir+"/shrines.yml");
 		selectionMode = false;
 		load();
 	}
@@ -45,14 +45,18 @@ public class DARShrines {
             	new File(shrinesDir).mkdir();
                 file.createNewFile(); 
             } catch (Exception ex) {
+            	Errors.shrinesLoadError();
+            	ex.printStackTrace();
             }
         } else {
-        	DARErrors.shrinesLoaded();
+        	Errors.shrinesLoaded();
         }
 		try {
             yml = new Configuration(file);
             yml.load();
         } catch (Exception e) {
+        	Errors.shrinesLoadError();
+        	e.printStackTrace();
         }
 	}
 	
@@ -94,6 +98,17 @@ public class DARShrines {
 		return true;
 	}
 	
+	public void setSpawn(String shrineName, Player player) {
+		String worldName = player.getWorld().getName();
+		int x = player.getLocation().getBlockX(),
+			y = player.getLocation().getBlockY(),
+			z = player.getLocation().getBlockZ();
+		
+		yml.setProperty("shrines." +worldName +"." +shrineName+".spawn.z", z);
+		yml.setProperty("shrines." +worldName +"." +shrineName+".spawn.y", y);
+		yml.setProperty("shrines." +worldName +"." +shrineName+".spawn.x", x);
+	}
+	
 	/**
 	 * Removes a shrine from the world
 	 * @param name
@@ -124,7 +139,7 @@ public class DARShrines {
 		yml.removeProperty("shrines." + worldName +"." + name +".tb");
 		selection1 = null;
 		selection2 = null;
-		message.sendChat(player, Messages.update);
+		plugin.message.sendChat(player, Messages.update);
 		yml.save();
 	}
 	
@@ -146,7 +161,7 @@ public class DARShrines {
 				else player.sendMessage(i+1 +". "+names.get(i));
 			}
 		}catch (NullPointerException e) {
-			message.sendChat(player, Messages.noShrinesFound);
+			plugin.message.sendChat(player, Messages.noShrinesFound);
 		}
 	}
 	
@@ -224,13 +239,14 @@ public class DARShrines {
 		}
 		return returnLoc;
 	}
+	
 	public Location getNearestShrineSpawn(Location loc) {
 		int x,y,z;
 		double distance = Double.MAX_VALUE;
 		String worldName = loc.getWorld().getName();
 		List<String> shrines = yml.getKeys("shrines."+worldName);
 		Location shrineLoc, returnLoc = null;
-		
+		String shrineName = "";
 		if (shrines == null) return null;
 		
 		for (String shrine : shrines) {
@@ -239,11 +255,19 @@ public class DARShrines {
 			z = yml.getInt("shrines."+worldName+"."+shrine+"."+"min.z", 0) - 1;
 			shrineLoc = new Location(loc.getWorld(), x, y, z);
 			if(loc.distance(shrineLoc) < distance) {
+				shrineName = shrine; 
 				returnLoc = shrineLoc.clone();
 				distance = loc.distance(shrineLoc);
 			}
 		}
-		return returnLoc;
+		String test = yml.getString("shrines." +worldName +"." +shrineName+".spawn.x");
+		if(test != null) {
+			return new Location(loc.getWorld(),
+					yml.getInt("shrines."+worldName+"."+shrineName+".spawn.x", 0), 
+					yml.getInt("shrines."+worldName+"."+shrineName+".spawn.y", 0),
+					yml.getInt("shrines."+worldName+"."+shrineName+".spawn.z", 0));
+		}
+		else return returnLoc;
 	}
 	/**
 	 * Checks if the block is part of the given shrine
@@ -281,7 +305,7 @@ public class DARShrines {
 			locY = loc.getBlockY(),
 			locZ = loc.getBlockZ();
 		List<String> names = yml.getKeys("shrines." +worldName);
-		int radius = config.getShrineRadius();
+		int radius = config.getInt(CFG.SHRINE_RADIUS);
 		try {
 			for (String name : names) {
 				if (		locX < yml.getInt("shrines." +worldName +"." +name+".max.x", 0)+radius

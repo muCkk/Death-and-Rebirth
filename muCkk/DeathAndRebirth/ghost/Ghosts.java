@@ -5,45 +5,46 @@ import java.util.HashMap;
 import java.util.List;
 
 import muCkk.DeathAndRebirth.DAR;
-import muCkk.DeathAndRebirth.config.DARProperties;
-import muCkk.DeathAndRebirth.messages.DARErrors;
-import muCkk.DeathAndRebirth.messages.DARMessages;
+import muCkk.DeathAndRebirth.config.CFG;
+import muCkk.DeathAndRebirth.config.Config;
+import muCkk.DeathAndRebirth.messages.Errors;
 import muCkk.DeathAndRebirth.messages.Messages;
 import muCkk.DeathAndRebirth.otherPlugins.Perms;
-import muCkk.DeathAndRebirth.otherPlugins.Spout;
+import net.minecraft.server.Packet20NamedEntitySpawn;
+import net.minecraft.server.Packet29DestroyEntity;
 
 import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.util.config.Configuration;
 
-public class DARGhosts {
+public class Ghosts {
 
 	private String dir;
 	private File ghostsFile;
-	private HashMap<String, ItemStack[]> dropManager;
+	private HashMap<String, Boolean> isRessing;
 	
-	private DARProperties config;
-	private DARGraves graves;
-	private Spout spout;
-	private DARMessages message;
-	private DARDrops dardrops;
+	private DAR plugin;
+	private Config config;
+	private Graves graves;
+	private Drops dardrops;
 	
 	private Configuration yml;
 	
-	public DARGhosts(String dir, String fileName, DARProperties config, DARGraves graves, Spout spout, DARMessages message) {
-		this.dir = dir;
-		this.ghostsFile = new File(fileName);
+	public Ghosts(DAR plugin, String dir, Config config, Graves graves) {
+		this.plugin = plugin;
+		this.dir = dir+"/data";
+		this.ghostsFile = new File(this.dir+"/ghosts");
 		this.config = config;
 		this.graves = graves;
-		this.spout = spout;
-		this.message = message;
-		this.dropManager = new HashMap<String, ItemStack[]>();
-		this.dardrops = new DARDrops(dir);
+		this.isRessing = new HashMap<String, Boolean>();
+		this.dardrops = new Drops(this.dir, config);
+		load();
 	}
 	
 	
@@ -56,17 +57,17 @@ public class DARGhosts {
             	new File(dir).mkdir();
                 ghostsFile.createNewFile(); 
             } catch (Exception e) {
-            	DARErrors.couldNotReadGhostFile();
+            	Errors.couldNotReadGhostFile();
             	e.printStackTrace();
             }
         } else {
-        	DARErrors.gravesLoaded();
+        	// loaded
         }
 		try {
             yml = new Configuration(ghostsFile);
             yml.load();
         } catch (Exception e) {
-        	DARErrors.couldNotReadGhostFile();
+        	Errors.couldNotReadGhostFile();
         	e.printStackTrace();
         }
 	}
@@ -143,60 +144,49 @@ public class DARGhosts {
 	 * Manages the death of players.
 	 * @param player which died
 	 */
-	public void died(Player player, ItemStack [] drops) {
+	public void died(Player player, PlayerInventory inv) {
 		String pname = player.getName();
 		String world = player.getWorld().getName();
-		
-		yml.setProperty("players."+pname +"."+world +".dead", true);
-		
 		Block block = player.getWorld().getBlockAt(player.getLocation());
-		
-		if (config.isLightningDEnabled()) {
+	
+		yml.setProperty("players."+pname +"."+world +".dead", true);
+	// lightning
+		if (config.getBoolean(CFG.LIGHTNING_DEATH)) {
 			player.getWorld().strikeLightningEffect(player.getLocation());
 		}
-		
+	// saving location of death	
 		yml.setProperty("players."+pname +"."+world +".location.x", block.getX());
 		yml.setProperty("players."+pname +"."+world +".location.y", block.getY());
 		yml.setProperty("players."+pname +"."+world +".location.z", block.getZ());		
 		save();
 		
 	// drop-management
-		
-		if (!config.isDroppingEnabled()) {
-			dropManager.put(pname, drops);
-			dardrops.add(player, drops);  
+		if (!config.getBoolean(CFG.DROPPING)) {
+			dardrops.put(player, inv);  
 		}
 		else if(Perms.hasPermission(player, "dar.nodrop")) {
-			dropManager.put(pname, drops);
-			dardrops.add(player, drops);
+			dardrops.put(player, inv);
 		}
 		
-		
 	// change the displayname
-		setDisplayName(player);
+//		setDisplayName(player, true);
+		
+	// invisibility
+		if (config.getBoolean(CFG.INVISIBILITY)) vanish(player);
 		
 	// spout related
-		if (config.isSpoutEnabled()) {
-			spout.playerDied(player, config.getDeathSound());
+		if (config.getBoolean(CFG.SPOUT_ENABLED)) {
+			plugin.darSpout.playerDied(player, config.getString(CFG.DEATH_SOUND));
 		}
 
 	// grave related
 		String l1 = "R.I.P";
-//		if (config.isSignsEnabled()) {
-//			Location location = player.getLocation();
-//			location.getBlock().setType(Material.SIGN_POST);
-//			Sign sign = (Sign) location.getBlock().getState();
-//			sign.setLine(1, l1);
-//			sign.setLine(2, pname);
-//			sign.update(true);
-//		}
 		graves.addGrave(pname,block, l1, world);
-//		graves.addGrave(pname,block.getX(), block.getY(), block.getZ(), l1, pname, world);
+		save();
 	}
 	
 	public String getGhostDisplayName(Player player) {
-		String newName = config.getGhostName().replace("%player", player.getName());
-		return newName;
+		return config.getString(CFG.GHOST_NAME).replace("%player%", player.getName()).replace("%displayname%", player.getDisplayName());
 	}
 	/**
 	 * Brings players back to life
@@ -206,21 +196,24 @@ public class DARGhosts {
 		String pname = player.getName();
 		String world = player.getWorld().getName();
 		
+		player.setCompassTarget(player.getWorld().getSpawnLocation());
+		
 		yml.setProperty("players."+pname +"."+world +".dead", false);
-//		if (config.isSignsEnabled())	player.getWorld().getBlockAt(getLocation(player)).setType(Material.AIR);
 		graves.deleteGrave(player.getWorld().getBlockAt(getLocation(player)), pname, world);
-		message.send(player, Messages.reborn);
+		plugin.message.send(player, Messages.reborn);
 		
 	// check if lightning is enabled
-		if (config.isLightningREnabled()) {
+		if (config.getBoolean(CFG.LIGHTNING_REBIRTH)) {
 			player.getWorld().strikeLightningEffect(player.getLocation());
 		}
 		
-		player.setDisplayName(pname);
+		setDisplayName(player, false);
+		
+		if (config.getBoolean(CFG.INVISIBILITY)) unvanish(player);
 		
 	// spout related
-		if (config.isSpoutEnabled()) {
-			spout.playerRes(player, config.getResSound());
+		if (config.getBoolean(CFG.SPOUT_ENABLED)) {
+			plugin.darSpout.playerRes(player, config.getString(CFG.REB_SOUND));
 		}
 		save();
 		
@@ -228,53 +221,168 @@ public class DARGhosts {
 				@Override
 				public void run() {				
 					try {
-						Thread.sleep(1000);
+						Thread.sleep(500);
 					} catch (InterruptedException e) {
 						System.out.println("[Death and Rebirth] Error: Could not sleep while giving drops.");
 						e.printStackTrace();
 					}
-					if (!config.isDroppingEnabled()) giveDrops(player);
-					else if (Perms.hasPermission(player, "dar.nodrop"))	giveDrops(player);
+					
+					player.getInventory().clear();
+					
+					try {
+						Thread.sleep(500);
+					} catch (InterruptedException e) {
+						System.out.println("[Death and Rebirth] Error: Could not sleep while giving drops.");
+						e.printStackTrace();
+					}
+					
+					if (!config.getBoolean(CFG.DROPPING)) dardrops.givePlayerInv(player);
+					else if (Perms.hasPermission(player, "dar.nodrop"))	dardrops.givePlayerInv(player);
 				}
 			}.start();
 		
 	}
 	
+	public void vanish(Player vanishingPlayer) {
+		Player[] onlinePlayers = vanishingPlayer.getServer().getOnlinePlayers();
+		for (Player otherPlayer : onlinePlayers) {
+			if (otherPlayer == vanishingPlayer) continue;
+			// reveal other ghosts
+			if (isGhost(otherPlayer)) {
+				((CraftPlayer) vanishingPlayer).getHandle().netServerHandler.sendPacket(new Packet20NamedEntitySpawn(( (CraftPlayer) otherPlayer).getHandle()));
+				continue;
+			}
+			// hide ghost from living players
+			((CraftPlayer) otherPlayer).getHandle().netServerHandler.sendPacket(new Packet29DestroyEntity(((CraftPlayer) vanishingPlayer).getEntityId()));
+		}
+	}
+	
+	private void unvanish(Player appearingPlayer) {
+		Player[] onlinePlayers = appearingPlayer.getServer().getOnlinePlayers();
+		for (Player otherPlayer : onlinePlayers) {
+			if (otherPlayer == appearingPlayer) continue;
+			// hide other ghosts
+			if (isGhost(otherPlayer)) {
+				((CraftPlayer) appearingPlayer).getHandle().netServerHandler.sendPacket(new Packet29DestroyEntity(((CraftPlayer) otherPlayer).getEntityId()));
+				continue;
+			}
+			// reveal player for others
+			((CraftPlayer) otherPlayer).getHandle().netServerHandler.sendPacket(new Packet20NamedEntitySpawn(( (CraftPlayer) appearingPlayer).getHandle()));
+		}
+	}
+	
+	
+	public void selfRebirth(Player player, Shrines shrines) {
+		// rebirth at location of death
+		if (!config.getBoolean(CFG.CORPSE_SPAWNING)) 	player.teleport(getLocation(player));
+		// rebirth at next shrine
+		else {
+			Location loc = getBoundShrine(player);
+			if (loc != null) player.teleport(loc);
+			else player.teleport(shrines.getNearestShrine(player.getLocation()));
+		}
+		resurrect(player);
+		selfResPunish(player);
+	}
+	
+	private void selfResPunish(Player player) {
+		// health
+		player.setHealth(config.getInt(CFG.HEALTH));
+		
+		//drops
+		dardrops.selfResPunish(player);
+		
+		//economy
+		double money = config.getDouble(CFG.ECONOMY);
+		if(money > 0) 	plugin.darConomy.take(player, money);
+		
+		// mcMMO
+		if (config.getBoolean(CFG.MCMMO)) {
+			List<String> skills = config.getKeys("SKILLS");
+			int amount = config.getInt(CFG.XP);
+			for (String skill : skills) {
+				if(config.getBoolean("SKILLS."+skill)) plugin.darmcmmo.xpPenality(player, skill, amount);
+			}
+		}
+	}
+	
+	public void removeItems(Player player) {
+		dardrops.selfResPunish(player);
+	}
 	
 	/**
 	 * Called when a player tries to resurrect someone.
 	 * @param player who tries to resurrect someone
 	 * @param target player to be resurrected
 	 */
-	public void resurrect(Player player, Player target) {
+	public void resurrect(final Player player, final Player target) {
 		// *** check distance ***
 		double distance = player.getLocation().distance(target.getLocation());
-		if(distance > config.getInteger("distance")) {
-			message.send(player, Messages.tooFarAway);
+		if(distance > config.getInt(CFG.DISTANCE)) {
+			plugin.message.send(player, Messages.tooFarAway);
 			return;
 		}
-		
-		// check for items
-		if (config.getBoolean("needItem")) {
-			int itemID = config.getInteger("itemID");
-			int amount = config.getInteger("amount");
-			
+		final int itemID = config.getInt(CFG.ITEM_ID);
+		final int amount = config.getInt(CFG.AMOUNT);
+	// check for items
+		if (config.getBoolean(CFG.NEED_ITEM)) {	
 			ItemStack costStack = new ItemStack(itemID);
 			costStack.setAmount(amount);
 			
-			if(!ConsumeItems(player, costStack)) {
-				message.sendChat(player, Messages.notEnoughItems, " "+amount +" "+Material.getMaterial(itemID).name());
+			if(!CheckItems(player, costStack)) {
+				plugin.message.sendChat(player, Messages.notEnoughItems, " "+amount +" "+Material.getMaterial(itemID).name());
 				return;
 			}
-		}		
-		resurrect(target);
-		message.send(player, Messages.resurrected);
-		target.teleport(getLocation(target));
+			
+			if(!ConsumeItems(player, costStack)) {
+				plugin.message.sendChat(player, Messages.notEnoughItems, " "+amount +" "+Material.getMaterial(itemID).name());
+				return;
+			}
+		}
 		
-		// spout related
-		if (config.isSpoutEnabled()) {
-			spout.playResSound(player, config.getResSound());
-		}		
+		final String name = player.getName();
+		new Thread() {
+			public void run() {
+				int counter = 0;
+				int time = config.getInt(CFG.TIME);
+				int x = player.getLocation().getBlockX(),
+					z = player.getLocation().getBlockZ();
+				if (config.getBoolean(CFG.SPOUT_ENABLED)) {
+					plugin.darSpout.playResSound(player, config.getString(CFG.RES_SOUND));
+				}
+				while (counter < time && isRessing.get(name)) {
+					if (x != player.getLocation().getBlockX() || z != player.getLocation().getBlockZ()) {
+						isRessing.put(name, false);
+						continue;
+					}
+					plugin.message.send(player, Messages.resurrecting, String.valueOf(counter));
+					try {
+						sleep(1000);
+					}catch (InterruptedException e) {
+						Errors.whileRessing();
+						e.printStackTrace();
+					}
+					counter++;
+				}
+				if(config.getBoolean(CFG.NEED_ITEM)) {
+					ItemStack costStack = new ItemStack(itemID);
+					costStack.setAmount(amount);
+					if(!ConsumeItems(player, costStack)) {
+						plugin.message.sendChat(player, Messages.notEnoughItems, " "+amount +" "+Material.getMaterial(itemID).name());
+						counter = time-1;
+					}
+				}
+				if(counter == time) {					
+					resurrect(target);
+					plugin.message.send(player, Messages.resurrected, " "+target.getName());
+					target.teleport(getLocation(target));
+				// spout related
+					if (config.getBoolean(CFG.SPOUT_ENABLED)) {
+						plugin.darSpout.playRebirthSound(player, config.getString(CFG.REB_SOUND));
+					}
+				}
+			}
+		}.start();		
 	}
 	
 	/**
@@ -379,36 +487,20 @@ public class DARGhosts {
 		return Messages.yourGraveIsHere +": "+x +", "+y+", "+z;
 	}
 	
-	/**
-	 * Gives a player his drops back
-	 * @param player which gets his items
-	 */
-	public void giveDrops(Player player) {
-		//TODO testen: leeres inventory
-		PlayerInventory inv = player.getInventory();
-		ItemStack [] stack = dropManager.get(player.getName());
-		if (stack != null) {
-			try {
-				for (ItemStack item : stack) {
-					if (item == null) continue;
-					inv.addItem(item);
-				}
-			}catch(NullPointerException e) {
-				// empty inventory on death
-			}
+	public void setDisplayName(Player player, boolean isDead) {
+		if ( config.getString(CFG.GHOST_NAME).equalsIgnoreCase("")) return;
+		
+		String playerName = player.getName();
+		String world = player.getWorld().getName();
+		
+		if(isDead) {
+			yml.setProperty("players."+playerName+"."+world+".displayname", player.getDisplayName());
+			player.setDisplayName(getGhostDisplayName(player));
 		}
 		else {
-			for (ItemStack item : dardrops.get(player)) {
-				inv.addItem(item);
-			}
+			player.setDisplayName(yml.getString("players."+playerName+"."+world+".displayname"));
 		}
-	}
-	
-	public void setDisplayName(Player player) {
-		String ghostName = config.getGhostName();
-		if (ghostName != "") {
-			player.setDisplayName(ghostName.replace("%player%", player.getName()));
-		}
+		yml.save();
 	}
 	
 	/**
@@ -416,7 +508,7 @@ public class DARGhosts {
 	 * @param plugin plugin which is using the method
 	 */
 	public void onDisable(DAR plugin) {
-		if(!config.isDroppingEnabled()) {
+		if(!config.getBoolean(CFG.DROPPING)) {
 			List<String> names = yml.getKeys("players.");
 			for (String name : names) {
 				List<String> worlds = yml.getKeys("players."+name);
@@ -425,13 +517,13 @@ public class DARGhosts {
 				if (!player.isOnline()) continue;
 				for (String world : worlds) {
 					if (yml.getBoolean("players."+name+"."+world+".dead", false)) {
-						giveDrops(player);
+						dardrops.givePlayerInv(player);
 					}
 				}
 			}
 		}
 	}
-
+	
 //  private methods ************************************************************************************************************
 	private void worldChangeHelper(String playerName, String worldName, Location location) {
 		yml.setProperty("players." +playerName +"."+worldName +".dead", false);
