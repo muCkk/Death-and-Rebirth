@@ -76,11 +76,11 @@ VERSION_CHECK: true
 # Colors use RGB values, so 1;0;0 would be red.           #
 ###########################################################
 GHOST_SOUND_EFFECTS: true
-DEATH_SOUND: http\://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/death.wav
-REB_SOUND: http\://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/res.wav
+DEATH_SOUND: http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/death.wav
+REB_SOUND: http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/res.wav
 RES_SOUND: 
 
-GHOST_SKIN: http\://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/skins/ghost1.png
+GHOST_SKIN: http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/skins/ghost1.png
 GHOST_TEXTPACK: 
 
 CHANGE_COLORS: true
