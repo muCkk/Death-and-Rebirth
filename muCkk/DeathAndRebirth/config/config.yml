@@ -67,6 +67,7 @@ SHRINE_NOTE: true
 SHRINE_RADIUS: 3
 SHRINE_ONLY: false
 VERSION_CHECK: true
+VOID_DEATH: true
 
 ###########################################################
 #                            Spout                        #
