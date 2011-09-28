@@ -40,6 +40,7 @@ public enum CFG {
 		SHRINE_RADIUS			(3),
 		SHRINE_ONLY				(false),
 		VERSION_CHECK			(true),
+		VOID_DEATH				(true),
 		
 		// Spout
 		GHOST_SOUND_EFFECTS		(true),
@@ -58,106 +59,6 @@ public enum CFG {
 		// special nodes
 		SPOUT_ENABLED			(false),
 		CITIZENS_ENABLED		(false);
-	
-	
-	
-	
-	
-	
-	
-//	// ghost related
-//	BLOCK_GHOST_INTERACTION	(false),
-//	FLY						(false),
-//	FLY_SPEED				(0.75),
-//	GHOST_CHAT				(true),
-//	GHOST_NAME				("Ghost of %player%"),
-//	INVISIBILITY			(true),
-//	LIGHTNING_DEATH			(true),
-//	LIGHTNING_REBIRTH		(true),
-//	
-//	//dropping
-//	DROPPING				(false),
-//	PVP_DROP				(true),
-//	
-//	// self res punishment
-//	HEALTH					(10),
-//	PERCENT					(15),
-//	
-//	// resurrection
-//	NEED_ITEM				(false),
-//	ITEM_ID					(288),
-//	AMOUNT					(1),
-//	DISTANCE				(10),
-//	TIME					(10),
-//	
-//	// spawning
-//	CORPSE_SPAWNING			(false),
-//	
-//	// plugin related
-//	GRAVE_SIGNS				(true),
-//	SHRINE_NOTE				(true),
-//	SHRINE_RADIUS			(3),
-//	SHRINE_ONLY				(false),
-//	VERSION_CHECK			(true),
-//	
-//	// Spout
-//	GHOST_SOUND_EFFECTS		(true),
-//	DEATH_SOUND				("http:dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/death.wav"),
-//	REB_SOUND				("http:dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/res.wav"),
-//	RES_SOUND				(""),
-//	
-//	GHOST_SKIN				("http:dl.dropbox.com/u/12769915/minecraft/plugins/DAR/skins/ghost1.png"),
-//	GHOST_TEXTPACK			(""),
-//	
-//	CHANGE_COLORS			(true),
-//	GHOST_SKY				("0.8;0;0"),
-//	GHOST_FOG				("0.8;0;0"),
-//	GHOST_CLOUDS			("0;0;0"),
-//	
-//	// special nodes
-//	SPOUT_ENABLED			(false),
-//	CITIZENS_ENABLED		(false);
-	
-	
-// alphabetical	
-//	AMOUNT					(1),
-//	BLOCK_GHOST_INTERACTION	(false),
-//	CORPSE_SPAWNING			(false),
-//	DISTANCE				(10),
-//	DROPPING				(false),
-//	FLY						(false),
-//	FLY_SPEED				(0.75),
-//	GHOST_CHAT				(true),
-//	GHOST_NAME				("Ghost of %player%"),
-//	GRAVE_SIGNS				(true),
-//	HEALTH					(10),
-//	INVISIBILITY			(true),
-//	ITEM_ID					(288),
-//	LIGHTNING_DEATH			(true),
-//	LIGHTNING_REBIRTH		(true),
-//	NEED_ITEM				(false),
-//	PERCENT					(15),
-//	PVP_DROP				(true),
-//	SHRINE_NOTE				(true),
-//	SHRINE_RADIUS			(3),
-//	SHRINE_ONLY				(false),
-//	TIME					(10),
-//	VERSION_CHECK			(true),
-//	
-//	// Spout
-//	GHOST_SOUND_EFFECTS		(true),
-//	GHOST_SKIN				("http:dl.dropbox.com/u/12769915/minecraft/plugins/DAR/skins/ghost1.png"),
-//	DEATH_SOUND				("http:dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/death.wav"),
-//	REB_SOUND				("http:dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/res.wav"),
-//	RES_SOUND				(""),
-//	GHOST_TEXTPACK			(""),
-//	CHANGE_COLORS			(true),
-//	GHOST_SKY				("0.8;0;0"),
-//	GHOST_FOG				("0.8;0;0"),
-//	GHOST_CLOUDS			("0;0;0");
-
-	// plugins: spout, citizens, mobarena
-	// worlds
 	
 	// variables
 	private String s;
