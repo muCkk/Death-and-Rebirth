@@ -54,10 +54,12 @@ public class DAR extends JavaPlugin {
 	}
 
 	public void onEnable() {
+	// Config
 		oldConfig = new DARProperties(dir);
 		config = new Config(dir, oldConfig);
 		if (oldConfig.configExists() && !config.isConverted()) config.convert();
-			
+		
+	// DAR Classes
 		darSpout = new DARSpout(config, dataDir);
 		message = new Messenger(dir);
 		Perms.setup(this);
@@ -74,6 +76,7 @@ public class DAR extends JavaPlugin {
 		EListener entityListener = new EListener(this, config, ghosts, shrines);
 		BListener blockListener = new BListener(this, config, shrines,ghosts,graves);
 		SListener serverListener = new SListener(this, config);
+		serverListener.checkForPlugins();
 		
 		pm.registerEvent(Type.PLAYER_RESPAWN, playerlistener, Priority.Highest, this);
 		pm.registerEvent(Type.PLAYER_PICKUP_ITEM, playerlistener, Priority.Highest, this);
