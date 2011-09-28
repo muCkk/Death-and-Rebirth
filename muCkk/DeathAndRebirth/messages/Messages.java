@@ -44,6 +44,8 @@ public enum Messages {
 	noShrinesFound			("No shrines were found."),
 	noSelectionMade			("You have to select an area to create a shrine."),
 	update					("Shrine updated."),
+	showGhosts				("Revealing ghosts."),
+	hideGhosts				("Hiding ghosts."),
 	
 	newVersion				("Death and Rebirth - A new version is available"),
 	worldEnabled			("World enabled"),
