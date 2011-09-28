@@ -60,8 +60,10 @@ public class EListener extends EntityListener {
 			}catch (NullPointerException e) {
 				// happens if there is no cause (/kill, /suicide ...)
 			}
+		if (config.getBoolean(CFG.VOID_DEATH) && damageCause.equalsIgnoreCase("VOID")) return;
+		
 	// check if the world is enabled
-		if(!config.isEnabled(entity.getWorld().getName()) ||  damageCause.equalsIgnoreCase("VOID")) {
+		if(!config.isEnabled(entity.getWorld().getName())) {
 			return;
 		}
 	// check for ignore	
