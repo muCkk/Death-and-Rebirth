@@ -388,7 +388,18 @@ public class DAR extends JavaPlugin {
 				}
 				return true;
 			}
-			// toggles
+		// show and hide ghosts
+			if (arg.equalsIgnoreCase("showghosts")) {
+				ghosts.showGhosts(player);
+				message.sendChat(player, Messages.showGhosts);
+				return true;
+			}
+			if (arg.equalsIgnoreCase("hideghosts")) {
+				ghosts.hideGhosts(player);
+				message.sendChat(player, Messages.hideGhosts);
+				return true;
+			}
+		// toggles
 			if (arg.equalsIgnoreCase("invis")) {
 				if(toggle(CFG.INVISIBILITY)) message.sendChat(player, Messages.invisToggle, " disabled");
 				else message.sendChat(player, Messages.invisToggle, " enabled");
