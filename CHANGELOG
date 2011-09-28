@@ -1,3 +1,14 @@
+Version 2.5.1
+	Craftbukkit 1185 support
+	added /dar showghosts, /dar hideghosts
+	added option VOID_DEATH
+	fixed a permissions bug ("permissions failed")
+	fixed various spout related bugs (no sounds, skin, colors or notifications)
+	fixed pvp dropping
+	fixed check for third party plugins (citizens, spout ..)
+	fixed a bug using explosive arrows from the EffectiveArrows plugin
+	fixed invisibility
+
 Version 2.5
 	economy support for: iConomy 4, 5, & 6+, BOSEconomy 6 & 7, Essentials Economy 2.2.17+, MultiCurrency
 	mcMMO support
@@ -125,7 +136,7 @@ Version 2.0
     Bugfixes 
 
 Version 1.1
-    Players can now bin their souls by right clicking a shrine. /res will then work everywhere and teleport them to the shrine (if they are dead)
+    Players can now bind their souls by right clicking a shrine. /res will then work everywhere and teleport them to the shrine (if they are dead)
     Ghosts can't be attacked by players and players not by ghosts
     Ghosts can't interact with blocks (they are still able to use doors, buttons and levers) 
 
