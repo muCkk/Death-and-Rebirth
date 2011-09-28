@@ -143,12 +143,14 @@ public class PListener extends PlayerListener {
 				event.setRespawnLocation(corpse);
 				if (nearestShrine != null) giveGhostCompass(player, nearestShrine);
 			}
-			plugin.message.send(player, Messages.playerDied);	
+			plugin.message.send(player, Messages.playerDied);
 	//  spout related
 			if (config.getBoolean(CFG.SPOUT_ENABLED)) {
 				plugin.darSpout.setDeathOptions(player, config.getString(CFG.GHOST_SKIN));
 			}
 			ghosts.setDisplayName(player, true);
+		// invisibility
+			if (config.getBoolean(CFG.INVISIBILITY)) ghosts.vanish(player);
 		}
 	}
 	
