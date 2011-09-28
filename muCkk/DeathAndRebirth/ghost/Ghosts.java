@@ -10,6 +10,7 @@ import muCkk.DeathAndRebirth.config.Config;
 import muCkk.DeathAndRebirth.messages.Errors;
 import muCkk.DeathAndRebirth.messages.Messages;
 import muCkk.DeathAndRebirth.otherPlugins.Perms;
+import net.minecraft.server.Packet201PlayerInfo;
 import net.minecraft.server.Packet20NamedEntitySpawn;
 import net.minecraft.server.Packet29DestroyEntity;
 
@@ -161,18 +162,12 @@ public class Ghosts {
 		save();
 		
 	// drop-management
-		if (!config.getBoolean(CFG.DROPPING)) {
+		if (!config.getBoolean(CFG.DROPPING) || Perms.hasPermission(player, "dar.nodrop") || config.getBoolean(CFG.PVP_DROP)) {
 			dardrops.put(player, inv);  
 		}
-		else if(Perms.hasPermission(player, "dar.nodrop")) {
-			dardrops.put(player, inv);
-		}
-		
-	// change the displayname
-//		setDisplayName(player, true);
 		
 	// invisibility
-		if (config.getBoolean(CFG.INVISIBILITY)) vanish(player);
+	//	if (config.getBoolean(CFG.INVISIBILITY)) vanish(player);
 		
 	// spout related
 		if (config.getBoolean(CFG.SPOUT_ENABLED)) {
@@ -236,38 +231,69 @@ public class Ghosts {
 						e.printStackTrace();
 					}
 					
-					if (!config.getBoolean(CFG.DROPPING)) dardrops.givePlayerInv(player);
-					else if (Perms.hasPermission(player, "dar.nodrop"))	dardrops.givePlayerInv(player);
+					if (!config.getBoolean(CFG.DROPPING) || Perms.hasPermission(player, "dar.nodrop") || config.getBoolean(CFG.PVP_DROP)) dardrops.givePlayerInv(player);
 				}
 			}.start();
-		
 	}
 	
-	public void vanish(Player vanishingPlayer) {
-		Player[] onlinePlayers = vanishingPlayer.getServer().getOnlinePlayers();
-		for (Player otherPlayer : onlinePlayers) {
-			if (otherPlayer == vanishingPlayer) continue;
-			// reveal other ghosts
-			if (isGhost(otherPlayer)) {
-				((CraftPlayer) vanishingPlayer).getHandle().netServerHandler.sendPacket(new Packet20NamedEntitySpawn(( (CraftPlayer) otherPlayer).getHandle()));
-				continue;
+	public void vanish(final Player vanishingPlayer) {
+		plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+			
+			@Override
+			public void run() {
+				Player[] onlinePlayers = vanishingPlayer.getServer().getOnlinePlayers();
+				for (Player otherPlayer : onlinePlayers) {
+					if (otherPlayer == vanishingPlayer) continue;
+					// reveal other ghosts
+					if (isGhost(otherPlayer)) {
+						((CraftPlayer) vanishingPlayer).getHandle().netServerHandler.sendPacket(new Packet20NamedEntitySpawn(( (CraftPlayer) otherPlayer).getHandle()));
+						((CraftPlayer) vanishingPlayer).getHandle().netServerHandler.sendPacket(new Packet201PlayerInfo(otherPlayer.getName(), true, 1));
+						continue;
+					}
+					// hide ghost from living players
+					((CraftPlayer) otherPlayer).getHandle().netServerHandler.sendPacket(new Packet29DestroyEntity(((CraftPlayer) vanishingPlayer).getEntityId()));
+					((CraftPlayer) otherPlayer).getHandle().netServerHandler.sendPacket(new Packet201PlayerInfo(vanishingPlayer.getName(), false, 0));
+				}
 			}
-			// hide ghost from living players
-			((CraftPlayer) otherPlayer).getHandle().netServerHandler.sendPacket(new Packet29DestroyEntity(((CraftPlayer) vanishingPlayer).getEntityId()));
+		}, 20L);	
+	}
+	
+	private void unvanish(final Player appearingPlayer) {
+			plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+				
+				@Override
+				public void run() {
+					Player[] onlinePlayers = appearingPlayer.getServer().getOnlinePlayers();
+					for (Player otherPlayer : onlinePlayers) {
+						if (otherPlayer == appearingPlayer) continue;
+						// hide other ghosts
+						if (isGhost(otherPlayer)) {
+							((CraftPlayer) appearingPlayer).getHandle().netServerHandler.sendPacket(new Packet29DestroyEntity(((CraftPlayer) otherPlayer).getEntityId()));
+							((CraftPlayer) appearingPlayer).getHandle().netServerHandler.sendPacket(new Packet201PlayerInfo(otherPlayer.getName(), false, 0));
+							continue;
+						}
+						// reveal player for others
+						((CraftPlayer) otherPlayer).getHandle().netServerHandler.sendPacket(new Packet20NamedEntitySpawn(( (CraftPlayer) appearingPlayer).getHandle()));
+						((CraftPlayer) otherPlayer).getHandle().netServerHandler.sendPacket(new Packet201PlayerInfo(appearingPlayer.getName(), true, 1));
+					}
+				}
+			}, 20L);		
+	}
+	
+	public void showGhosts(final Player admin) {
+		Player[] onlinePlayers = admin.getServer().getOnlinePlayers();
+		for (Player ghost : onlinePlayers) {
+			if (!isGhost(ghost)) continue;
+			((CraftPlayer) admin).getHandle().netServerHandler.sendPacket(new Packet20NamedEntitySpawn(( (CraftPlayer) ghost).getHandle()));
+			((CraftPlayer) admin).getHandle().netServerHandler.sendPacket(new Packet201PlayerInfo(ghost.getName(), true, 1));
 		}
 	}
-	
-	private void unvanish(Player appearingPlayer) {
-		Player[] onlinePlayers = appearingPlayer.getServer().getOnlinePlayers();
-		for (Player otherPlayer : onlinePlayers) {
-			if (otherPlayer == appearingPlayer) continue;
-			// hide other ghosts
-			if (isGhost(otherPlayer)) {
-				((CraftPlayer) appearingPlayer).getHandle().netServerHandler.sendPacket(new Packet29DestroyEntity(((CraftPlayer) otherPlayer).getEntityId()));
-				continue;
-			}
-			// reveal player for others
-			((CraftPlayer) otherPlayer).getHandle().netServerHandler.sendPacket(new Packet20NamedEntitySpawn(( (CraftPlayer) appearingPlayer).getHandle()));
+	public void hideGhosts(final Player admin) {
+		Player[] onlinePlayers = admin.getServer().getOnlinePlayers();
+		for (Player ghost : onlinePlayers) {
+			if (!isGhost(ghost)) continue;
+			((CraftPlayer) admin).getHandle().netServerHandler.sendPacket(new Packet29DestroyEntity(((CraftPlayer) ghost).getEntityId()));
+			((CraftPlayer) admin).getHandle().netServerHandler.sendPacket(new Packet201PlayerInfo(ghost.getName(), false, 0));
 		}
 	}
 	
