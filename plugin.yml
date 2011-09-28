@@ -1,6 +1,6 @@
 name: Death and Rebirth
 main: muCkk.DeathAndRebirth.DAR
-version: 2.5
+version: 2.5.1
 author: muCkk
 commands:
     rebirth:
@@ -21,9 +21,9 @@ permissions:
         descriptopn: Gives access to all plugin functions
         children:
             dar.res: true
-            dar.ignore: true
-            dar.nodrop: true
-            dar.admin: true
+            dar.ignore: false
+            dar.nodrop: false
+            dar.admin: false
     dar.res:
         description: Allows you to use resurrection
         default: true
