@@ -35,11 +35,15 @@ public class Perms {
 		
 	// Permissions 3.1.6
 		if (permissionHandler != null) {
-			if (permissionHandler.has(player, perm)) return true;
+			if (permissionHandler.has(player, perm)) {
+				return true;
+			}
 		}
 		
 	// OP system
-		if(perm.equalsIgnoreCase("dar.admin") && player.isOp()) return true;
+		if(perm.equalsIgnoreCase("dar.admin") && player.isOp()) {
+			return true;
+		}
 		
 	// default
 		return false;
