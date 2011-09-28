@@ -26,7 +26,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.util.config.Configuration;
 
-import com.citizens.npcs.NPCManager;
+import net.citizensnpcs.api.CitizensManager;
 
 public class EListener extends EntityListener {
 
@@ -65,8 +65,7 @@ public class EListener extends EntityListener {
 			return;
 		}
 	// check for ignore	
-		if (Perms.hasPermission(player, "dar.ignore") || !Perms.hasPermission(player, "dar.res")) {
-			System.out.println("permissions fail");
+		if (Perms.hasPermission(player, "dar.ignore")) {
 			return;
 		 }
 		
@@ -98,12 +97,7 @@ public class EListener extends EntityListener {
 				 
 				 player.getWorld().dropItemNaturally(player.getLocation(), droppedItem);
 				 inv.remove(droppedItem);
-				 drops.clear();
-//				 for (int i=0; i<drops.size(); i++) {
-//					 if (i==nr) continue;
-//					 drops.remove(i);
-//				 }
-				 
+				 drops.clear();				 
 				 ghosts.died(player, inv);
 				 return;
 			 }
@@ -210,8 +204,7 @@ public class EListener extends EntityListener {
 	 * Protects shrines from explosions
 	 */
 	public void onEntityExplode(EntityExplodeEvent event) {
-        Entity entity = event.getEntity();
-		String shrine = shrines.getClose(entity.getLocation());
+		String shrine = shrines.getClose(event.getLocation());
 		if (shrine != null) {
 			event.setCancelled(true);
 		}
@@ -220,7 +213,7 @@ public class EListener extends EntityListener {
 	
 // *** private methods *******************************************************************
 	private boolean checkForNPC(Entity entity) {
-		if(NPCManager.isNPC(entity)) {
+		if(CitizensManager.isNPC(entity)) {
 			return true;
 		}
 		// *** checking all names for evil npcs ... ***
