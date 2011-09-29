@@ -152,7 +152,7 @@ public class Config {
 		return yml.getBoolean(path, false);
 	}
 	public String getString(CFG node) {
-		return yml.getString(node.toString());
+		return yml.getString(node.toString(), node.s());
 	}
 	public double getDouble(CFG node) {
 		return yml.getDouble(node.toString(), node.d());
