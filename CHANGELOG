@@ -1,3 +1,6 @@
+Version 2.5.1b
+	fixed a spout related bug
+
 Version 2.5.1
 	Craftbukkit 1185 support
 	added /dar showghosts, /dar hideghosts
