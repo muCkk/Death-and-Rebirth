@@ -9,6 +9,7 @@ import muCkk.DeathAndRebirth.messages.Errors;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
 import org.bukkit.util.config.Configuration;
 
@@ -53,10 +54,39 @@ public class Graves {
 
 	public void addGrave(String name, Block block, String l1, String world) {		
 		if (config.getBoolean(CFG.GRAVE_SIGNS)) placeSign(block, l1, name);
+		int x = block.getX();
+		int y = block.getY();
+		int z = block.getZ();
+		Block otherBlock;
 		
-		yml.setProperty("graves." +world +"." +name+".x", block.getX());
-		yml.setProperty("graves." +world +"." +name+".y", block.getY());
-		yml.setProperty("graves." +world +"." +name+".z", block.getZ());
+		// water
+		if (block.getTypeId() == 8 || block.getTypeId() == 9) {
+			otherBlock = block.getRelative(BlockFace.UP);
+			while (otherBlock.getTypeId() == 8 || otherBlock.getTypeId() == 9) {
+				otherBlock = block.getRelative(BlockFace.UP);
+			}
+			if (otherBlock.getTypeId() == 0) {
+				otherBlock.setTypeId(3);
+				x = otherBlock.getX();
+				y = otherBlock.getY();
+				z = otherBlock.getZ();
+			}
+		}
+		
+		// explosion
+		if (block.getTypeId() == 0) {
+			otherBlock = block.getRelative(BlockFace.DOWN);
+			while (otherBlock.getTypeId() == 0) {
+				otherBlock = block.getRelative(BlockFace.DOWN);
+			}
+			x = otherBlock.getX();
+			y = otherBlock.getY();
+			z = otherBlock.getZ();
+		}
+			
+		yml.setProperty("graves." +world +"." +name+".x", x);
+		yml.setProperty("graves." +world +"." +name+".y", y);
+		yml.setProperty("graves." +world +"." +name+".z", z);
 		yml.setProperty("graves." +world +"." +name+".l1", l1);
 		yml.setProperty("graves." +world +"." +name+".l2", name);
 		
