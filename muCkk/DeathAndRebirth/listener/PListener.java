@@ -235,7 +235,18 @@ public class PListener extends PlayerListener {
 	// *** ghost interactions ***
 		if (ghosts.isGhost(player)) {
 			Block block = event.getClickedBlock();
-			
+		// chest, furnace
+			try {
+				Material type = block.getType(); 			
+				if(			type.equals(Material.FURNACE)
+						||	type.equals(Material.CHEST)) {
+					plugin.message.send(player, Messages.cantDoThat);
+					event.setCancelled(true);
+					return;
+				}
+			}catch (NullPointerException e) {
+				// Material = null
+			}
 		// resurrection
 			if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
 				Location locDeath = ghosts.getLocation(player);
@@ -271,17 +282,6 @@ public class PListener extends PlayerListener {
 			if (config.getBoolean(CFG.BLOCK_GHOST_INTERACTION)) {
 				event.setCancelled(true);
 				return;
-			}
-			try {
-				Material type = block.getType(); 			
-				if(			type.equals(Material.FURNACE)
-						||	type.equals(Material.CHEST)) {
-					plugin.message.send(player, Messages.cantDoThat);
-					event.setCancelled(true);
-					return;
-				}
-			}catch (NullPointerException e) {
-				// Material = null
 			}
 		}
 	// *** selection mode for creating shrines ****************
