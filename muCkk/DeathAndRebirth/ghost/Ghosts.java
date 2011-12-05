@@ -43,6 +43,7 @@ public class Ghosts {
 		this.ghostsFile = new File(this.dir+"/ghosts");
 		this.config = config;
 		this.graves = graves;
+		graves.setGhosts(this);
 		this.isRessing = new HashMap<String, Boolean>();
 		this.dardrops = new Drops(this.dir, config);
 		load();
@@ -145,10 +146,10 @@ public class Ghosts {
 	 * Manages the death of players.
 	 * @param player which died
 	 */
-	public void died(Player player, PlayerInventory inv) {
-		String pname = player.getName();
-		String world = player.getWorld().getName();
-		Block block = player.getWorld().getBlockAt(player.getLocation());
+	public void died(Player player, PlayerInventory inv, boolean pvp_death) { 
+		final String pname = player.getName();
+		final String world = player.getWorld().getName();
+		final Block block = player.getWorld().getBlockAt(player.getLocation());
 	
 		yml.setProperty("players."+pname +"."+world +".dead", true);
 	// lightning
@@ -156,14 +157,14 @@ public class Ghosts {
 			player.getWorld().strikeLightningEffect(player.getLocation());
 		}
 	// saving location of death	
-		yml.setProperty("players."+pname +"."+world +".location.x", block.getX());
-		yml.setProperty("players."+pname +"."+world +".location.y", block.getY());
-		yml.setProperty("players."+pname +"."+world +".location.z", block.getZ());		
-		save();
+		// moved
 		
 	// drop-management
-		if (!config.getBoolean(CFG.DROPPING) || Perms.hasPermission(player, "dar.nodrop") || config.getBoolean(CFG.PVP_DROP)) {
+		if (!config.getBoolean(CFG.DROPPING) || Perms.hasPermission(player, "dar.nodrop") || pvp_death) {
 			dardrops.put(player, inv);  
+		}
+		else {
+			dardrops.remove(player);
 		}
 		
 	// invisibility
@@ -175,11 +176,27 @@ public class Ghosts {
 		}
 
 	// grave related
-		String l1 = "R.I.P";
-		graves.addGrave(pname,block, l1, world);
+		final String l1 = "R.I.P";
+		new Thread() {
+			@Override
+			public void run() {				
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					System.out.println("[Death and Rebirth] Error: Could not sleep: explosion.");
+					e.printStackTrace();
+				}
+				graves.addGrave(pname,block, l1, world);
+			}
+		}.start();
 		save();
 	}
-	
+	public void setLocationOfDeath(Block block, String pname) {
+		yml.setProperty("players."+pname +"."+block.getWorld().getName() +".location.x", block.getX());
+		yml.setProperty("players."+pname +"."+block.getWorld().getName() +".location.y", block.getY());
+		yml.setProperty("players."+pname +"."+block.getWorld().getName() +".location.z", block.getZ());		
+		yml.save();
+	}
 	public String getGhostDisplayName(Player player) {
 		return config.getString(CFG.GHOST_NAME).replace("%player%", player.getName()).replace("%displayname%", player.getDisplayName());
 	}
@@ -192,10 +209,6 @@ public class Ghosts {
 		String world = player.getWorld().getName();
 		
 		player.setCompassTarget(player.getWorld().getSpawnLocation());
-		
-		yml.setProperty("players."+pname +"."+world +".dead", false);
-		graves.deleteGrave(player.getWorld().getBlockAt(getLocation(player)), pname, world);
-		plugin.message.send(player, Messages.reborn);
 		
 	// check if lightning is enabled
 		if (config.getBoolean(CFG.LIGHTNING_REBIRTH)) {
@@ -212,28 +225,32 @@ public class Ghosts {
 		}
 		save();
 		
-			new Thread() {
-				@Override
-				public void run() {				
-					try {
-						Thread.sleep(500);
-					} catch (InterruptedException e) {
-						System.out.println("[Death and Rebirth] Error: Could not sleep while giving drops.");
-						e.printStackTrace();
-					}
-					
-					player.getInventory().clear();
-					
-					try {
-						Thread.sleep(500);
-					} catch (InterruptedException e) {
-						System.out.println("[Death and Rebirth] Error: Could not sleep while giving drops.");
-						e.printStackTrace();
-					}
-					
-					if (!config.getBoolean(CFG.DROPPING) || Perms.hasPermission(player, "dar.nodrop") || config.getBoolean(CFG.PVP_DROP)) dardrops.givePlayerInv(player);
+		new Thread() {
+			@Override
+			public void run() {				
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					System.out.println("[Death and Rebirth] Error: Could not sleep while giving drops.");
+					e.printStackTrace();
 				}
-			}.start();
+				
+				player.getInventory().clear();
+				
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					System.out.println("[Death and Rebirth] Error: Could not sleep while giving drops.");
+					e.printStackTrace();
+				}
+				
+				if (!config.getBoolean(CFG.DROPPING) || Perms.hasPermission(player, "dar.nodrop") || config.getBoolean(CFG.PVP_DROP)) dardrops.givePlayerInv(player);
+			}
+		}.start();
+		
+		yml.setProperty("players."+pname +"."+world +".dead", false);
+		graves.deleteGrave(player.getWorld().getBlockAt(getLocation(player)), pname, world);
+		plugin.message.send(player, Messages.reborn);
 	}
 	
 	public void vanish(final Player vanishingPlayer) {
@@ -373,6 +390,7 @@ public class Ghosts {
 				int time = config.getInt(CFG.TIME);
 				int x = player.getLocation().getBlockX(),
 					z = player.getLocation().getBlockZ();
+				isRessing.put(name, true);
 				if (config.getBoolean(CFG.SPOUT_ENABLED)) {
 					plugin.darSpout.playResSound(player, config.getString(CFG.RES_SOUND));
 				}
@@ -390,6 +408,7 @@ public class Ghosts {
 					}
 					counter++;
 				}
+				isRessing.remove(name);
 				if(config.getBoolean(CFG.NEED_ITEM)) {
 					ItemStack costStack = new ItemStack(itemID);
 					costStack.setAmount(amount);
