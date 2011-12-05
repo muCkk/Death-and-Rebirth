@@ -100,6 +100,9 @@ public class DAR extends JavaPlugin {
 		pm.registerEvent(Type.PLUGIN_DISABLE, serverListener, Priority.Monitor, this);
 	}
 	
+	public boolean checkAdminPerms() {
+		return config.getBoolean(CFG.ADMIN_PERMS);
+	}
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
 		Player player = null;
@@ -261,6 +264,7 @@ public class DAR extends JavaPlugin {
 					return true;
 				}
 				shrines.setSpawn(name, player);
+				message.sendChat(player, Messages.shrineSpawnAdded);
 				return true;
 			}
 		// removing shrines
