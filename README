@@ -7,23 +7,26 @@ http://dev.bukkit.org/server-mods/death-and-rebirth/
 
 Dependencies:
 --------------------
-Bukkit v841
+Bukkit v953
 http://bukkit.org/
 
-CraftBukkit v1060
+CraftBukkit v1337
 http://bukkit.org/
 
-Citizens v1.0.9d
+Citizens v1.1.2
 http://dev.bukkit.org/server-mods/citizens/
 
-iConomy v6.0.4b
+iConomy v6.0.8b
 http://dev.bukkit.org/server-mods/iconomy/
 
-mcMMO v1.1.14
+mcMMO v1.2.04
 http://dev.bukkit.org/server-mods/mcmmo/
+
+PermissionsEX v1.16
+http://forums.bukkit.org/threads/1337.18140/
 
 Permissions v3.1.6
 http://forums.bukkit.org/threads/18430/
 
-Spout API v131 
+Spout API v277 
 http://dev.bukkit.org/server-mods/spout/

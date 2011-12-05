@@ -1,3 +1,20 @@
+Version 2.5.3
+	added a return message for /shrine setspawn
+	fixed errors related to economy plugins
+	fixed an error related to citizens
+	fixed a problem which appeared when corpse spawning is enabled
+	fixed players having superpermbridge.* being ignored
+	fixed an item dupe bug
+
+Version 2.5.2
+	CB 1337
+	ops can edit shrines
+	shrine protection can be turned off
+	fixed ghosts can open chests
+	placing of signs changed when dying in water (above the water) or by an explosion (at the bottom of the crater)
+    fix (more a workaround) for the permissions problem: you can configure if admins with the * permission are ignored and have nodrop or not
+	fixed a nullpointer while resurrecting another player
+
 Version 2.5.1b
 	fixed a spout related bug
 

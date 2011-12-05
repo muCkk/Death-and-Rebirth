@@ -1,6 +1,6 @@
 name: Death and Rebirth
 main: muCkk.DeathAndRebirth.DAR
-version: 2.5.1b
+version: 2.5.3
 author: muCkk
 commands:
     rebirth:
