@@ -19,6 +19,7 @@ public class Graves {
 	private File graveFile;
 	private Configuration yml;
 	private Config config;
+	private Ghosts ghosts;
 	
 	public Graves(String dir, Config config) {
 		this.dir = dir;
@@ -51,37 +52,53 @@ public class Graves {
 	public void save() {
 		yml.save();
 	}
-
+	public void setGhosts(Ghosts ghosts) {
+		this.ghosts = ghosts;
+	}
 	public void addGrave(String name, Block block, String l1, String world) {		
-		if (config.getBoolean(CFG.GRAVE_SIGNS)) placeSign(block, l1, name);
+//		if (config.getBoolean(CFG.GRAVE_SIGNS)) placeSign(block, l1, name);
 		int x = block.getX();
 		int y = block.getY();
 		int z = block.getZ();
 		Block otherBlock;
-		
+		boolean placed = false;
 		// water
 		if (block.getTypeId() == 8 || block.getTypeId() == 9) {
 			otherBlock = block.getRelative(BlockFace.UP);
-			while (otherBlock.getTypeId() == 8 || otherBlock.getTypeId() == 9) {
-				otherBlock = block.getRelative(BlockFace.UP);
+			while (otherBlock.getTypeId() != 0) {
+				otherBlock = otherBlock.getRelative(BlockFace.UP);
 			}
-			if (otherBlock.getTypeId() == 0) {
-				otherBlock.setTypeId(3);
-				x = otherBlock.getX();
-				y = otherBlock.getY();
-				z = otherBlock.getZ();
+			otherBlock.getRelative(BlockFace.DOWN).setTypeId(3);
+			x = otherBlock.getX();
+			y = otherBlock.getY();
+			z = otherBlock.getZ();
+			if (config.getBoolean(CFG.GRAVE_SIGNS)) {
+				placeSign(otherBlock, l1, name);
+				ghosts.setLocationOfDeath(otherBlock, name);
+				placed = true;
 			}
 		}
+//		else if (config.getBoolean(CFG.GRAVE_SIGNS)) placeSign(block, l1, name);
 		
 		// explosion
-		if (block.getTypeId() == 0) {
+		if (block.getRelative(BlockFace.DOWN).getTypeId() == 0) {
 			otherBlock = block.getRelative(BlockFace.DOWN);
-			while (otherBlock.getTypeId() == 0) {
-				otherBlock = block.getRelative(BlockFace.DOWN);
+			while (otherBlock.getRelative(BlockFace.DOWN).getTypeId() == 0) {
+				otherBlock = otherBlock.getRelative(BlockFace.DOWN);
 			}
 			x = otherBlock.getX();
 			y = otherBlock.getY();
 			z = otherBlock.getZ();
+			if (config.getBoolean(CFG.GRAVE_SIGNS)) {
+				placeSign(otherBlock, l1, name);
+				ghosts.setLocationOfDeath(otherBlock, name);
+				placed= true;
+			}
+		}
+		
+		if (config.getBoolean(CFG.GRAVE_SIGNS) && !placed) {
+			placeSign(block, l1, name);
+			ghosts.setLocationOfDeath(block, name);
 		}
 			
 		yml.setProperty("graves." +world +"." +name+".x", x);
@@ -121,7 +138,11 @@ public class Graves {
 	
 	private void removeSign(Block block, String name, String worldName) {
 		int id = yml.getInt("graves."+worldName+"."+name+".blockid", 0);
-		block.setTypeId(id);
+		int x =  yml.getInt("graves."+worldName+"."+name+".x", block.getX());
+		int y =  yml.getInt("graves."+worldName+"."+name+".y", block.getY());
+		int z =  yml.getInt("graves."+worldName+"."+name+".z", block.getZ());
+//		block.setTypeId(id);
+		block.getWorld().getBlockAt(x, y, z).setTypeId(id);
 		if (id == 43 || id == 44 || id == 35) block.setData((byte)yml.getInt("graves."+worldName+"."+name+".blockdata", 0));
 	}
 	
