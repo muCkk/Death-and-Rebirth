@@ -41,6 +41,8 @@ public enum CFG {
 		SHRINE_ONLY				(false),
 		VERSION_CHECK			(true),
 		VOID_DEATH				(true),
+		ADMIN_PERMS				(false),
+		SHRINE_PROTECTION		(true),
 		
 		// Spout
 		GHOST_SOUND_EFFECTS		(true),

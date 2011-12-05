@@ -1,25 +1,26 @@
 package muCkk.DeathAndRebirth.config;
 
-import org.bukkit.util.config.Configuration;
 
 import java.io.*;
 import java.util.HashMap;
 
-public class CommentedConfiguration extends Configuration {
+import org.bukkit.util.config.Configuration;
+
+public class CommentedConfiguration extends Configuration  {
 
     private HashMap<String, String> comments;
     private File file;
 
     public CommentedConfiguration(File file) {
         super(file);
+    	
         comments = new HashMap<String, String>();
         this.file = file;
     }
 
-    @Override
     public boolean save() {
         boolean saved = super.save();
-    
+    	
         if (!comments.isEmpty() && saved) {
             String[] yamlContents =
                     convertFileToString(file).split("[" + System.getProperty("line.separator") + "]");
