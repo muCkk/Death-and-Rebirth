@@ -100,7 +100,7 @@ public class EListener extends EntityListener {
 				 player.getWorld().dropItemNaturally(player.getLocation(), droppedItem);
 				 inv.remove(droppedItem);
 				 drops.clear();				 
-				 ghosts.died(player, inv);
+				 ghosts.died(player, inv, true);
 				 return;
 			 }
 		}
@@ -108,10 +108,10 @@ public class EListener extends EntityListener {
 		// dropping OFF   OR    dar.nodrop 
 		if (!config.getBoolean(CFG.DROPPING) || Perms.hasPermission(player, "dar.nodrop")) {
 			drops.clear();
-			ghosts.died(player, inv);
+			ghosts.died(player, inv, false);
 			return;
 		}
-		ghosts.died(player, inv);
+		ghosts.died(player, inv, false);
 	}
 	
 	/**
@@ -226,17 +226,27 @@ public class EListener extends EntityListener {
 		try {
             yml = new Configuration(namesFile);
             yml.load();
-        
-            String [] evilNames = yml.getString("evil.misc.names").split(",");
-            String [] pirateNames = yml.getString("pirates.misc.names").split(",");
             
-            for (String name : evilNames) {
-				if (player.equalsIgnoreCase(name)) return true;
+            String [] evilNames = null;
+            String [] pirateNames = null;
+            
+            try {
+	            evilNames = yml.getString("evil.misc.names").split(",");
+	            pirateNames = yml.getString("pirates.misc.names").split(",");
+            }catch (NullPointerException e) {
+				// TODO ! nullpointer pirate names
 			}
             
-            for (String name : pirateNames) {
-				if (player.equalsIgnoreCase(name)) return true;
-			}
+            if(evilNames != null) {
+		        for (String name : evilNames) {
+					if (player.equalsIgnoreCase(name)) return true;
+				}
+            }
+            if(pirateNames != null)  {
+	            for (String name : pirateNames) {
+					if (player.equalsIgnoreCase(name)) return true;
+				}
+            }
 		} catch (Exception e) {
         	System.out.println("[Death and Rebirth] Error while checking for NPCs");
         	e.printStackTrace();
