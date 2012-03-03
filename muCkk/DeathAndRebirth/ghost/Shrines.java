@@ -1,63 +1,70 @@
 package muCkk.DeathAndRebirth.ghost;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import muCkk.DeathAndRebirth.DAR;
-import muCkk.DeathAndRebirth.config.CFG;
-import muCkk.DeathAndRebirth.config.Config;
-import muCkk.DeathAndRebirth.messages.Errors;
 import muCkk.DeathAndRebirth.messages.Messages;
 
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.util.config.Configuration;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class Shrines {
 	
-	private String shrinesDir;
-	private File file; 
-	private Configuration yml ;
-	private Config config;
+	private FileConfiguration customConfig = null;
+	private File shrinesFile; 
 	private DAR plugin;
 	private Location selection1, selection2;
 	private boolean selectionMode;
 	private String selectionPlayer;
 	
-	public Shrines(DAR plugin, String dir, Config config) {
+	public Shrines(DAR plugin, String dir) {
 		this.plugin = plugin;
-		this.shrinesDir = dir;
-		this.config = config;
-		file = new File(dir+"/shrines.yml");
+		shrinesFile = new File(dir+"/shrines.yml");
 		selectionMode = false;
-		load();
 	}
 	
-	public void save() {
-		yml.save();
+	public void reloadCustomConfig() {
+	    if (shrinesFile == null) {
+	    	shrinesFile = new File(plugin.getDataFolder(), "customConfig.yml");
+	    }
+	    customConfig = YamlConfiguration.loadConfiguration(shrinesFile);
+	 
+	    // Look for defaults in the jar
+	    InputStream defConfigStream = plugin.getResource("customConfig.yml");
+	    if (defConfigStream != null) {
+	        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
+	        customConfig.setDefaults(defConfig);
+	    }
 	}
 	
-	public void load() {
-		if(!file.exists()){
-            try {
-            	new File(shrinesDir).mkdir();
-                file.createNewFile(); 
-            } catch (Exception ex) {
-            	Errors.shrinesLoadError();
-            	ex.printStackTrace();
-            }
-        } else {
-        	Errors.shrinesLoaded();
-        }
-		try {
-            yml = new Configuration(file);
-            yml.load();
-        } catch (Exception e) {
-        	Errors.shrinesLoadError();
-        	e.printStackTrace();
-        }
+	public FileConfiguration getCustomConfig() {
+	    if (customConfig == null) {
+	        reloadCustomConfig();
+	    }
+	    return customConfig;
+	}
+	
+	public void saveCustomConfig() {
+	    if (customConfig == null || shrinesFile == null) {
+	    return;
+	    }
+	    try {
+	        customConfig.save(shrinesFile);
+	    } catch (IOException ex) {
+	        Logger.getLogger(JavaPlugin.class.getName()).log(Level.SEVERE, "Could not save config to " + shrinesFile, ex);
+	    }
 	}
 	
 	/**
@@ -84,17 +91,17 @@ public class Shrines {
 		else		{ minZ = z2; maxZ = z1;	}
 		
 		// writing the information
-		yml.setProperty("shrines." +worldName +"." +name+".max.x", maxX);
-		yml.setProperty("shrines." +worldName +"." +name+".max.y", maxY);
-		yml.setProperty("shrines." +worldName +"." +name+".max.z", maxZ);
-		yml.setProperty("shrines." +worldName +"." +name+".min.x", minX);
-		yml.setProperty("shrines." +worldName +"." +name+".min.y", minY);
-		yml.setProperty("shrines." +worldName +"." +name+".min.z", minZ);
-		yml.setProperty("shrines." +worldName +"." +name+".binding", "true");
+		getCustomConfig().set("shrines." +worldName +"." +name+".max.x", maxX);
+		getCustomConfig().set("shrines." +worldName +"." +name+".max.y", maxY);
+		getCustomConfig().set("shrines." +worldName +"." +name+".max.z", maxZ);
+		getCustomConfig().set("shrines." +worldName +"." +name+".min.x", minX);
+		getCustomConfig().set("shrines." +worldName +"." +name+".min.y", minY);
+		getCustomConfig().set("shrines." +worldName +"." +name+".min.z", minZ);
+		getCustomConfig().set("shrines." +worldName +"." +name+".binding", "true");
 		
 		selection1 = null;
 		selection2 = null;
-		yml.save();
+		saveCustomConfig();
 		return true;
 	}
 	
@@ -104,9 +111,9 @@ public class Shrines {
 			y = player.getLocation().getBlockY(),
 			z = player.getLocation().getBlockZ();
 		
-		yml.setProperty("shrines." +worldName +"." +shrineName+".spawn.z", z);
-		yml.setProperty("shrines." +worldName +"." +shrineName+".spawn.y", y);
-		yml.setProperty("shrines." +worldName +"." +shrineName+".spawn.x", x);
+		getCustomConfig().set("shrines." +worldName +"." +shrineName+".spawn.z", z);
+		getCustomConfig().set("shrines." +worldName +"." +shrineName+".spawn.y", y);
+		getCustomConfig().set("shrines." +worldName +"." +shrineName+".spawn.x", x);
 	}
 	
 	/**
@@ -117,30 +124,30 @@ public class Shrines {
 	public void removeShrine(String name, Player player) {
 		String worldName = player.getWorld().getName();
 		
-		yml.removeProperty("shrines." +worldName +"." +name);
-		yml.save();
+		getCustomConfig().set("shrines." +worldName +"." +name, null);
+		saveCustomConfig();
 	}
 	
 	public void update(Player player, String name) {
 		World world = player.getWorld();
 		String worldName = world.getName();
-		if (yml.getKeys("shrines." + worldName +"." + name +"." + "tb") == null) return;
+		if (getCustomConfig().getConfigurationSection("shrines." + worldName +"." + name +"." + "tb") == null) return;
 		
-		double	minX = yml.getInt("shrines." + worldName +"." + name +"." + "tb.x", 0) - 1,
-				minY = yml.getInt("shrines." + worldName +"." + name +"." + "tb.y", 0) - 1,
-				minZ = yml.getInt("shrines." + worldName +"." + name +"." + "tb.z", 0) - 1,
-				maxX = yml.getInt("shrines." + worldName +"." + name +"." + "tb.x", 0) + 1,
-				maxY = yml.getInt("shrines." + worldName +"." + name +"." + "tb.y", 0) + 3,
-				maxZ = yml.getInt("shrines." + worldName +"." + name +"." + "tb.z", 0) + 1;
+		double	minX = getCustomConfig().getInt("shrines." + worldName +"." + name +"." + "tb.x", 0) - 1,
+				minY = getCustomConfig().getInt("shrines." + worldName +"." + name +"." + "tb.y", 0) - 1,
+				minZ = getCustomConfig().getInt("shrines." + worldName +"." + name +"." + "tb.z", 0) - 1,
+				maxX = getCustomConfig().getInt("shrines." + worldName +"." + name +"." + "tb.x", 0) + 1,
+				maxY = getCustomConfig().getInt("shrines." + worldName +"." + name +"." + "tb.y", 0) + 3,
+				maxZ = getCustomConfig().getInt("shrines." + worldName +"." + name +"." + "tb.z", 0) + 1;
 		selection1 = new Location(world, minX, minY, minZ);
 		selection2 = new Location(world, maxX, maxY, maxZ);
 		addShrine(name);
-		yml.removeProperty("shrines." + worldName +"." + name +".originalids");
-		yml.removeProperty("shrines." + worldName +"." + name +".tb");
+		getCustomConfig().set("shrines." + worldName +"." + name +".originalids", null);
+		getCustomConfig().set("shrines." + worldName +"." + name +".tb", null);
 		selection1 = null;
 		selection2 = null;
 		plugin.message.sendChat(player, Messages.update);
-		yml.save();
+		saveCustomConfig();
 	}
 	
 	/**
@@ -151,13 +158,14 @@ public class Shrines {
 	public void list(Player player, int page) {
 		String world = player.getWorld().getName();
 		try {
-			List<String> names = yml.getKeys("shrines." +world);
-			int pages = names.size()/6;
-			if(names.size()%6 != 0) pages += 1;
+			Set<String> names1 = getCustomConfig().getConfigurationSection("shrines." +world).getKeys(false);
+			List<Object> names = Arrays.asList(names1.toArray());
+			int pages = names1.size()/6;
+			if(names1.size()%6 != 0) pages += 1;
 			
 			player.sendMessage("List of shrines in world "+world +" (Page "+page+"/"+pages+")");
 			for (int i=page-1; i<page*6 && i< names.size(); i++) {
-				if (yml.getBoolean("shrines."+world+"."+names.get(i)+".binding", true)) player.sendMessage(i+1 +". "+names.get(i) +" (Soulbinding)");
+				if (getCustomConfig().getBoolean("shrines."+world+"."+names.get(i)+".binding", true)) player.sendMessage(i+1 +". "+names.get(i) +" (Soulbinding)");
 				else player.sendMessage(i+1 +". "+names.get(i));
 			}
 		}catch (NullPointerException e) {
@@ -171,7 +179,7 @@ public class Shrines {
 	 * @return
 	 */
 	public boolean exists(String name, String world) {
-		List<String> names = yml.getKeys("shrines." +world);
+		Set<String> names = getCustomConfig().getConfigurationSection("shrines." +world).getKeys(false);
 		try {
 			for (String currentName : names) {
 				if (currentName.equalsIgnoreCase(name)) return true;
@@ -192,16 +200,16 @@ public class Shrines {
 		int locX = loc.getBlockX(),
 			locY = loc.getBlockY(),
 			locZ = loc.getBlockZ();
-		List<String> names = yml.getKeys("shrines." +worldName);
+		Set<String> names = getCustomConfig().getConfigurationSection("shrines." +worldName).getKeys(false);
 		int radius = 6;
 		try {
 			for (String name : names) {
-				if (		locX < yml.getInt("shrines." +worldName +"." +name+".max.x", 0)+radius
-						&&	locX > yml.getInt("shrines." +worldName +"." +name+".min.x", 0)-radius
-						&&	locY < yml.getInt("shrines." +worldName +"." +name+".max.y", 0)+radius
-						&&	locY > yml.getInt("shrines." +worldName +"." +name+".min.y", 0)-radius
-						&&	locZ < yml.getInt("shrines." +worldName +"." +name+".max.z", 0)+radius
-						&&	locZ > yml.getInt("shrines." +worldName +"." +name+".min.z", 0)-radius) {
+				if (		locX < getCustomConfig().getInt("shrines." +worldName +"." +name+".max.x", 0)+radius
+						&&	locX > getCustomConfig().getInt("shrines." +worldName +"." +name+".min.x", 0)-radius
+						&&	locY < getCustomConfig().getInt("shrines." +worldName +"." +name+".max.y", 0)+radius
+						&&	locY > getCustomConfig().getInt("shrines." +worldName +"." +name+".min.y", 0)-radius
+						&&	locZ < getCustomConfig().getInt("shrines." +worldName +"." +name+".max.z", 0)+radius
+						&&	locZ > getCustomConfig().getInt("shrines." +worldName +"." +name+".min.z", 0)-radius) {
 					return name;
 				}
 			}
@@ -220,17 +228,17 @@ public class Shrines {
 		int x,y,z;
 		double distance = Double.MAX_VALUE;
 		String worldName = loc.getWorld().getName();
-		List<String> shrines = yml.getKeys("shrines."+worldName);
+		Set<String> shrines = getCustomConfig().getConfigurationSection("shrines."+worldName).getKeys(false);
 		Location shrineLoc, returnLoc = null;
 		
 		if (shrines == null) return null;
 		
 		for (String shrine : shrines) {
-			x = yml.getInt("shrines."+worldName+"."+shrine+"."+"min.x", 0) + 
-					( (yml.getInt("shrines."+worldName+"."+shrine+"."+"max.x", 0) - yml.getInt("shrines."+worldName+"."+shrine+"."+"min.x", 0)) / 2);
-			y = yml.getInt("shrines."+worldName+"."+shrine+"."+"min.y", 0)+2;
-			z = yml.getInt("shrines."+worldName+"."+shrine+"."+"min.z", 0) + 
-					( (yml.getInt("shrines."+worldName+"."+shrine+"."+"max.z", 0) - yml.getInt("shrines."+worldName+"."+shrine+"."+"min.z", 0)) / 2);
+			x = getCustomConfig().getInt("shrines."+worldName+"."+shrine+"."+"min.x", 0) + 
+					( (getCustomConfig().getInt("shrines."+worldName+"."+shrine+"."+"max.x", 0) - getCustomConfig().getInt("shrines."+worldName+"."+shrine+"."+"min.x", 0)) / 2);
+			y = getCustomConfig().getInt("shrines."+worldName+"."+shrine+"."+"min.y", 0)+2;
+			z = getCustomConfig().getInt("shrines."+worldName+"."+shrine+"."+"min.z", 0) + 
+					( (getCustomConfig().getInt("shrines."+worldName+"."+shrine+"."+"max.z", 0) - getCustomConfig().getInt("shrines."+worldName+"."+shrine+"."+"min.z", 0)) / 2);
 			shrineLoc = new Location(loc.getWorld(), x, y, z);
 			if(loc.distance(shrineLoc) < distance) {
 				returnLoc = shrineLoc.clone();
@@ -244,15 +252,15 @@ public class Shrines {
 		int x,y,z;
 		double distance = Double.MAX_VALUE;
 		String worldName = loc.getWorld().getName();
-		List<String> shrines = yml.getKeys("shrines."+worldName);
+		Set<String> shrines = getCustomConfig().getConfigurationSection("shrines."+worldName).getKeys(false);
 		Location shrineLoc, returnLoc = null;
 		String shrineName = "";
 		if (shrines == null) return null;
 		
 		for (String shrine : shrines) {
-			x = yml.getInt("shrines."+worldName+"."+shrine+"."+"min.x", 0) - 1;
-			y = yml.getInt("shrines."+worldName+"."+shrine+"."+"min.y", 0) + 2;
-			z = yml.getInt("shrines."+worldName+"."+shrine+"."+"min.z", 0) - 1;
+			x = getCustomConfig().getInt("shrines."+worldName+"."+shrine+"."+"min.x", 0) - 1;
+			y = getCustomConfig().getInt("shrines."+worldName+"."+shrine+"."+"min.y", 0) + 2;
+			z = getCustomConfig().getInt("shrines."+worldName+"."+shrine+"."+"min.z", 0) - 1;
 			shrineLoc = new Location(loc.getWorld(), x, y, z);
 			if(loc.distance(shrineLoc) < distance) {
 				shrineName = shrine; 
@@ -260,12 +268,12 @@ public class Shrines {
 				distance = loc.distance(shrineLoc);
 			}
 		}
-		String test = yml.getString("shrines." +worldName +"." +shrineName+".spawn.x");
+		String test = getCustomConfig().getString("shrines." +worldName +"." +shrineName+".spawn.x");
 		if(test != null) {
 			return new Location(loc.getWorld(),
-					yml.getInt("shrines."+worldName+"."+shrineName+".spawn.x", 0), 
-					yml.getInt("shrines."+worldName+"."+shrineName+".spawn.y", 0),
-					yml.getInt("shrines."+worldName+"."+shrineName+".spawn.z", 0));
+					getCustomConfig().getInt("shrines."+worldName+"."+shrineName+".spawn.x", 0), 
+					getCustomConfig().getInt("shrines."+worldName+"."+shrineName+".spawn.y", 0),
+					getCustomConfig().getInt("shrines."+worldName+"."+shrineName+".spawn.z", 0));
 		}
 		else return returnLoc;
 	}
@@ -282,12 +290,12 @@ public class Shrines {
 		int locX = loc.getBlockX(),
 			locY = loc.getBlockY(),
 			locZ = loc.getBlockZ();		
-		if (		locX <= yml.getInt("shrines." +worldName +"." +name+".max.x", 0)
-				&&	locX >= yml.getInt("shrines." +worldName +"." +name+".min.x", 0)
-				&&	locY <= yml.getInt("shrines." +worldName +"." +name+".max.y", 0)
-				&&	locY >= yml.getInt("shrines." +worldName +"." +name+".min.y", 0)
-				&&	locZ <= yml.getInt("shrines." +worldName +"." +name+".max.z", 0)
-				&&	locZ >= yml.getInt("shrines." +worldName +"." +name+".min.z", 0)) {
+		if (		locX <= getCustomConfig().getInt("shrines." +worldName +"." +name+".max.x", 0)
+				&&	locX >= getCustomConfig().getInt("shrines." +worldName +"." +name+".min.x", 0)
+				&&	locY <= getCustomConfig().getInt("shrines." +worldName +"." +name+".max.y", 0)
+				&&	locY >= getCustomConfig().getInt("shrines." +worldName +"." +name+".min.y", 0)
+				&&	locZ <= getCustomConfig().getInt("shrines." +worldName +"." +name+".max.z", 0)
+				&&	locZ >= getCustomConfig().getInt("shrines." +worldName +"." +name+".min.z", 0)) {
 			return true;
 		}		
 		return false;
@@ -304,16 +312,16 @@ public class Shrines {
 		int locX = loc.getBlockX(),
 			locY = loc.getBlockY(),
 			locZ = loc.getBlockZ();
-		List<String> names = yml.getKeys("shrines." +worldName);
-		int radius = config.getInt(CFG.SHRINE_RADIUS);
+		Set<String> names = getCustomConfig().getConfigurationSection("shrines." +worldName).getKeys(false);
+		int radius = plugin.getConfig().getInt("SHRINE_RADIUS");
 		try {
 			for (String name : names) {
-				if (		locX < yml.getInt("shrines." +worldName +"." +name+".max.x", 0)+radius
-						&&	locX > yml.getInt("shrines." +worldName +"." +name+".min.x", 0)-radius
-						&&	locY < yml.getInt("shrines." +worldName +"." +name+".max.y", 0)+radius
-						&&	locY > yml.getInt("shrines." +worldName +"." +name+".min.y", 0)-radius
-						&&	locZ < yml.getInt("shrines." +worldName +"." +name+".max.z", 0)+radius
-						&&	locZ > yml.getInt("shrines." +worldName +"." +name+".min.z", 0)-radius) {
+				if (		locX < getCustomConfig().getInt("shrines." +worldName +"." +name+".max.x", 0)+radius
+						&&	locX > getCustomConfig().getInt("shrines." +worldName +"." +name+".min.x", 0)-radius
+						&&	locY < getCustomConfig().getInt("shrines." +worldName +"." +name+".max.y", 0)+radius
+						&&	locY > getCustomConfig().getInt("shrines." +worldName +"." +name+".min.y", 0)-radius
+						&&	locZ < getCustomConfig().getInt("shrines." +worldName +"." +name+".max.z", 0)+radius
+						&&	locZ > getCustomConfig().getInt("shrines." +worldName +"." +name+".min.z", 0)-radius) {
 					return true;
 				}
 			}
@@ -331,16 +339,16 @@ public class Shrines {
 	}
 	
 	public boolean checkBinding(String name, String worldName) {
-		return yml.getBoolean("shrines."+worldName+"."+name+".binding", true);
+		return getCustomConfig().getBoolean("shrines."+worldName+"."+name+".binding", true);
 	}
 	
 	public String setBinding(String name, String world) {
-		if (yml.getBoolean("shrines."+world+"."+name+".binding", true)) {
-			yml.setProperty("shrines."+world+"."+name+".binding", false);
+		if (getCustomConfig().getBoolean("shrines."+world+"."+name+".binding", true)) {
+			getCustomConfig().set("shrines."+world+"."+name+".binding", false);
 			return "disabled";
 		}
 		else {
-			yml.setProperty("shrines."+world+"."+name+".binding", true);
+			getCustomConfig().set("shrines."+world+"."+name+".binding", true);
 			return "enabled";
 		}
 	}

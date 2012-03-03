@@ -1,16 +1,21 @@
 package muCkk.DeathAndRebirth.otherPlugins;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import muCkk.DeathAndRebirth.config.CFG;
-import muCkk.DeathAndRebirth.config.Config;
+import muCkk.DeathAndRebirth.DAR;
 import muCkk.DeathAndRebirth.ghost.Ghosts;
 import muCkk.DeathAndRebirth.messages.Errors;
 
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.util.config.Configuration;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.getspout.spoutapi.gui.Color;
 import org.getspout.spoutapi.SpoutManager;
 import org.getspout.spoutapi.player.AppearanceManager;
@@ -21,46 +26,47 @@ import org.getspout.spoutapi.sound.SoundManager;
 
 public class DARSpout {
 
-	private Config config;
+	private DAR plugin;
 	private Ghosts ghosts;
 	
-	private String dir;
 	private File spoutFile;
-	private Configuration yml;
+	private FileConfiguration customConfig = null;
 	
-	public DARSpout(Config config, String dir) {
-		this.config = config;
-		this.dir = dir;
+	public DARSpout(DAR dar, String dir) {
+		this.plugin = dar;
 		this.spoutFile = new File(dir+"/spout");
-		load();
 	}
 	
-	public void load() {
-		if(!spoutFile.exists()){
-            try {
-            	new File(dir).mkdir();
-                spoutFile.createNewFile(); 
-            } catch (Exception e) {
-            	Errors.couldNotReadSpoutFile();
-            	e.printStackTrace();
-            }
-        } else {
-        	// loaded
-        }
-		try {
-            yml = new Configuration(spoutFile);
-            yml.load();
-        } catch (Exception e) {
-        	Errors.couldNotReadSpoutFile();
-        	e.printStackTrace();
-        }
+	public void reloadCustomConfig() {
+	    if (spoutFile == null) {
+	    	spoutFile = new File(plugin.getDataFolder(), "customConfig.yml");
+	    }
+	    customConfig = YamlConfiguration.loadConfiguration(spoutFile);
+	 
+	    // Look for defaults in the jar
+	    InputStream defConfigStream = plugin.getResource("customConfig.yml");
+	    if (defConfigStream != null) {
+	        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
+	        customConfig.setDefaults(defConfig);
+	    }
 	}
-
-	/**
-	 * Saves the current information to a file
-	 */
-	public void save() {
-		yml.save();
+	
+	public FileConfiguration getCustomConfig() {
+	    if (customConfig == null) {
+	        reloadCustomConfig();
+	    }
+	    return customConfig;
+	}
+	
+	public void saveCustomConfig() {
+	    if (customConfig == null || spoutFile == null) {
+	    return;
+	    }
+	    try {
+	        customConfig.save(spoutFile);
+	    } catch (IOException ex) {
+	        Logger.getLogger(JavaPlugin.class.getName()).log(Level.SEVERE, "Could not save config to " + spoutFile, ex);
+	    }
 	}
 	
 	public void setGhosts(Ghosts ghosts) {
@@ -92,16 +98,16 @@ public class DARSpout {
 		
 		// *** Skin ***
 		AppearanceManager appearanceM = SpoutManager.getAppearanceManager();
-		String skin = yml.getString(player.getName()+".skin");
+		String skin = getCustomConfig().getString(player.getName()+".skin");
 		if (skin != null) appearanceM.setGlobalSkin(sp, skin);
 		
 		resetTtitle(player);
 
-		String textPack = config.getString(CFG.GHOST_TEXTPACK);
+		String textPack = plugin.getConfig().getString("GHOST_TEXTPACK");
 		if(!textPack.equalsIgnoreCase("")) sp.resetTexturePack();
 		
 		SkyManager sky = SpoutManager.getSkyManager();
-		if(config.getBoolean(CFG.CHANGE_COLORS)) {
+		if(plugin.getConfig().getBoolean("CHANGE_COLORS")) {
 			sky.setCloudColor(sp, Color.remove());
 			sky.setFogColor(sp, Color.remove());
 			sky.setSkyColor(sp, Color.remove());
@@ -110,19 +116,19 @@ public class DARSpout {
 	}
 	
 	public void setTitle(Player player) {
-		if (!config.getString(CFG.GHOST_NAME).equalsIgnoreCase("")) return;
+		if (!plugin.getConfig().getString("GHOST_NAME").equalsIgnoreCase("")) return;
 		SpoutPlayer sp = SpoutManager.getPlayer(player);
 		AppearanceManager appearanceM = SpoutManager.getAppearanceManager();
-		yml.setProperty(player.getName()+".title", appearanceM.getTitle(sp, sp));
-		yml.save();
+		getCustomConfig().set(player.getName()+".title", appearanceM.getTitle(sp, sp));
+		saveCustomConfig();
 		appearanceM.setGlobalTitle(sp, ghosts.getGhostDisplayName(player));
 	}
 	
 	public void resetTtitle(Player player) {
-		if (!config.getString(CFG.GHOST_NAME).equalsIgnoreCase("")) return;
+		if (!plugin.getConfig().getString("GHOST_NAME").equalsIgnoreCase("")) return;
 		SpoutPlayer sp = SpoutManager.getPlayer(player);
 		AppearanceManager appearanceM = SpoutManager.getAppearanceManager();
-		appearanceM.setGlobalTitle(sp, yml.getString(player.getName()+".title"));
+		appearanceM.setGlobalTitle(sp, getCustomConfig().getString(player.getName()+".title"));
 	}
 	
 	public void playRebirthSound(Player player, String sound) {
@@ -164,27 +170,27 @@ public class DARSpout {
 				
 				// skin
 				String skinUrl = appearanceM.getSkinUrl(sPlayer, sPlayer);
-				if ( skinUrl != null) yml.setProperty(player.getName()+".skin", skinUrl);
+				if ( skinUrl != null) getCustomConfig().set(player.getName()+".skin", skinUrl);
 				setTitle(player);
-				yml.save();
+				saveCustomConfig();
 				appearanceM.setGlobalSkin(sPlayer, skin);
 				
 				// texturepack
-				String textPack = config.getString(CFG.GHOST_TEXTPACK);
+				String textPack = plugin.getConfig().getString("GHOST_TEXTPACK");
 				if(!textPack.equalsIgnoreCase("")) sPlayer.setTexturePack(textPack);
 				
 				// colors
-				if(config.getBoolean(CFG.CHANGE_COLORS)) {
-					float [] skycol = config.getFloatColor(CFG.GHOST_SKY);
-					float [] fogcol = config.getFloatColor(CFG.GHOST_FOG);
-					float [] cloudcol = config.getFloatColor(CFG.GHOST_CLOUDS);
+				if(plugin.getConfig().getBoolean("CHANGE_COLORS")) {
+					float [] skycol = plugin.getFloatColor("GHOST_SKY");
+					float [] fogcol = plugin.getFloatColor("GHOST_FOG");
+					float [] cloudcol = plugin.getFloatColor("GHOST_CLOUDS");
 					sky.setCloudColor(sPlayer, new Color(cloudcol[0], cloudcol[1], cloudcol[2]));
 					sky.setFogColor(sPlayer, new Color(fogcol[0], fogcol[1], fogcol[2]));
 					sky.setSkyColor(sPlayer, new Color(skycol[0], skycol[1], skycol[2]));
 				}
 				
 				// sound effect
-				if (config.getBoolean(CFG.GHOST_SOUND_EFFECTS)) {
+				if (plugin.getConfig().getBoolean("GHOST_SOUND_EFFECTS")) {
 					new Thread() {
 						@Override
 						public void run() {

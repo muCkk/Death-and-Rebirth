@@ -8,8 +8,6 @@ import java.net.URL;
 import java.util.ArrayList;
 
 import muCkk.DeathAndRebirth.DAR;
-import muCkk.DeathAndRebirth.config.CFG;
-import muCkk.DeathAndRebirth.config.Config;
 import muCkk.DeathAndRebirth.ghost.Ghosts;
 import muCkk.DeathAndRebirth.ghost.Shrines;
 import muCkk.DeathAndRebirth.messages.Errors;
@@ -21,11 +19,13 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
@@ -33,20 +33,18 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 
-public class PListener extends PlayerListener {
+public class PListener implements Listener {
 
 	private Ghosts ghosts;
 	private Shrines shrines;
-	private Config config;
 	private DAR plugin;
 	private double flySpeed;
 	
 	private ArrayList<String> checkList;
 	
-	public PListener(DAR plugin, Config config, Ghosts ghosts, Shrines shrines) {
+	public PListener(DAR plugin, Ghosts ghosts, Shrines shrines) {
 		this.plugin = plugin;
-		this.config = config;
-		this.flySpeed = config.getDouble(CFG.FLY_SPEED);
+		this.flySpeed = plugin.getConfig().getDouble("FLY_SPEED");
 		this.ghosts = ghosts;
 		this.shrines = shrines;
 		checkList = new ArrayList<String>();
@@ -54,6 +52,7 @@ public class PListener extends PlayerListener {
 	/**
 	 * Looks for new Players and adds them to the list
 	 */
+	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPlayerJoin(final PlayerJoinEvent event) {
 		final Player player = event.getPlayer();
 		if(!ghosts.existsPlayer(player)) {
@@ -62,13 +61,13 @@ public class PListener extends PlayerListener {
 	// if dead players join
 		if(ghosts.isGhost(player)) {
 			ghosts.setDisplayName(player, true);
-			if(config.getBoolean(CFG.INVISIBILITY)) ghosts.vanish(player);
-			if (config.getBoolean(CFG.SPOUT_ENABLED)) {
-				plugin.darSpout.setDeathOptions(player, config.getString(CFG.GHOST_SKIN));
+			if(plugin.getConfig().getBoolean("INVISIBILITY")) ghosts.vanish(player);
+			if (plugin.getConfig().getBoolean("SPOUT_ENABLED")) {
+				plugin.darSpout.setDeathOptions(player, plugin.getConfig().getString("GHOST_SKIN"));
 			}
 			plugin.message.send(player, Messages.playerDied);
 		}
-		else if(config.getBoolean(CFG.INVISIBILITY)) hideGhosts(player); 
+		else if(plugin.getConfig().getBoolean("INVISIBILITY")) hideGhosts(player); 
 		
 	// version checking
 	// in it's own thread because it takes some time and would stop the rest of the world to load
@@ -110,9 +109,10 @@ public class PListener extends PlayerListener {
 	/**
 	 * Checks if ghosts are allowed to chat
 	 */
+	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onPlayerChat(PlayerChatEvent event) {
 		Player player = event.getPlayer();
-		if(ghosts.isGhost(player) && !config.getBoolean(CFG.GHOST_CHAT)) {
+		if(ghosts.isGhost(player) && !plugin.getConfig().getBoolean("GHOST_CHAT")) {
 			plugin.message.send(player, Messages.ghostNoChat);
 			event.setCancelled(true);
 		}
@@ -121,17 +121,18 @@ public class PListener extends PlayerListener {
 	/**
 	 * Sets the players respawn location to their location of death
 	 */
+	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerRespawn(PlayerRespawnEvent event) {
 		Player player = event.getPlayer();
 	// check if the world is enabled
-		if(!config.isEnabled(player.getWorld().getName())) {
+		if(!plugin.getConfig().getBoolean(player.getWorld().getName())) {
 			return;
 		}
 		if(ghosts.isGhost(player)) {
 			// reverse spawning
 			Location nearestShrine = shrines.getNearestShrineSpawn(player.getLocation());
 			Location corpse = ghosts.getLocation(player);
-			if (!config.getBoolean(CFG.CORPSE_SPAWNING)) {
+			if (!plugin.getConfig().getBoolean("CORPSE_SPAWNING")) {
 				Location loc = ghosts.getBoundShrine(player);
 				
 				if (loc != null) event.setRespawnLocation(loc);
@@ -145,12 +146,12 @@ public class PListener extends PlayerListener {
 			}
 			plugin.message.send(player, Messages.playerDied);
 	//  spout related
-			if (config.getBoolean(CFG.SPOUT_ENABLED)) {
-				plugin.darSpout.setDeathOptions(player, config.getString(CFG.GHOST_SKIN));
+			if (plugin.getConfig().getBoolean("SPOUT_ENABLED")) {
+				plugin.darSpout.setDeathOptions(player, plugin.getConfig().getString("GHOST_SKIN"));
 			}
 			ghosts.setDisplayName(player, true);
 		// invisibility
-			if (config.getBoolean(CFG.INVISIBILITY)) ghosts.vanish(player);
+			if (plugin.getConfig().getBoolean("INVISIBILITY")) ghosts.vanish(player);
 		}
 	}
 	
@@ -175,9 +176,10 @@ public class PListener extends PlayerListener {
 	/**
 	 * Prevents dead players from picking up items
 	 */
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onPlayerPickupItem(PlayerPickupItemEvent event) {
 		// check if the world is enabled
-		if(!config.isEnabled(event.getPlayer().getWorld().getName())) {
+		if(!plugin.getConfig().getBoolean(event.getPlayer().getWorld().getName())) {
 			return;
 		}
 		if(ghosts.isGhost(event.getPlayer())) {
@@ -188,6 +190,7 @@ public class PListener extends PlayerListener {
 	/**
 	 * Flying for ghosts
 	 */
+	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onPlayerMove(PlayerMoveEvent event) {		
 		final Player player = event.getPlayer();			
 		
@@ -212,7 +215,7 @@ public class PListener extends PlayerListener {
 				}
 			}
 		// flying for ghosts
-			if(player.isSneaking() &&  config.getBoolean(CFG.FLY)) {		
+			if(player.isSneaking() &&  plugin.getConfig().getBoolean("FLY")) {		
 				player.setVelocity(player.getLocation().getDirection().multiply(flySpeed));
 				return;
 			}
@@ -222,12 +225,13 @@ public class PListener extends PlayerListener {
 	/**
 	 * Players try to bind their soul to a shrine
 	 */
+	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		Player player = event.getPlayer();
 		
 		
 		// check if the world is enabled
-		if(!config.isEnabled(player.getWorld().getName())) {
+		if(!plugin.getConfig().getBoolean(player.getWorld().getName())) {
 			return;
 		}
 		
@@ -251,14 +255,14 @@ public class PListener extends PlayerListener {
 			if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
 				Location locDeath = ghosts.getLocation(player);
 			// reverse spawning
-				if(!config.getBoolean(CFG.CORPSE_SPAWNING)) {
+				if(!plugin.getConfig().getBoolean("CORPSE_SPAWNING")) {
 					if (event.getClickedBlock().getLocation().distance(locDeath) < 3) ghosts.resurrect(player);
 					else {
 						String shrine = shrines.getClose(player.getLocation());
 						if (shrine != null) {
 							ghosts.resurrect(player);
 							ghosts.removeItems(player);
-							player.setHealth(config.getInt(CFG.HEALTH));
+							player.setHealth(plugin.getConfig().getInt("HEALTH"));
 						}
 					}
 				}
@@ -270,7 +274,7 @@ public class PListener extends PlayerListener {
 						if (event.getClickedBlock().getLocation().distance(locDeath) < 3) {
 							ghosts.resurrect(player);
 							ghosts.removeItems(player);
-							player.setHealth(config.getInt(CFG.HEALTH));
+							player.setHealth(plugin.getConfig().getInt("HEALTH"));
 						}
 					}
 				}
@@ -279,7 +283,7 @@ public class PListener extends PlayerListener {
 			
 			// normal interactions		
 			
-			if (config.getBoolean(CFG.BLOCK_GHOST_INTERACTION)) {
+			if (plugin.getConfig().getBoolean("BLOCK_GHOST_INTERACTION")) {
 				event.setCancelled(true);
 				return;
 			}
@@ -339,6 +343,7 @@ public class PListener extends PlayerListener {
 	/**
 	 * checks if the player enters a new world
 	 */
+	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onPlayerTeleport(PlayerTeleportEvent event) {
 		Player player = event.getPlayer();
 		ghosts.worldChange(player);
@@ -347,6 +352,7 @@ public class PListener extends PlayerListener {
 	/**
 	 * checks if the player enters a new world
 	 */
+	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onPlayerPortal(PlayerPortalEvent event) {
 		Player player = event.getPlayer();
 		ghosts.worldChange(player);

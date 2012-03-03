@@ -1,8 +1,5 @@
 package muCkk.DeathAndRebirth;
 
-import muCkk.DeathAndRebirth.config.CFG;
-import muCkk.DeathAndRebirth.config.Config;
-import muCkk.DeathAndRebirth.config.DARProperties;
 import muCkk.DeathAndRebirth.ghost.Ghosts;
 import muCkk.DeathAndRebirth.ghost.Graves;
 import muCkk.DeathAndRebirth.ghost.Shrines;
@@ -21,8 +18,6 @@ import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event.Priority;
-import org.bukkit.event.Event.Type;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin; 
 
@@ -32,8 +27,6 @@ public class DAR extends JavaPlugin {
 	private String dataDir			=	dir+"/data";	
 	
 	private Ghosts ghosts;
-	private DARProperties oldConfig;
-	private Config config;
 	private Graves graves;
 	private Shrines shrines;
 	
@@ -47,63 +40,48 @@ public class DAR extends JavaPlugin {
 	public void onDisable() {
 		ghosts.onDisable(this);
 		getServer().getScheduler().cancelTasks(this);
-		config.save();
-		ghosts.save();
-		graves.save();
-		shrines.save();
+		saveConfig();
+		ghosts.saveCustomConfig();
+		graves.saveCustomConfig();
+		shrines.saveCustomConfig();
 	}
 
 	public void onEnable() {
 	// Config
-		oldConfig = new DARProperties(dir);
-		config = new Config(dir, oldConfig);
-		if (oldConfig.configExists() && !config.isConverted()) config.convert();
+		getConfig().options().copyDefaults(true);
 		
 	// DAR Classes
-		darSpout = new DARSpout(config, dataDir);
+		darSpout = new DARSpout(this, dataDir);
 		message = new Messenger(dir);
 		Perms.setup(this);
 
-		graves = new Graves(dataDir, config);
-		ghosts = new Ghosts(this, dir, config, graves);
+		graves = new Graves(this, dataDir);
+		ghosts = new Ghosts(this, dir, graves);
 		darSpout.setGhosts(ghosts);
-		shrines = new Shrines(this, dataDir, config);
+		shrines = new Shrines(this, dataDir);
 
 	// Listener
 		pm = getServer().getPluginManager();
-		
-		PListener playerlistener = new PListener(this, config, ghosts, shrines);
-		EListener entityListener = new EListener(this, config, ghosts, shrines);
-		BListener blockListener = new BListener(this, config, shrines,ghosts,graves);
-		SListener serverListener = new SListener(this, config);
+		pm.registerEvents(new PListener(this, ghosts, shrines), this);
+		pm.registerEvents(new EListener(this, ghosts, shrines), this);
+		pm.registerEvents(new BListener(this, shrines,ghosts,graves), this);
+		SListener serverListener = new SListener(this);
+		pm.registerEvents(serverListener, this);
 		serverListener.checkForPlugins();
-		
-		pm.registerEvent(Type.PLAYER_RESPAWN, playerlistener, Priority.Highest, this);
-		pm.registerEvent(Type.PLAYER_PICKUP_ITEM, playerlistener, Priority.Highest, this);
-		pm.registerEvent(Type.PLAYER_JOIN, playerlistener, Priority.Lowest, this);
-		pm.registerEvent(Type.PLAYER_INTERACT, playerlistener, Priority.Lowest, this);
-		pm.registerEvent(Type.PLAYER_PORTAL, playerlistener, Priority.Lowest, this);
-		pm.registerEvent(Type.PLAYER_TELEPORT, playerlistener, Priority.Lowest, this);
-		pm.registerEvent(Type.PLAYER_MOVE, playerlistener, Priority.Lowest, this);
-		pm.registerEvent(Type.PLAYER_CHAT, playerlistener, Priority.Lowest, this);
-		
-		pm.registerEvent(Type.ENTITY_DEATH, entityListener, Priority.Lowest, this);
-		pm.registerEvent(Type.ENTITY_TARGET, entityListener, Priority.Lowest, this);
-		pm.registerEvent(Type.ENTITY_DAMAGE, entityListener, Priority.Lowest, this);
-		pm.registerEvent(Type.ENTITY_EXPLODE, entityListener, Priority.Lowest, this);
-		
-		pm.registerEvent(Type.BLOCK_DAMAGE, blockListener, Priority.Lowest, this);
-		pm.registerEvent(Type.BLOCK_PLACE, blockListener, Priority.Lowest, this);
-		pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Lowest, this);
-
-		pm.registerEvent(Type.PLUGIN_ENABLE, serverListener, Priority.Monitor, this);
-		pm.registerEvent(Type.PLUGIN_DISABLE, serverListener, Priority.Monitor, this);
 	}
 	
 	public boolean checkAdminPerms() {
-		return config.getBoolean(CFG.ADMIN_PERMS);
+		return getConfig().getBoolean("ADMIN_PERMS");
 	}
 	
+	public float[] getFloatColor(String node) { 
+		float [] array = new float[3];
+		String [] strings = getConfig().getString(node).split(";");
+		for(int i=0; i<strings.length; i++) {
+			array[i] = Float.valueOf(strings[i]);
+		}
+		return array;
+	}
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
 		Player player = null;
 		if (sender instanceof Player) {
@@ -152,7 +130,7 @@ public class DAR extends JavaPlugin {
 					return true;
 				}
 				// normal mode
-				if (!config.getBoolean(CFG.SHRINE_ONLY)) {
+				if (!this.getConfig().getBoolean("SHRINE_ONLY")) {
 					ghosts.selfRebirth(player, shrines);
 					return true;
 				}
@@ -331,10 +309,10 @@ public class DAR extends JavaPlugin {
 			
 		// reloading all config files
 			if(arg.equalsIgnoreCase("reload")) {
-				config.load();
-				graves.load();
-				ghosts.load();
-				shrines.load();
+				reloadConfig();
+				graves.reloadCustomConfig();
+				ghosts.reloadCustomConfig();
+				shrines.reloadCustomConfig();
 				message.sendChat(player, Messages.reloadComplete);
 				return true;
 			}
@@ -344,7 +322,7 @@ public class DAR extends JavaPlugin {
 				String world = player.getWorld().getName();
 				player.sendMessage("You are in world: "+world);
 				String bool = "";
-				if (config.isEnabled(world)) {
+				if (getConfig().getBoolean(world)) {
 					 bool = "enabled";
 				}
 				else {
@@ -383,11 +361,11 @@ public class DAR extends JavaPlugin {
 					}
 				}
 				if (arg.equalsIgnoreCase("enable")) {
-					config.set(name, true);
+					getConfig().set(name, true);
 					message.sendChat(player, Messages.worldEnabled, " "+name);
 				}
 				else {
-					config.set(name, false);
+					getConfig().set(name, false);
 					message.sendChat(player, Messages.worldDisabled, " "+name);
 				}
 				return true;
@@ -405,61 +383,61 @@ public class DAR extends JavaPlugin {
 			}
 		// toggles
 			if (arg.equalsIgnoreCase("invis")) {
-				if(toggle(CFG.INVISIBILITY)) message.sendChat(player, Messages.invisToggle, " disabled");
+				if(toggle("INVISIBILITY")) message.sendChat(player, Messages.invisToggle, " disabled");
 				else message.sendChat(player, Messages.invisToggle, " enabled");
 			}
 			if (arg.equalsIgnoreCase("dropping")) {
-				if(toggle(CFG.DROPPING)) message.sendChat(player, Messages.droppingToggle, " disabled");
+				if(toggle("DROPPING")) message.sendChat(player, Messages.droppingToggle, " disabled");
 				else message.sendChat(player, Messages.droppingToggle, " enabled");
 				return true;
 			}
 			if (arg.equalsIgnoreCase("pvpdrop")) {
-				if(toggle(CFG.PVP_DROP)) message.sendChat(player, Messages.pvpDroppingToggle, " disabled");
+				if(toggle("PVP_DROP")) message.sendChat(player, Messages.pvpDroppingToggle, " disabled");
 				else message.sendChat(player, Messages.pvpDroppingToggle, " enabled");
 				return true;
 			}
 			if (arg.equalsIgnoreCase("versioncheck")) {
-				if(toggle(CFG.VERSION_CHECK)) message.sendChat(player, Messages.versionCheckToggle, " disabled");
+				if(toggle("VERSION_CHECK")) message.sendChat(player, Messages.versionCheckToggle, " disabled");
 				else message.sendChat(player, Messages.versionCheckToggle, " enabled");
 				return true;
 			}
 			if (arg.equalsIgnoreCase("fly")) {
-				if(toggle(CFG.FLY)) message.sendChat(player, Messages.flymodeToggle, " disabled");
+				if(toggle("FLY")) message.sendChat(player, Messages.flymodeToggle, " disabled");
 				else message.sendChat(player, Messages.flymodeToggle, " enabled");
 				return true;
 			}
 			if (arg.equalsIgnoreCase("shrinemode")) {
-				if(toggle(CFG.SHRINE_ONLY)) message.sendChat(player, Messages.shrinemodeToggle, " disabled");
+				if(toggle("SHRINE_ONLY")) message.sendChat(player, Messages.shrinemodeToggle, " disabled");
 				else message.sendChat(player, Messages.shrinemodeToggle, " enabled");
 				return true;
 			}
 			if (arg.equalsIgnoreCase("ghostinteraction")) {
-				if(toggle(CFG.BLOCK_GHOST_INTERACTION)) message.sendChat(player, Messages.blockghostToggle, " disabled");
+				if(toggle("BLOCK_GHOST_INTERACTION")) message.sendChat(player, Messages.blockghostToggle, " disabled");
 				else message.sendChat(player, Messages.blockghostToggle, " enabled");
 				return true;
 			}
 			if (arg.equalsIgnoreCase("ghostchat")) {
-				if(toggle(CFG.GHOST_CHAT)) message.sendChat(player, Messages.chatToggle, " disabled");
+				if(toggle("GHOST_CHAT")) message.sendChat(player, Messages.chatToggle, " disabled");
 				else message.sendChat(player, Messages.chatToggle, " enabled");
 				return true;
 			}
 			if (arg.equalsIgnoreCase("lightningD")) {
-				if(toggle(CFG.LIGHTNING_DEATH)) message.sendChat(player, Messages.lightningDT, " disabled");
+				if(toggle("LIGHTNING_DEATH")) message.sendChat(player, Messages.lightningDT, " disabled");
 				else message.sendChat(player, Messages.lightningDT, " enabled");
 				return true;
 			}
 			if (arg.equalsIgnoreCase("lightningR")) {
-				if(toggle(CFG.LIGHTNING_REBIRTH)) message.sendChat(player, Messages.lightningRT, " disabled");
+				if(toggle("LIGHTNING_REBIRTH")) message.sendChat(player, Messages.lightningRT, " disabled");
 				else message.sendChat(player, Messages.lightningRT, " enabled");
 				return true;
 			}
 			if (arg.equalsIgnoreCase("signs")) {
-				if(toggle(CFG.GRAVE_SIGNS)) message.sendChat(player, Messages.signsToggle, " disabled");
+				if(toggle("GRAVE_SIGNS")) message.sendChat(player, Messages.signsToggle, " disabled");
 				else message.sendChat(player, Messages.signsToggle, " enabled");
 				return true;
 			}
 			if (arg.equalsIgnoreCase("spawn")) {
-				if(toggle(CFG.CORPSE_SPAWNING)) message.sendChat(player, Messages.spawningToggle, " disabled");
+				if(toggle("CORPSE_SPAWNING")) message.sendChat(player, Messages.spawningToggle, " disabled");
 				else message.sendChat(player, Messages.spawningToggle, " enabled");
 				return true;
 			}
@@ -467,13 +445,13 @@ public class DAR extends JavaPlugin {
 		return false;		
 	}
 	
-	public boolean toggle(CFG node) {
-		if(config.getBoolean(node)) {
-			config.set(node, false);
+	public boolean toggle(String node) {
+		if(getConfig().getBoolean(node)) {
+			getConfig().set(node, false);
 			return false;
 		}
 		else {
-			config.set(node, true);
+			getConfig().set(node, true);
 			return true;
 		}
 	}

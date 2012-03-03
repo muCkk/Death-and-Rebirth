@@ -1,12 +1,14 @@
 package muCkk.DeathAndRebirth.ghost;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import muCkk.DeathAndRebirth.DAR;
-import muCkk.DeathAndRebirth.config.CFG;
-import muCkk.DeathAndRebirth.config.Config;
 import muCkk.DeathAndRebirth.messages.Errors;
 import muCkk.DeathAndRebirth.messages.Messages;
 import muCkk.DeathAndRebirth.otherPlugins.Perms;
@@ -18,69 +20,100 @@ import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
-import org.bukkit.util.config.Configuration;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class Ghosts {
 
 	private String dir;
-	private File ghostsFile;
 	private HashMap<String, Boolean> isRessing;
 	
 	private DAR plugin;
-	private Config config;
 	private Graves graves;
 	private Drops dardrops;
 	
-	private Configuration yml;
+	private FileConfiguration customConfig = null;
+	private File ghostsFile;
 	
-	public Ghosts(DAR plugin, String dir, Config config, Graves graves) {
+	public Ghosts(DAR plugin, String dir, Graves graves) {
 		this.plugin = plugin;
 		this.dir = dir+"/data";
 		this.ghostsFile = new File(this.dir+"/ghosts");
-		this.config = config;
 		this.graves = graves;
 		graves.setGhosts(this);
 		this.isRessing = new HashMap<String, Boolean>();
-		this.dardrops = new Drops(this.dir, config);
-		load();
+		this.dardrops = new Drops(plugin, this.dir);
 	}
 	
-	
-	/**
-	 * Loads saved data from a file
-	 */
-	public void load() {
-		if(!ghostsFile.exists()){
-            try {
-            	new File(dir).mkdir();
-                ghostsFile.createNewFile(); 
-            } catch (Exception e) {
-            	Errors.couldNotReadGhostFile();
-            	e.printStackTrace();
-            }
-        } else {
-        	// loaded
-        }
-		try {
-            yml = new Configuration(ghostsFile);
-            yml.load();
-        } catch (Exception e) {
-        	Errors.couldNotReadGhostFile();
-        	e.printStackTrace();
-        }
-	}
 
-	/**
-	 * Saves the current information to a file
-	 */
-	public void save() {
-		yml.save();
-		dardrops.save();
+	public void reloadCustomConfig() {
+	    if (ghostsFile == null) {
+	    	ghostsFile = new File(plugin.getDataFolder(), "customConfig.yml");
+	    }
+	    customConfig = YamlConfiguration.loadConfiguration(ghostsFile);
+	 
+	    // Look for defaults in the jar
+	    InputStream defConfigStream = plugin.getResource("customConfig.yml");
+	    if (defConfigStream != null) {
+	        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
+	        customConfig.setDefaults(defConfig);
+	    }
 	}
+	
+	public FileConfiguration getCustomConfig() {
+	    if (customConfig == null) {
+	        reloadCustomConfig();
+	    }
+	    return customConfig;
+	}
+	
+	public void saveCustomConfig() {
+	    if (customConfig == null || ghostsFile == null) {
+	    return;
+	    }
+	    try {
+	        customConfig.save(ghostsFile);
+	    } catch (IOException ex) {
+	        Logger.getLogger(JavaPlugin.class.getName()).log(Level.SEVERE, "Could not save config to " + ghostsFile, ex);
+	    }
+	}
+	
+//	/**
+//	 * Loads saved data from a file
+//	 */
+//	public void load() {
+//		if(!ghostsFile.exists()){
+//            try {
+//            	new File(dir).mkdir();
+//                ghostsFile.createNewFile(); 
+//            } catch (Exception e) {
+//            	Errors.couldNotReadGhostFile();
+//            	e.printStackTrace();
+//            }
+//        } else {
+//        	// loaded
+//        }
+//		try {
+//            yml = new Configuration(ghostsFile);
+//            yml.load();
+//        } catch (Exception e) {
+//        	Errors.couldNotReadGhostFile();
+//        	e.printStackTrace();
+//        }
+//	}
+//
+//	/**
+//	 * Saves the current information to a file
+//	 */
+//	public void save() {
+//		yml.save();
+//		dardrops.save();
+//	}
 	
 	/**
 	 * Adds a new player to the ghost file
@@ -93,13 +126,13 @@ public class Ghosts {
 		String pname = player.getName();
 		String world = player.getWorld().getName();
 				
-		yml.setProperty("players." +pname +"."+world +".dead", false);
-		yml.setProperty("players." +pname +"."+world +".location.x", player.getLocation().getBlockX());
-		yml.setProperty("players." +pname +"."+world +".location.y", player.getLocation().getBlockY());
-		yml.setProperty("players." +pname +"."+world +".location.z", player.getLocation().getBlockZ());
-		yml.setProperty("players." +pname +"."+world +".world", world);
+		getCustomConfig().set("players." +pname +"."+world +".dead", false);
+		getCustomConfig().set("players." +pname +"."+world +".location.x", player.getLocation().getBlockX());
+		getCustomConfig().set("players." +pname +"."+world +".location.y", player.getLocation().getBlockY());
+		getCustomConfig().set("players." +pname +"."+world +".location.z", player.getLocation().getBlockZ());
+		getCustomConfig().set("players." +pname +"."+world +".world", world);
 		
-		yml.save();
+		saveCustomConfig();
 	}
 	
 	/**
@@ -108,7 +141,7 @@ public class Ghosts {
 	 * @return boolean
 	 */
 	public boolean existsPlayer(Player player) {
-		List<String> names = yml.getKeys("players");
+		Set<String> names = getCustomConfig().getConfigurationSection("players").getKeys(false);
 		String pname = player.getName();
 		
 		try {
@@ -136,7 +169,7 @@ public class Ghosts {
 		String world = player.getWorld().getName();
 		
 		try {
-			return yml.getBoolean("players."+pname +"."+world +".dead", false);	
+			return getCustomConfig().getBoolean("players."+pname +"."+world +".dead", false);	
 		}catch (NullPointerException e) {
 			return false;
 		}		
@@ -151,16 +184,16 @@ public class Ghosts {
 		final String world = player.getWorld().getName();
 		final Block block = player.getWorld().getBlockAt(player.getLocation());
 	
-		yml.setProperty("players."+pname +"."+world +".dead", true);
+		getCustomConfig().set("players."+pname +"."+world +".dead", true);
 	// lightning
-		if (config.getBoolean(CFG.LIGHTNING_DEATH)) {
+		if (plugin.getConfig().getBoolean("LIGHTNING_DEATH")) {
 			player.getWorld().strikeLightningEffect(player.getLocation());
 		}
 	// saving location of death	
 		// moved
 		
 	// drop-management
-		if (!config.getBoolean(CFG.DROPPING) || Perms.hasPermission(player, "dar.nodrop") || pvp_death) {
+		if (!plugin.getConfig().getBoolean("DROPPING") || Perms.hasPermission(player, "dar.nodrop") || pvp_death) {
 			dardrops.put(player, inv);  
 		}
 		else {
@@ -168,11 +201,11 @@ public class Ghosts {
 		}
 		
 	// invisibility
-	//	if (config.getBoolean(CFG.INVISIBILITY)) vanish(player);
+	//	if (config.getBoolean("INVISIBILITY)) vanish(player);
 		
 	// spout related
-		if (config.getBoolean(CFG.SPOUT_ENABLED)) {
-			plugin.darSpout.playerDied(player, config.getString(CFG.DEATH_SOUND));
+		if (plugin.getConfig().getBoolean("SPOUT_ENABLED")) {
+			plugin.darSpout.playerDied(player, plugin.getConfig().getString("DEATH_SOUND"));
 		}
 
 	// grave related
@@ -189,16 +222,16 @@ public class Ghosts {
 				graves.addGrave(pname,block, l1, world);
 			}
 		}.start();
-		save();
+		saveCustomConfig();
 	}
 	public void setLocationOfDeath(Block block, String pname) {
-		yml.setProperty("players."+pname +"."+block.getWorld().getName() +".location.x", block.getX());
-		yml.setProperty("players."+pname +"."+block.getWorld().getName() +".location.y", block.getY());
-		yml.setProperty("players."+pname +"."+block.getWorld().getName() +".location.z", block.getZ());		
-		yml.save();
+		getCustomConfig().set("players."+pname +"."+block.getWorld().getName() +".location.x", block.getX());
+		getCustomConfig().set("players."+pname +"."+block.getWorld().getName() +".location.y", block.getY());
+		getCustomConfig().set("players."+pname +"."+block.getWorld().getName() +".location.z", block.getZ());		
+		saveCustomConfig();
 	}
 	public String getGhostDisplayName(Player player) {
-		return config.getString(CFG.GHOST_NAME).replace("%player%", player.getName()).replace("%displayname%", player.getDisplayName());
+		return plugin.getConfig().getString("GHOST_NAME").replace("%player%", player.getName()).replace("%displayname%", player.getDisplayName());
 	}
 	/**
 	 * Brings players back to life
@@ -211,19 +244,19 @@ public class Ghosts {
 		player.setCompassTarget(player.getWorld().getSpawnLocation());
 		
 	// check if lightning is enabled
-		if (config.getBoolean(CFG.LIGHTNING_REBIRTH)) {
+		if (plugin.getConfig().getBoolean("LIGHTNING_REBIRTH")) {
 			player.getWorld().strikeLightningEffect(player.getLocation());
 		}
 		
 		setDisplayName(player, false);
 		
-		if (config.getBoolean(CFG.INVISIBILITY)) unvanish(player);
+		if (plugin.getConfig().getBoolean("INVISIBILITY")) unvanish(player);
 		
 	// spout related
-		if (config.getBoolean(CFG.SPOUT_ENABLED)) {
-			plugin.darSpout.playerRes(player, config.getString(CFG.REB_SOUND));
+		if (plugin.getConfig().getBoolean("SPOUT_ENABLED")) {
+			plugin.darSpout.playerRes(player, plugin.getConfig().getString("REB_SOUND"));
 		}
-		save();
+		saveCustomConfig();
 		
 		new Thread() {
 			@Override
@@ -244,11 +277,11 @@ public class Ghosts {
 					e.printStackTrace();
 				}
 				
-				if (!config.getBoolean(CFG.DROPPING) || Perms.hasPermission(player, "dar.nodrop") || config.getBoolean(CFG.PVP_DROP)) dardrops.givePlayerInv(player);
+				if (!plugin.getConfig().getBoolean("DROPPING") || Perms.hasPermission(player, "dar.nodrop") || plugin.getConfig().getBoolean("PVP_DROP")) dardrops.givePlayerInv(player);
 			}
 		}.start();
 		
-		yml.setProperty("players."+pname +"."+world +".dead", false);
+		getCustomConfig().set("players."+pname +"."+world +".dead", false);
 		graves.deleteGrave(player.getWorld().getBlockAt(getLocation(player)), pname, world);
 		plugin.message.send(player, Messages.reborn);
 	}
@@ -317,7 +350,7 @@ public class Ghosts {
 	
 	public void selfRebirth(Player player, Shrines shrines) {
 		// rebirth at location of death
-		if (!config.getBoolean(CFG.CORPSE_SPAWNING)) 	player.teleport(getLocation(player));
+		if (!plugin.getConfig().getBoolean("CORPSE_SPAWNING")) 	player.teleport(getLocation(player));
 		// rebirth at next shrine
 		else {
 			Location loc = getBoundShrine(player);
@@ -330,21 +363,21 @@ public class Ghosts {
 	
 	private void selfResPunish(Player player) {
 		// health
-		player.setHealth(config.getInt(CFG.HEALTH));
+		player.setHealth(plugin.getConfig().getInt("HEALTH"));
 		
 		//drops
 		dardrops.selfResPunish(player);
 		
 		//economy
-		double money = config.getDouble(CFG.ECONOMY);
+		double money = plugin.getConfig().getDouble("ECONOMY");
 		if(money > 0) 	plugin.darConomy.take(player, money);
 		
 		// mcMMO
-		if (config.getBoolean(CFG.MCMMO)) {
-			List<String> skills = config.getKeys("SKILLS");
-			int amount = config.getInt(CFG.XP);
+		if (plugin.getConfig().getBoolean("MCMMO")) {
+			Set<String> skills = plugin.getConfig().getConfigurationSection("SKILLS").getKeys(false);
+			int amount = plugin.getConfig().getInt("XP");
 			for (String skill : skills) {
-				if(config.getBoolean("SKILLS."+skill)) plugin.darmcmmo.xpPenality(player, skill, amount);
+				if(plugin.getConfig().getBoolean("SKILLS."+skill)) plugin.darmcmmo.xpPenality(player, skill, amount);
 			}
 		}
 	}
@@ -361,14 +394,14 @@ public class Ghosts {
 	public void resurrect(final Player player, final Player target) {
 		// *** check distance ***
 		double distance = player.getLocation().distance(target.getLocation());
-		if(distance > config.getInt(CFG.DISTANCE)) {
+		if(distance > plugin.getConfig().getInt("DISTANCE")) {
 			plugin.message.send(player, Messages.tooFarAway);
 			return;
 		}
-		final int itemID = config.getInt(CFG.ITEM_ID);
-		final int amount = config.getInt(CFG.AMOUNT);
+		final int itemID = plugin.getConfig().getInt("ITEM_ID");
+		final int amount = plugin.getConfig().getInt("AMOUNT");
 	// check for items
-		if (config.getBoolean(CFG.NEED_ITEM)) {	
+		if (plugin.getConfig().getBoolean("NEED_ITEM")) {	
 			ItemStack costStack = new ItemStack(itemID);
 			costStack.setAmount(amount);
 			
@@ -387,12 +420,12 @@ public class Ghosts {
 		new Thread() {
 			public void run() {
 				int counter = 0;
-				int time = config.getInt(CFG.TIME);
+				int time = plugin.getConfig().getInt("TIME");
 				int x = player.getLocation().getBlockX(),
 					z = player.getLocation().getBlockZ();
 				isRessing.put(name, true);
-				if (config.getBoolean(CFG.SPOUT_ENABLED)) {
-					plugin.darSpout.playResSound(player, config.getString(CFG.RES_SOUND));
+				if (plugin.getConfig().getBoolean("SPOUT_ENABLED")) {
+					plugin.darSpout.playResSound(player, plugin.getConfig().getString("RES_SOUND"));
 				}
 				while (counter < time && isRessing.get(name)) {
 					if (x != player.getLocation().getBlockX() || z != player.getLocation().getBlockZ()) {
@@ -409,7 +442,7 @@ public class Ghosts {
 					counter++;
 				}
 				isRessing.remove(name);
-				if(config.getBoolean(CFG.NEED_ITEM)) {
+				if(plugin.getConfig().getBoolean("NEED_ITEM")) {
 					ItemStack costStack = new ItemStack(itemID);
 					costStack.setAmount(amount);
 					if(!ConsumeItems(player, costStack)) {
@@ -422,8 +455,8 @@ public class Ghosts {
 					plugin.message.send(player, Messages.resurrected, " "+target.getName());
 					target.teleport(getLocation(target));
 				// spout related
-					if (config.getBoolean(CFG.SPOUT_ENABLED)) {
-						plugin.darSpout.playRebirthSound(player, config.getString(CFG.REB_SOUND));
+					if (plugin.getConfig().getBoolean("SPOUT_ENABLED")) {
+						plugin.darSpout.playRebirthSound(player, plugin.getConfig().getString("REB_SOUND"));
 					}
 				}
 			}
@@ -440,9 +473,9 @@ public class Ghosts {
 		World world = player.getWorld();
 		String worldName = world.getName();
 		
-		double x = yml.getDouble("players."+pname +"."+worldName +".location.x", 0);
-		double y = yml.getDouble("players."+pname +"."+worldName +".location.y", 64);
-		double z = yml.getDouble("players."+pname +"."+worldName +".location.z", 0);
+		double x = getCustomConfig().getDouble("players."+pname +"."+worldName +".location.x", 0);
+		double y = getCustomConfig().getDouble("players."+pname +"."+worldName +".location.y", 64);
+		double z = getCustomConfig().getDouble("players."+pname +"."+worldName +".location.z", 0);
 		Location loc = new Location(world, x, y, z);
 		return loc;
 	}
@@ -458,18 +491,18 @@ public class Ghosts {
 		String world = player.getWorld().getName();
 		Location loc = player.getLocation();
 		
-		yml.setProperty("players." +pname +"."+world +".shrine.x", loc.getX());
-		yml.setProperty("players." +pname +"."+world +".shrine.y", loc.getY());
-		yml.setProperty("players." +pname +"."+world +".shrine.z", loc.getZ());
-		save();
+		getCustomConfig().set("players." +pname +"."+world +".shrine.x", loc.getX());
+		getCustomConfig().set("players." +pname +"."+world +".shrine.y", loc.getY());
+		getCustomConfig().set("players." +pname +"."+world +".shrine.z", loc.getZ());
+		saveCustomConfig();
 	}
 	
 	public void unbind(Player player) {
 		String pname = player.getName();
 		String world = player.getWorld().getName();
-		yml.removeProperty("players." +pname +"."+world +".shrine.x");
-		yml.removeProperty("players." +pname +"."+world +".shrine.y");
-		yml.removeProperty("players." +pname +"."+world +".shrine.z");
+		getCustomConfig().set("players." +pname +"."+world +".shrine.x", null);
+		getCustomConfig().set("players." +pname +"."+world +".shrine.y", null);
+		getCustomConfig().set("players." +pname +"."+world +".shrine.z", null);
 	}
 	
 	/**
@@ -483,14 +516,14 @@ public class Ghosts {
 		String worldName = world.getName();
 		
 		// check if a shrine is saved
-		Object doesShrineExists = yml.getProperty("players."+pname +"."+worldName +".shrine.x");
+		Object doesShrineExists = getCustomConfig().get("players."+pname +"."+worldName +".shrine.x");
 		if (doesShrineExists == null) {
 			return null;
 		}
 		
-		double x = yml.getDouble("players."+pname +"."+worldName +".shrine.x", 0);
-		double y = yml.getDouble("players."+pname +"."+worldName +".shrine.y", 64);
-		double z = yml.getDouble("players."+pname +"."+worldName +".shrine.z", 0);
+		double x = getCustomConfig().getDouble("players."+pname +"."+worldName +".shrine.x", 0);
+		double y = getCustomConfig().getDouble("players."+pname +"."+worldName +".shrine.y", 64);
+		double z = getCustomConfig().getDouble("players."+pname +"."+worldName +".shrine.z", 0);
 		Location loc = new Location(world, x, y, z);	
 		return loc;
 	}
@@ -503,7 +536,7 @@ public class Ghosts {
 	public void worldChange(Player player) {
 		String worldName = player.getWorld().getName();
 		String name = player.getName();
-		List<String> worlds = yml.getKeys("players."+name);
+		Set<String> worlds = getCustomConfig().getConfigurationSection("players."+name).getKeys(false);
 		
 		try {
 			for (String world : worlds) {
@@ -523,9 +556,9 @@ public class Ghosts {
 		String world = player.getWorld().getName();
 		String x,y,z;
 		try {
-			x = yml.getString("players." +name +"."+world +".location.x");
-			y = yml.getString("players." +name +"."+world +".location.y");
-			z = yml.getString("players." +name +"."+world +".location.z");
+			x = getCustomConfig().getString("players." +name +"."+world +".location.x");
+			y = getCustomConfig().getString("players." +name +"."+world +".location.y");
+			z = getCustomConfig().getString("players." +name +"."+world +".location.z");
 		}catch(NullPointerException e) {
 			return Messages.youHaveNoGrave.msg();
 		}
@@ -533,19 +566,19 @@ public class Ghosts {
 	}
 	
 	public void setDisplayName(Player player, boolean isDead) {
-		if ( config.getString(CFG.GHOST_NAME).equalsIgnoreCase("")) return;
+		if ( plugin.getConfig().getString("GHOST_NAME").equalsIgnoreCase("")) return;
 		
 		String playerName = player.getName();
 		String world = player.getWorld().getName();
 		
 		if(isDead) {
-			yml.setProperty("players."+playerName+"."+world+".displayname", player.getDisplayName());
+			getCustomConfig().set("players."+playerName+"."+world+".displayname", player.getDisplayName());
 			player.setDisplayName(getGhostDisplayName(player));
 		}
 		else {
-			player.setDisplayName(yml.getString("players."+playerName+"."+world+".displayname"));
+			player.setDisplayName(getCustomConfig().getString("players."+playerName+"."+world+".displayname"));
 		}
-		yml.save();
+		saveCustomConfig();
 	}
 	
 	/**
@@ -553,15 +586,16 @@ public class Ghosts {
 	 * @param plugin plugin which is using the method
 	 */
 	public void onDisable(DAR plugin) {
-		if(!config.getBoolean(CFG.DROPPING)) {
-			List<String> names = yml.getKeys("players.");
+		if(!plugin.getConfig().getBoolean("DROPPING")) {
+			Set<String> names = getCustomConfig().getConfigurationSection("players.").getKeys(false);
+			if (names == null) return;
 			for (String name : names) {
-				List<String> worlds = yml.getKeys("players."+name);
+				Set<String> worlds = getCustomConfig().getConfigurationSection("players."+name).getKeys(false);
 				Player player = plugin.getServer().getPlayer(name);
 				if (player == null) continue;
 				if (!player.isOnline()) continue;
 				for (String world : worlds) {
-					if (yml.getBoolean("players."+name+"."+world+".dead", false)) {
+					if (getCustomConfig().getBoolean("players."+name+"."+world+".dead", false)) {
 						dardrops.givePlayerInv(player);
 					}
 				}
@@ -571,13 +605,13 @@ public class Ghosts {
 	
 //  private methods ************************************************************************************************************
 	private void worldChangeHelper(String playerName, String worldName, Location location) {
-		yml.setProperty("players." +playerName +"."+worldName +".dead", false);
-		yml.setProperty("players." +playerName +"."+worldName +".location.x", location.getBlockX());
-		yml.setProperty("players." +playerName +"."+worldName +".location.y", location.getBlockY());
-		yml.setProperty("players." +playerName +"."+worldName +".location.z", location.getBlockZ());
-		yml.setProperty("players." +playerName +"."+worldName +".world", worldName);
+		getCustomConfig().set("players." +playerName +"."+worldName +".dead", false);
+		getCustomConfig().set("players." +playerName +"."+worldName +".location.x", location.getBlockX());
+		getCustomConfig().set("players." +playerName +"."+worldName +".location.y", location.getBlockY());
+		getCustomConfig().set("players." +playerName +"."+worldName +".location.z", location.getBlockZ());
+		getCustomConfig().set("players." +playerName +"."+worldName +".world", worldName);
 		
-		yml.save();
+		saveCustomConfig();
 	}
 		
 	// **************************************************************

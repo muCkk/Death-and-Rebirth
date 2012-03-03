@@ -87,6 +87,7 @@ public enum CFG {
 		this.isDouble = true;
 	}
 	
+	
 	// Getter
 	/**
 	 * Returns the information as string

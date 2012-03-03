@@ -1,8 +1,6 @@
 package muCkk.DeathAndRebirth.listener;
 
 import muCkk.DeathAndRebirth.DAR;
-import muCkk.DeathAndRebirth.config.CFG;
-import muCkk.DeathAndRebirth.config.Config;
 import muCkk.DeathAndRebirth.ghost.Ghosts;
 import muCkk.DeathAndRebirth.ghost.Graves;
 import muCkk.DeathAndRebirth.ghost.Shrines;
@@ -15,25 +13,26 @@ import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDamageEvent;
-import org.bukkit.event.block.BlockListener;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 
-public class BListener extends BlockListener {
+public class BListener implements Listener {
 
 	private DAR plugin;
 	private Shrines shrines;
 	private Ghosts ghosts;
 	private Graves graves;
-	private Config config;
 	
-	public BListener(DAR plugin, Config config, Shrines shrines, Ghosts ghosts, Graves graves) {
+	public BListener(DAR plugin, Shrines shrines, Ghosts ghosts, Graves graves) {
 		this.plugin = plugin;
-		this.config = config;
 		this.shrines = shrines;
 		this.ghosts = ghosts;
 		this.graves = graves;
 	}
 	
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onBlockBreak(BlockBreakEvent event) {
 	// *** protecting graves ************************************************
 		Block blockUp = event.getBlock().getRelative(BlockFace.UP);
@@ -67,6 +66,7 @@ public class BListener extends BlockListener {
 		}
 	}
 	
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onBlockDamage(BlockDamageEvent event) {
 		if(event.isCancelled()) {
 			return;
@@ -74,7 +74,7 @@ public class BListener extends BlockListener {
 		Player player = event.getPlayer();
 		
 		// check if the world is enabled
-		if(!config.isEnabled(player.getWorld().getName())) {
+		if(!plugin.getConfig().getBoolean(player.getWorld().getName())) {
 			return;
 		}
 		
@@ -82,7 +82,7 @@ public class BListener extends BlockListener {
 		// *** shrine is being damaged ***
 		String shrine = shrines.getClose(player.getLocation());
 		if (shrine != null) {
-			if(config.getBoolean(CFG.SHRINE_PROTECTION)) {
+			if(plugin.getConfig().getBoolean("SHRINE_PROTECTION")) {
 				if(!player.isOp()) {
 					if(shrines.isShrineArea(shrine, event.getBlock())) {
 						plugin.message.send(player, Messages.shrineProtectedDestroy);
@@ -94,6 +94,7 @@ public class BListener extends BlockListener {
 		}
 	}
 	
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onBlockPlace (BlockPlaceEvent event) {
 		if(event.isCancelled()) {
 			return;
@@ -102,7 +103,7 @@ public class BListener extends BlockListener {
 		Player player = event.getPlayer();
 		
 		// check if the world is enabled
-		if(!config.isEnabled(player.getWorld().getName())) {
+		if(!plugin.getConfig().getBoolean(player.getWorld().getName())) {
 			return;
 		}
 

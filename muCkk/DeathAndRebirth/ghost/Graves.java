@@ -1,57 +1,66 @@
 package muCkk.DeathAndRebirth.ghost;
 
 import java.io.File;
-import java.util.List;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import muCkk.DeathAndRebirth.config.CFG;
-import muCkk.DeathAndRebirth.config.Config;
-import muCkk.DeathAndRebirth.messages.Errors;
+import muCkk.DeathAndRebirth.DAR;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
-import org.bukkit.util.config.Configuration;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class Graves {
 	
-	private String dir;
+	private FileConfiguration customConfig = null;
 	private File graveFile;
-	private Configuration yml;
-	private Config config;
+	private DAR plugin;
 	private Ghosts ghosts;
 	
-	public Graves(String dir, Config config) {
-		this.dir = dir;
-		graveFile = new File(dir+"/graves");
-		this.config = config;
-		load();
+	public Graves(DAR instance, String dataDir) {
+		this.plugin = instance;
+		graveFile = new File(dataDir+"/graves");
 	}
 	
-	public void load() {
-		if(!graveFile.exists()){
-            try {
-            	new File(dir).mkdir();
-                graveFile.createNewFile(); 
-            } catch (Exception ex) {
-            	Errors.couldNotReadSignsFile();
-            	ex.printStackTrace();
-            }
-        } else {
-        	Errors.gravesLoaded();
-        }
-		try {
-            yml = new Configuration(graveFile);
-            yml.load();
-        } catch (Exception e) {
-        	Errors.couldNotReadSignsFile();
-        	e.printStackTrace();
-        }
+	public void reloadCustomConfig() {
+	    if (graveFile == null) {
+	    	graveFile = new File(plugin.getDataFolder(), "customConfig.yml");
+	    }
+	    customConfig = YamlConfiguration.loadConfiguration(graveFile);
+	 
+	    // Look for defaults in the jar
+	    InputStream defConfigStream = plugin.getResource("customConfig.yml");
+	    if (defConfigStream != null) {
+	        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
+	        customConfig.setDefaults(defConfig);
+	    }
 	}
 	
-	public void save() {
-		yml.save();
+	public FileConfiguration getCustomConfig() {
+	    if (customConfig == null) {
+	        reloadCustomConfig();
+	    }
+	    return customConfig;
 	}
+	
+	public void saveCustomConfig() {
+	    if (customConfig == null || graveFile == null) {
+	    return;
+	    }
+	    try {
+	        customConfig.save(graveFile);
+	    } catch (IOException ex) {
+	        Logger.getLogger(JavaPlugin.class.getName()).log(Level.SEVERE, "Could not save config to " + graveFile, ex);
+	    }
+	}
+	
 	public void setGhosts(Ghosts ghosts) {
 		this.ghosts = ghosts;
 	}
@@ -72,7 +81,7 @@ public class Graves {
 			x = otherBlock.getX();
 			y = otherBlock.getY();
 			z = otherBlock.getZ();
-			if (config.getBoolean(CFG.GRAVE_SIGNS)) {
+			if (plugin.getConfig().getBoolean("GRAVE_SIGNS")) {
 				placeSign(otherBlock, l1, name);
 				ghosts.setLocationOfDeath(otherBlock, name);
 				placed = true;
@@ -89,42 +98,42 @@ public class Graves {
 			x = otherBlock.getX();
 			y = otherBlock.getY();
 			z = otherBlock.getZ();
-			if (config.getBoolean(CFG.GRAVE_SIGNS)) {
+			if (plugin.getConfig().getBoolean("GRAVE_SIGNS")) {
 				placeSign(otherBlock, l1, name);
 				ghosts.setLocationOfDeath(otherBlock, name);
 				placed= true;
 			}
 		}
 		
-		if (config.getBoolean(CFG.GRAVE_SIGNS) && !placed) {
+		if (plugin.getConfig().getBoolean("GRAVE_SIGNS") && !placed) {
 			placeSign(block, l1, name);
 			ghosts.setLocationOfDeath(block, name);
 		}
 			
-		yml.setProperty("graves." +world +"." +name+".x", x);
-		yml.setProperty("graves." +world +"." +name+".y", y);
-		yml.setProperty("graves." +world +"." +name+".z", z);
-		yml.setProperty("graves." +world +"." +name+".l1", l1);
-		yml.setProperty("graves." +world +"." +name+".l2", name);
+		getCustomConfig().set("graves." +world +"." +name+".x", x);
+		getCustomConfig().set("graves." +world +"." +name+".y", y);
+		getCustomConfig().set("graves." +world +"." +name+".z", z);
+		getCustomConfig().set("graves." +world +"." +name+".l1", l1);
+		getCustomConfig().set("graves." +world +"." +name+".l2", name);
 		
-		yml.save();
+		saveCustomConfig();
 	}
 	
 	public void deleteGrave(Block block, String name, String worldName) {
 		// check for lava
-		if (yml.getInt("graves."+block.getWorld().getName()+"."+name+".blockid", 0) != 10 && yml.getInt("graves."+block.getWorld().getName()+"."+name+".blockid", 0) != 11) {
-			if (config.getBoolean(CFG.GRAVE_SIGNS)) removeSign(block, name, worldName);
+		if (getCustomConfig().getInt("graves."+block.getWorld().getName()+"."+name+".blockid", 0) != 10 && getCustomConfig().getInt("graves."+block.getWorld().getName()+"."+name+".blockid", 0) != 11) {
+			if (plugin.getConfig().getBoolean("GRAVE_SIGNS")) removeSign(block, name, worldName);
 		}
-		yml.removeProperty("graves." +worldName +"." +name);
-		yml.save();		
+		getCustomConfig().set("graves." +worldName +"." +name, null);
+		saveCustomConfig();
 	}
 	
 	private void placeSign(Block block, String l1, String name) {
 		int id = block.getTypeId();
-		yml.setProperty("graves."+block.getWorld().getName()+"."+name+".blockid", id);
+		getCustomConfig().set("graves."+block.getWorld().getName()+"."+name+".blockid", id);
 		if (id == 43 || id == 44 || id == 35) {
 			int data = (int) block.getData();
-			yml.setProperty("graves."+block.getWorld().getName()+"."+name+".blockdata", data);
+			getCustomConfig().set("graves."+block.getWorld().getName()+"."+name+".blockdata", data);
 		}
 		//avoid placing signs in lava
 		if(id == 10 || id == 11) return;
@@ -137,23 +146,23 @@ public class Graves {
 	}
 	
 	private void removeSign(Block block, String name, String worldName) {
-		int id = yml.getInt("graves."+worldName+"."+name+".blockid", 0);
-		int x =  yml.getInt("graves."+worldName+"."+name+".x", block.getX());
-		int y =  yml.getInt("graves."+worldName+"."+name+".y", block.getY());
-		int z =  yml.getInt("graves."+worldName+"."+name+".z", block.getZ());
+		int id = getCustomConfig().getInt("graves."+worldName+"."+name+".blockid", 0);
+		int x =  getCustomConfig().getInt("graves."+worldName+"."+name+".x", block.getX());
+		int y =  getCustomConfig().getInt("graves."+worldName+"."+name+".y", block.getY());
+		int z =  getCustomConfig().getInt("graves."+worldName+"."+name+".z", block.getZ());
 //		block.setTypeId(id);
 		block.getWorld().getBlockAt(x, y, z).setTypeId(id);
-		if (id == 43 || id == 44 || id == 35) block.setData((byte)yml.getInt("graves."+worldName+"."+name+".blockdata", 0));
+		if (id == 43 || id == 44 || id == 35) block.setData((byte)getCustomConfig().getInt("graves."+worldName+"."+name+".blockdata", 0));
 	}
 	
 	public boolean isProtected(String name, String world, int x, int y, int z) {
-		List<String> graves = yml.getKeys("graves." +world);
+		Set<String> graves = getCustomConfig().getConfigurationSection("graves." +world).getKeys(false);
 		try {
 			for (String grave : graves) {
 				if(grave.equalsIgnoreCase(name)
-						&& yml.getInt("graves." +world +"." +grave+".x", 0) == x
-						&&	yml.getInt("graves." +world +"." +grave+".y", 0) == y
-						&&	yml.getInt("graves." +world +"." +grave+".z", 0) == z)
+						&& getCustomConfig().getInt("graves." +world +"." +grave+".x", 0) == x
+						&&	getCustomConfig().getInt("graves." +world +"." +grave+".y", 0) == y
+						&&	getCustomConfig().getInt("graves." +world +"." +grave+".z", 0) == z)
 					
 						return true;
 			}

@@ -5,39 +5,38 @@ import java.util.List;
 import java.util.Random;
 
 import muCkk.DeathAndRebirth.DAR;
-import muCkk.DeathAndRebirth.config.CFG;
-import muCkk.DeathAndRebirth.config.Config;
 import muCkk.DeathAndRebirth.ghost.Ghosts;
 import muCkk.DeathAndRebirth.ghost.Shrines;
 import muCkk.DeathAndRebirth.messages.Messages;
 import muCkk.DeathAndRebirth.otherPlugins.Perms;
 
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.event.entity.EntityListener;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
-import org.bukkit.util.config.Configuration;
 
 import net.citizensnpcs.api.CitizensManager;
 
-public class EListener extends EntityListener {
+public class EListener implements Listener {
 
 	private DAR plugin;
 	private Ghosts ghosts;
-	private Config config;
 	private Shrines shrines;
 	
-	public EListener(DAR plugin, Config config, Ghosts ghosts, Shrines shrines) {
+	public EListener(DAR plugin, Ghosts ghosts, Shrines shrines) {
 		this.plugin = plugin;
-		this.config = config;
 		this.ghosts = ghosts;
 		this.shrines = shrines;
 	}
@@ -45,6 +44,7 @@ public class EListener extends EntityListener {
 	/**
 	 * Checks for dying players
 	 */
+	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onEntityDeath(EntityDeathEvent event) {		
 		Entity entity = event.getEntity();
 		if(!(entity instanceof Player)) return;
@@ -60,10 +60,10 @@ public class EListener extends EntityListener {
 			}catch (NullPointerException e) {
 				// happens if there is no cause (/kill, /suicide ...)
 			}
-		if (config.getBoolean(CFG.VOID_DEATH) && damageCause.equalsIgnoreCase("VOID")) return;
+		if (plugin.getConfig().getBoolean("VOID_DEATH") && damageCause.equalsIgnoreCase("VOID")) return;
 		
 	// check if the world is enabled
-		if(!config.isEnabled(entity.getWorld().getName())) {
+		if(!plugin.getConfig().getBoolean(entity.getWorld().getName())) {
 			return;
 		}
 	// check for ignore	
@@ -72,7 +72,7 @@ public class EListener extends EntityListener {
 		 }
 		
 	// check for citizen NPCs
-		if (config.getBoolean(CFG.CITIZENS_ENABLED)) {
+		if (plugin.getConfig().getBoolean("CITIZENS_ENABLED")) {
 			if (checkForNPC(entity)) return;
 		}
 		
@@ -80,7 +80,7 @@ public class EListener extends EntityListener {
 		List<ItemStack> drops = event.getDrops();
 		PlayerInventory inv = player.getInventory();
 		// PVP kill
-		if (entity.getLastDamageCause() instanceof EntityDamageByEntityEvent && config.getBoolean(CFG.PVP_DROP) && drops.size() > 0) {
+		if (entity.getLastDamageCause() instanceof EntityDamageByEntityEvent && plugin.getConfig().getBoolean("PVP_DROP") && drops.size() > 0) {
 			 Entity damager = ((EntityDamageByEntityEvent)entity.getLastDamageCause()).getDamager();
 			 if (damager instanceof Player) {
 			// find one random item which will be dropped
@@ -106,7 +106,7 @@ public class EListener extends EntityListener {
 		}
 		
 		// dropping OFF   OR    dar.nodrop 
-		if (!config.getBoolean(CFG.DROPPING) || Perms.hasPermission(player, "dar.nodrop")) {
+		if (!plugin.getConfig().getBoolean("DROPPING") || Perms.hasPermission(player, "dar.nodrop")) {
 			drops.clear();
 			ghosts.died(player, inv, false);
 			return;
@@ -117,13 +117,10 @@ public class EListener extends EntityListener {
 	/**
 	 * Stops creatures from attacking ghosts
 	 */
-	public void onEntityTarget(EntityTargetEvent event) {
-		if (event.isCancelled()) {
-			return;
-		}
-		
+	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+	public void onEntityTarget(EntityTargetEvent event) {		
 		// check if the world is enabled
-		if(!config.isEnabled(event.getEntity().getWorld().getName())) {
+		if(!plugin.getConfig().getBoolean(event.getEntity().getWorld().getName())) {
 			return;
 		}
 		
@@ -143,13 +140,11 @@ public class EListener extends EntityListener {
 	/**
 	 * Preventing PvP with ghosts and ghosts from attacking monsters
 	 */
+	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onEntityDamage(EntityDamageEvent event) {
-		if(event.isCancelled()) {
-			return;
-		}
 		
 		// check if the world is enabled
-		if(!config.isEnabled(event.getEntity().getWorld().getName())) {
+		if(!plugin.getConfig().getBoolean(event.getEntity().getWorld().getName())) {
 			return;
 		}
 		
@@ -205,6 +200,7 @@ public class EListener extends EntityListener {
 	/**
 	 * Protects shrines from explosions
 	 */
+	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onEntityExplode(EntityExplodeEvent event) {
 		String shrine = shrines.getClose(event.getLocation());
 		if (shrine != null) {
@@ -220,12 +216,11 @@ public class EListener extends EntityListener {
 		}
 		// *** checking all names for evil npcs ... ***
 		File namesFile = new File("plugins/Citizens/mobs.yml");
-		Configuration yml;
+		FileConfiguration yml;
 		String player = ((Player) entity).getName();
 		
 		try {
-            yml = new Configuration(namesFile);
-            yml.load();
+            yml = YamlConfiguration.loadConfiguration(namesFile);//new Configuration(namesFile);
             
             String [] evilNames = null;
             String [] pirateNames = null;
@@ -234,7 +229,7 @@ public class EListener extends EntityListener {
 	            evilNames = yml.getString("evil.misc.names").split(",");
 	            pirateNames = yml.getString("pirates.misc.names").split(",");
             }catch (NullPointerException e) {
-				// TODO ! nullpointer pirate names
+				//nullpointer pirate names
 			}
             
             if(evilNames != null) {

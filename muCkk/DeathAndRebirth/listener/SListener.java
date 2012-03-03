@@ -1,34 +1,32 @@
 package muCkk.DeathAndRebirth.listener;
 
 import muCkk.DeathAndRebirth.DAR;
-import muCkk.DeathAndRebirth.config.CFG;
-import muCkk.DeathAndRebirth.config.Config;
 import muCkk.DeathAndRebirth.messages.Errors;
 import muCkk.DeathAndRebirth.otherPlugins.DARConomy;
 import muCkk.DeathAndRebirth.otherPlugins.DARmcMMO;
 
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginEnableEvent;
-import org.bukkit.event.server.ServerListener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager; 
 
 import com.nijikokun.register.payment.Methods;
 
-public class SListener extends ServerListener{
+public class SListener implements Listener{
 
 	private DAR plugin;
-	private Config config;
 	
-	public SListener(DAR plugin, Config config) {
+	public SListener(DAR plugin) {
 		this.plugin = plugin;
-		this.config = config;
 	}
 	
 //	@Override
 //    public void onPluginDisable(PluginDisableEvent event) {
 //	}
 	
-	@Override
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onPluginEnable(PluginEnableEvent event) {
 		String pluginName = event.getPlugin().getDescription().getName();
 		PluginManager plugman = plugin.getServer().getPluginManager();
@@ -44,20 +42,20 @@ public class SListener extends ServerListener{
 			if (spoutPlugin != null) {
 				Errors.foundSpout();
 				plugin.message.setSpout(true);
-				config.set(CFG.SPOUT_ENABLED, true);
+				plugin.getConfig().set("SPOUT_ENABLED", true);
 				plugin.message.setSpout(true);
 			}
 			else {
 				plugin.message.setSpout(false);
-				config.set(CFG.SPOUT_ENABLED, false);
+				plugin.getConfig().set("SPOUT_ENABLED", false);
 				plugin.message.setSpout(false);
 			}
 		}
 		// Citizens
 		if(pluginName.equalsIgnoreCase("citizens")) {
 			Plugin citizensPlugin = plugman.getPlugin("Citizens");
-			if (citizensPlugin != null)	config.set(CFG.CITIZENS_ENABLED, true);
-			else						config.set(CFG.CITIZENS_ENABLED, false);
+			if (citizensPlugin != null)	plugin.getConfig().set("CITIZENS_ENABLED", true);
+			else						plugin.getConfig().set("CITIZENS_ENABLED", false);
 		}
 		// mcMMO
 		if(pluginName.equalsIgnoreCase("mcMMO")) {
@@ -72,18 +70,18 @@ public class SListener extends ServerListener{
 		// spout
 		Plugin spoutPlugin = plugman.getPlugin("Spout");
 		if (spoutPlugin != null) {
-			config.set(CFG.SPOUT_ENABLED, true);
+			plugin.getConfig().set("SPOUT_ENABLED", true);
 			plugin.message.setSpout(true);
 		}
 		else {
-			config.set(CFG.SPOUT_ENABLED, false);
+			plugin.getConfig().set("SPOUT_ENABLED", false);
 			plugin.message.setSpout(false);
 		}
 		
 		// citizens
 		Plugin citizensPlugin = plugman.getPlugin("Citizens");
-		if (citizensPlugin != null)	config.set(CFG.CITIZENS_ENABLED, true);
-		else						config.set(CFG.CITIZENS_ENABLED, false);
+		if (citizensPlugin != null)	plugin.getConfig().set("CITIZENS_ENABLED", true);
+		else						plugin.getConfig().set("CITIZENS_ENABLED", false);
 		
 		// mcMMO
 		Plugin mcmmoPlug = plugman.getPlugin("mcMMO");
