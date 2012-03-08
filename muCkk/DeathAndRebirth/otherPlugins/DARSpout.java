@@ -18,7 +18,6 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.getspout.spoutapi.gui.Color;
 import org.getspout.spoutapi.SpoutManager;
-import org.getspout.spoutapi.player.AppearanceManager;
 import org.getspout.spoutapi.player.SkyManager;
 import org.getspout.spoutapi.player.SpoutPlayer;
 import org.getspout.spoutapi.sound.SoundEffect;
@@ -97,9 +96,8 @@ public class DARSpout {
 		if(!sp.isSpoutCraftEnabled()) return;
 		
 		// *** Skin ***
-		AppearanceManager appearanceM = SpoutManager.getAppearanceManager();
 		String skin = getCustomConfig().getString(player.getName()+".skin");
-		if (skin != null) appearanceM.setGlobalSkin(sp, skin);
+		if (skin != null) sp.setSkin(skin);
 		
 		resetTtitle(player);
 
@@ -118,17 +116,15 @@ public class DARSpout {
 	public void setTitle(Player player) {
 		if (!plugin.getConfig().getString("GHOST_NAME").equalsIgnoreCase("")) return;
 		SpoutPlayer sp = SpoutManager.getPlayer(player);
-		AppearanceManager appearanceM = SpoutManager.getAppearanceManager();
-		getCustomConfig().set(player.getName()+".title", appearanceM.getTitle(sp, sp));
+		getCustomConfig().set(player.getName()+".title", sp.getTitle());
 		saveCustomConfig();
-		appearanceM.setGlobalTitle(sp, ghosts.getGhostDisplayName(player));
+		sp.setTitle(ghosts.getGhostDisplayName(player));
 	}
 	
 	public void resetTtitle(Player player) {
 		if (!plugin.getConfig().getString("GHOST_NAME").equalsIgnoreCase("")) return;
 		SpoutPlayer sp = SpoutManager.getPlayer(player);
-		AppearanceManager appearanceM = SpoutManager.getAppearanceManager();
-		appearanceM.setGlobalTitle(sp, getCustomConfig().getString(player.getName()+".title"));
+		sp.setTitle(getCustomConfig().getString(player.getName()+".title"));
 	}
 	
 	public void playRebirthSound(Player player, String sound) {
@@ -165,15 +161,14 @@ public class DARSpout {
 					Errors.couldNotSleepSkin();
 				}
 				// Get all those managers
-				AppearanceManager appearanceM = SpoutManager.getAppearanceManager();
 				SkyManager sky = SpoutManager.getSkyManager();
 				
 				// skin
-				String skinUrl = appearanceM.getSkinUrl(sPlayer, sPlayer);
+				String skinUrl = sPlayer.getSkin(sPlayer);
 				if ( skinUrl != null) getCustomConfig().set(player.getName()+".skin", skinUrl);
 				setTitle(player);
 				saveCustomConfig();
-				appearanceM.setGlobalSkin(sPlayer, skin);
+				sPlayer.setSkin(skin);
 				
 				// texturepack
 				String textPack = plugin.getConfig().getString("GHOST_TEXTPACK");
