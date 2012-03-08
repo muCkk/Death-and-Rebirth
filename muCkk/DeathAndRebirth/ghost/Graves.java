@@ -13,6 +13,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -31,12 +32,12 @@ public class Graves {
 	
 	public void reloadCustomConfig() {
 	    if (graveFile == null) {
-	    	graveFile = new File(plugin.getDataFolder(), "customConfig.yml");
+	    	graveFile = new File(plugin.getDataFolder(), "graves");
 	    }
 	    customConfig = YamlConfiguration.loadConfiguration(graveFile);
 	 
 	    // Look for defaults in the jar
-	    InputStream defConfigStream = plugin.getResource("customConfig.yml");
+	    InputStream defConfigStream = plugin.getResource("graves");
 	    if (defConfigStream != null) {
 	        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
 	        customConfig.setDefaults(defConfig);
@@ -52,7 +53,7 @@ public class Graves {
 	
 	public void saveCustomConfig() {
 	    if (customConfig == null || graveFile == null) {
-	    return;
+	    	return;
 	    }
 	    try {
 	        customConfig.save(graveFile);
@@ -156,7 +157,9 @@ public class Graves {
 	}
 	
 	public boolean isProtected(String name, String world, int x, int y, int z) {
-		Set<String> graves = getCustomConfig().getConfigurationSection("graves." +world).getKeys(false);
+		ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("graves." +world);
+		if (cfgsel == null) return false;
+		Set<String> graves = cfgsel.getKeys(false);
 		try {
 			for (String grave : graves) {
 				if(grave.equalsIgnoreCase(name)

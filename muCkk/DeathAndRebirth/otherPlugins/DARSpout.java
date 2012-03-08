@@ -39,12 +39,12 @@ public class DARSpout {
 	
 	public void reloadCustomConfig() {
 	    if (spoutFile == null) {
-	    	spoutFile = new File(plugin.getDataFolder(), "customConfig.yml");
+	    	spoutFile = new File(plugin.getDataFolder(), "spout");
 	    }
 	    customConfig = YamlConfiguration.loadConfiguration(spoutFile);
 	 
 	    // Look for defaults in the jar
-	    InputStream defConfigStream = plugin.getResource("customConfig.yml");
+	    InputStream defConfigStream = plugin.getResource("spout");
 	    if (defConfigStream != null) {
 	        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
 	        customConfig.setDefaults(defConfig);
@@ -60,7 +60,7 @@ public class DARSpout {
 	
 	public void saveCustomConfig() {
 	    if (customConfig == null || spoutFile == null) {
-	    return;
+	    	return;
 	    }
 	    try {
 	        customConfig.save(spoutFile);

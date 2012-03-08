@@ -20,6 +20,7 @@ import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
@@ -53,12 +54,12 @@ public class Ghosts {
 
 	public void reloadCustomConfig() {
 	    if (ghostsFile == null) {
-	    	ghostsFile = new File(plugin.getDataFolder(), "customConfig.yml");
+	    	ghostsFile = new File(plugin.getDataFolder(), "ghosts");
 	    }
 	    customConfig = YamlConfiguration.loadConfiguration(ghostsFile);
 	 
 	    // Look for defaults in the jar
-	    InputStream defConfigStream = plugin.getResource("customConfig.yml");
+	    InputStream defConfigStream = plugin.getResource("ghosts");
 	    if (defConfigStream != null) {
 	        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
 	        customConfig.setDefaults(defConfig);
@@ -74,7 +75,7 @@ public class Ghosts {
 	
 	public void saveCustomConfig() {
 	    if (customConfig == null || ghostsFile == null) {
-	    return;
+	    	return;
 	    }
 	    try {
 	        customConfig.save(ghostsFile);
@@ -83,37 +84,6 @@ public class Ghosts {
 	    }
 	}
 	
-//	/**
-//	 * Loads saved data from a file
-//	 */
-//	public void load() {
-//		if(!ghostsFile.exists()){
-//            try {
-//            	new File(dir).mkdir();
-//                ghostsFile.createNewFile(); 
-//            } catch (Exception e) {
-//            	Errors.couldNotReadGhostFile();
-//            	e.printStackTrace();
-//            }
-//        } else {
-//        	// loaded
-//        }
-//		try {
-//            yml = new Configuration(ghostsFile);
-//            yml.load();
-//        } catch (Exception e) {
-//        	Errors.couldNotReadGhostFile();
-//        	e.printStackTrace();
-//        }
-//	}
-//
-//	/**
-//	 * Saves the current information to a file
-//	 */
-//	public void save() {
-//		yml.save();
-//		dardrops.save();
-//	}
 	
 	/**
 	 * Adds a new player to the ghost file
@@ -141,7 +111,9 @@ public class Ghosts {
 	 * @return boolean
 	 */
 	public boolean existsPlayer(Player player) {
-		Set<String> names = getCustomConfig().getConfigurationSection("players").getKeys(false);
+		ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("players");
+		if (cfgsel == null) return false;
+		Set<String> names = cfgsel.getKeys(false);
 		String pname = player.getName();
 		
 		try {
@@ -374,7 +346,9 @@ public class Ghosts {
 		
 		// mcMMO
 		if (plugin.getConfig().getBoolean("MCMMO")) {
-			Set<String> skills = plugin.getConfig().getConfigurationSection("SKILLS").getKeys(false);
+			ConfigurationSection cfgsel = plugin.getConfig().getConfigurationSection("SKILLS");
+			if(cfgsel == null) return;
+			Set<String> skills = cfgsel.getKeys(false);
 			int amount = plugin.getConfig().getInt("XP");
 			for (String skill : skills) {
 				if(plugin.getConfig().getBoolean("SKILLS."+skill)) plugin.darmcmmo.xpPenality(player, skill, amount);
@@ -536,19 +510,22 @@ public class Ghosts {
 	public void worldChange(Player player) {
 		String worldName = player.getWorld().getName();
 		String name = player.getName();
-		Set<String> worlds = getCustomConfig().getConfigurationSection("players."+name).getKeys(false);
-		
-		try {
-			for (String world : worlds) {
-				if(world.equalsIgnoreCase(worldName)) {
-					return;
+		ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("players."+name);
+		if(cfgsel != null) { 
+			Set<String> worlds = cfgsel.getKeys(false);
+			
+			try {
+				for (String world : worlds) {
+					if(world.equalsIgnoreCase(worldName)) {
+						return;
+					}
 				}
+			}catch (NullPointerException e) {
+				worldChangeHelper(name, worldName, player.getLocation());
+				return;
 			}
-		}catch (NullPointerException e) {
 			worldChangeHelper(name, worldName, player.getLocation());
-			return;
 		}
-		worldChangeHelper(name, worldName, player.getLocation());
 	}
 	
 	public String getGrave(Player player) {
@@ -585,12 +562,16 @@ public class Ghosts {
 	 * Gives ghosts their drops back
 	 * @param plugin plugin which is using the method
 	 */
-	public void onDisable(DAR plugin) {
+	public void onDisable() {
 		if(!plugin.getConfig().getBoolean("DROPPING")) {
-			Set<String> names = getCustomConfig().getConfigurationSection("players.").getKeys(false);
+			ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("players.");
+			if (cfgsel == null) return;
+			Set<String> names = cfgsel.getKeys(false);
 			if (names == null) return;
 			for (String name : names) {
-				Set<String> worlds = getCustomConfig().getConfigurationSection("players."+name).getKeys(false);
+				cfgsel = getCustomConfig().getConfigurationSection("players."+name);
+				if (cfgsel == null) return;
+				Set<String> worlds = cfgsel.getKeys(false);
 				Player player = plugin.getServer().getPlayer(name);
 				if (player == null) continue;
 				if (!player.isOnline()) continue;

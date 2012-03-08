@@ -13,10 +13,13 @@ import muCkk.DeathAndRebirth.otherPlugins.DARConomy;
 import muCkk.DeathAndRebirth.otherPlugins.DARmcMMO;
 import muCkk.DeathAndRebirth.otherPlugins.Perms;
 import muCkk.DeathAndRebirth.otherPlugins.DARSpout;
+import muCkk.DeathAndRebirth.tools.DARArmor;
+import muCkk.DeathAndRebirth.tools.DARInventory;
 
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin; 
@@ -38,7 +41,7 @@ public class DAR extends JavaPlugin {
 	public PluginManager pm;
 	
 	public void onDisable() {
-		ghosts.onDisable(this);
+		ghosts.onDisable();
 		getServer().getScheduler().cancelTasks(this);
 		saveConfig();
 		ghosts.saveCustomConfig();
@@ -50,9 +53,13 @@ public class DAR extends JavaPlugin {
 	// Config
 		getConfig().options().copyDefaults(true);
 		
+	// Register Serialization
+		ConfigurationSerialization.registerClass(DARInventory.class, "DARInventory");
+		ConfigurationSerialization.registerClass(DARArmor.class, "DARArmor");
+		
 	// DAR Classes
 		darSpout = new DARSpout(this, dataDir);
-		message = new Messenger(dir);
+		message = new Messenger(this);
 		Perms.setup(this);
 
 		graves = new Graves(this, dataDir);

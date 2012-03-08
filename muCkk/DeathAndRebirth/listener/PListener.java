@@ -24,6 +24,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerChatEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -49,6 +50,12 @@ public class PListener implements Listener {
 		this.shrines = shrines;
 		checkList = new ArrayList<String>();
 	}
+	
+	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+	public void onPlayerDropItem(PlayerDropItemEvent event) {
+		if(ghosts.isGhost(event.getPlayer())) event.setCancelled(true);
+	}
+	
 	/**
 	 * Looks for new Players and adds them to the list
 	 */

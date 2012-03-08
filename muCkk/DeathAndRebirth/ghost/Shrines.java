@@ -15,6 +15,7 @@ import muCkk.DeathAndRebirth.messages.Messages;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -37,12 +38,12 @@ public class Shrines {
 	
 	public void reloadCustomConfig() {
 	    if (shrinesFile == null) {
-	    	shrinesFile = new File(plugin.getDataFolder(), "customConfig.yml");
+	    	shrinesFile = new File(plugin.getDataFolder(), "shrines.yml");
 	    }
 	    customConfig = YamlConfiguration.loadConfiguration(shrinesFile);
 	 
 	    // Look for defaults in the jar
-	    InputStream defConfigStream = plugin.getResource("customConfig.yml");
+	    InputStream defConfigStream = plugin.getResource("shrines.yml");
 	    if (defConfigStream != null) {
 	        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
 	        customConfig.setDefaults(defConfig);
@@ -58,7 +59,7 @@ public class Shrines {
 	
 	public void saveCustomConfig() {
 	    if (customConfig == null || shrinesFile == null) {
-	    return;
+	    	return;
 	    }
 	    try {
 	        customConfig.save(shrinesFile);
@@ -158,7 +159,9 @@ public class Shrines {
 	public void list(Player player, int page) {
 		String world = player.getWorld().getName();
 		try {
-			Set<String> names1 = getCustomConfig().getConfigurationSection("shrines." +world).getKeys(false);
+			ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("shrines." +world);
+			if (cfgsel == null) return;
+			Set<String> names1 = cfgsel.getKeys(false);
 			List<Object> names = Arrays.asList(names1.toArray());
 			int pages = names1.size()/6;
 			if(names1.size()%6 != 0) pages += 1;
@@ -179,7 +182,9 @@ public class Shrines {
 	 * @return
 	 */
 	public boolean exists(String name, String world) {
-		Set<String> names = getCustomConfig().getConfigurationSection("shrines." +world).getKeys(false);
+		ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("shrines." +world);
+		if (cfgsel == null) return false;
+		Set<String> names = cfgsel.getKeys(false);
 		try {
 			for (String currentName : names) {
 				if (currentName.equalsIgnoreCase(name)) return true;
@@ -200,7 +205,9 @@ public class Shrines {
 		int locX = loc.getBlockX(),
 			locY = loc.getBlockY(),
 			locZ = loc.getBlockZ();
-		Set<String> names = getCustomConfig().getConfigurationSection("shrines." +worldName).getKeys(false);
+		ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("shrines." +worldName);
+		if (cfgsel == null) return null;
+		Set<String> names = cfgsel.getKeys(false);
 		int radius = 6;
 		try {
 			for (String name : names) {
@@ -228,7 +235,9 @@ public class Shrines {
 		int x,y,z;
 		double distance = Double.MAX_VALUE;
 		String worldName = loc.getWorld().getName();
-		Set<String> shrines = getCustomConfig().getConfigurationSection("shrines."+worldName).getKeys(false);
+		ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("shrines."+worldName);
+		if (cfgsel == null) return null;
+		Set<String> shrines = cfgsel.getKeys(false);
 		Location shrineLoc, returnLoc = null;
 		
 		if (shrines == null) return null;
@@ -252,7 +261,9 @@ public class Shrines {
 		int x,y,z;
 		double distance = Double.MAX_VALUE;
 		String worldName = loc.getWorld().getName();
-		Set<String> shrines = getCustomConfig().getConfigurationSection("shrines."+worldName).getKeys(false);
+		ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("shrines."+worldName);
+		if (cfgsel == null) return null;
+		Set<String> shrines = cfgsel.getKeys(false);
 		Location shrineLoc, returnLoc = null;
 		String shrineName = "";
 		if (shrines == null) return null;
@@ -312,7 +323,9 @@ public class Shrines {
 		int locX = loc.getBlockX(),
 			locY = loc.getBlockY(),
 			locZ = loc.getBlockZ();
-		Set<String> names = getCustomConfig().getConfigurationSection("shrines." +worldName).getKeys(false);
+		ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("shrines." +worldName);
+		if (cfgsel == null) return false;
+		Set<String> names = cfgsel.getKeys(false);
 		int radius = plugin.getConfig().getInt("SHRINE_RADIUS");
 		try {
 			for (String name : names) {

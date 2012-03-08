@@ -1,32 +1,29 @@
 Informations:
 --------------------
-This is a plugin for Bukkit which provides a different style of death.
+This is a plugin for CraftBukkit which provides a different style of death.
 Detailed informations can be found here:
 http://dev.bukkit.org/server-mods/death-and-rebirth/
 
 
 Dependencies:
 --------------------
-Bukkit v1211
+CraftBukkit #2034
 http://bukkit.org/
 
-CraftBukkit 1.1-R3
-http://bukkit.org/
+Register 1.6
+http://dev.bukkit.org/server-mods/register/
 
-Citizens v1.1.2
+Citizens v1.1.6 #37
 http://dev.bukkit.org/server-mods/citizens/
 
-iConomy v6.0.8b
-http://dev.bukkit.org/server-mods/iconomy/
-
-mcMMO v1.2.04
+mcMMO v1.3.02 
 http://dev.bukkit.org/server-mods/mcmmo/
 
-PermissionsEX v1.16
-http://forums.bukkit.org/threads/1337.18140/
+PermissionsEX v1.19
+http://dev.bukkit.org/server-mods/permissionsex/
 
 Permissions v3.1.6
 http://forums.bukkit.org/threads/18430/
 
-Spout API v277 
+Spout API v397
 http://dev.bukkit.org/server-mods/spout/

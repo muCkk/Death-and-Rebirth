@@ -1,106 +1,98 @@
 package muCkk.DeathAndRebirth.messages;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import muCkk.DeathAndRebirth.DAR;
 
 import org.bukkit.Material;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.util.config.Configuration;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.getspout.spoutapi.SpoutManager;
 import org.getspout.spoutapi.player.SpoutPlayer;
 
 public class Messenger {
 
 	private boolean spoutEnabled;
-	private String dir;
-	private File file; 
-	private Configuration yml;
+	private DAR plugin;
+	private File messagesFile; 
+	private FileConfiguration customConfig = null;
 	
 	private static String title = "Death & Rebirth";
 	private static Material mat = Material.BONE;
 
-	public Messenger(String dir) {
-		this.dir = dir;
-		this.file = new File(dir+"/messages.yml");
+	public Messenger(DAR instance) {
+		this.plugin = instance;
+		this.messagesFile = new File(plugin.getDataFolder()+"/messages.yml");
 		this.spoutEnabled = false;
-		load();
 	}
 	
-	public void save() {
-		yml.save();
+	public void reloadCustomConfig() {
+	    if (messagesFile == null) {
+	    	messagesFile = new File(plugin.getDataFolder(), "messages.yml");
+	    }
+	    customConfig = YamlConfiguration.loadConfiguration(messagesFile);
+	 
+	    // Look for defaults in the jar
+	    InputStream defConfigStream = plugin.getResource("messages.yml");
+	    if (defConfigStream != null) {
+	        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
+	        customConfig.setDefaults(defConfig);
+	    }
 	}
 	
-	public void load() {
-		if(!file.exists()){
-            try {
-            	new File(dir).mkdir();
-                file.createNewFile(); 
-            } catch (Exception ex) {
-            }
-        } else {
-        	Errors.messagesLoaded();
-        }
-		try {
-            yml = new Configuration(file);
-            yml.load();
-        } catch (Exception e) {
-        }
+	public FileConfiguration getCustomConfig() {
+	    if (customConfig == null) {
+	        reloadCustomConfig();
+	    }
+	    return customConfig;
+	}
+	
+	public void saveCustomConfig() {
+	    if (customConfig == null || messagesFile == null) {
+	    return;
+	    }
+	    try {
+	        customConfig.save(messagesFile);
+	    } catch (IOException ex) {
+	        Logger.getLogger(JavaPlugin.class.getName()).log(Level.SEVERE, "Could not save config to " + messagesFile, ex);
+	    }
 	}
 //	********************************************************************************************	
 	public void send(Player player, Messages msg) {
-		String ownMessage = yml.getString(msg.toString());
-		if (ownMessage == null) {
-			if (checkSpout(player)) spout(player, msg.msg());
-			else					chat(player, msg.msg());
-		}
-		else {
-			if (checkSpout(player)) spout(player, ownMessage);
-			else					chat(player, ownMessage);
-		}
+		String ownMessage = getCustomConfig().getString(msg.toString(), msg.msg());//yml.getString(msg.toString());
+		if (checkSpout(player)) spout(player, ownMessage);
+		else					chat(player, ownMessage);
 	}
 	
 	public void sendSkill(Player player, Messages msg, String skillType) {
-		String ownMessage = yml.getString(msg.msg());
-		if (ownMessage == null) {
-			if (checkSpout(player)) spout(player, msg.msg().replace("%skill%", skillType));
-			else					chat(player, msg.msg().replace("%skill%", skillType));
-		}
-		else {
-			ownMessage = ownMessage.replace("%skill%", skillType);
-			if (checkSpout(player)) spout(player, ownMessage);
-			else					chat(player, ownMessage);
-		}
+		String ownMessage = getCustomConfig().getString(msg.toString(), msg.msg()); //yml.getString(msg.msg());
+		if (checkSpout(player)) spout(player,ownMessage.replace("%skill%", skillType));
+		else					chat(player, ownMessage.replace("%skill%", skillType));
 	}
 	
 	public void send(Player player, Messages msg, String arg) {
-		String ownMessage = yml.getString(msg.toString());
-		if (ownMessage == null) {
-			String message = msg.msg()+" "+arg;
-			if (checkSpout(player)) spout(player, message);
-			else					chat(player, message);
-		}
-		else {
-			String message = ownMessage+" "+arg;
-			if (checkSpout(player)) spout(player, message);
-			else					chat(player, message);
-		}
+		String ownMessage = getCustomConfig().getString(msg.toString(), msg.msg());
+		String message = ownMessage+" "+arg;
+		if (checkSpout(player)) spout(player, message);
+		else					chat(player, message);
 	}
 //	*******************
 	public void sendChat(Player player, Messages msg) {
-		String ownMessage = yml.getString(msg.toString());
+		String ownMessage = getCustomConfig().getString(msg.toString(), msg.msg());
 		if (ownMessage == null)	chat(player, msg.msg());
 		else					chat(player, ownMessage);
 	}
 	
 	public void sendChat(Player player, Messages msg, String arg) {
-		String ownMessage = yml.getString(msg.toString());
-		if (ownMessage == null) {
-			String message = msg.msg()+" "+arg;
-			chat(player, message);
-		}
-		else {
-			String message = ownMessage+" "+arg;
-			chat(player, message);
-		}
+		String ownMessage = getCustomConfig().getString(msg.toString(), msg.msg());
+		String message = ownMessage+" "+arg;
+		chat(player, message);
 	}
 //	************************************************************************************
 	private void spout(Player player, String msg) {

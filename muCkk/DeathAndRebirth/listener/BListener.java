@@ -68,9 +68,6 @@ public class BListener implements Listener {
 	
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onBlockDamage(BlockDamageEvent event) {
-		if(event.isCancelled()) {
-			return;
-		}
 		Player player = event.getPlayer();
 		
 		// check if the world is enabled
@@ -95,11 +92,7 @@ public class BListener implements Listener {
 	}
 	
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-	public void onBlockPlace (BlockPlaceEvent event) {
-		if(event.isCancelled()) {
-			return;
-		}
-		
+	public void onBlockPlace (BlockPlaceEvent event) {		
 		Player player = event.getPlayer();
 		
 		// check if the world is enabled

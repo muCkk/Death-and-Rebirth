@@ -1,3 +1,10 @@
+Version 2.6
+	1.2.3 #2034 update
+	no longer using deprecated methods and Bukkits new config system. As a side effect some bugs got fixed.
+
+Version 2.5.3b
+	R4 release
+	
 Version 2.5.3
 	added a return message for /shrine setspawn
 	fixed errors related to economy plugins
