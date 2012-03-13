@@ -11,7 +11,6 @@ import java.util.logging.Logger;
 import muCkk.DeathAndRebirth.DAR;
 import muCkk.DeathAndRebirth.messages.Errors;
 import muCkk.DeathAndRebirth.messages.Messages;
-import muCkk.DeathAndRebirth.otherPlugins.Perms;
 import net.minecraft.server.Packet201PlayerInfo;
 import net.minecraft.server.Packet20NamedEntitySpawn;
 import net.minecraft.server.Packet29DestroyEntity;
@@ -31,6 +30,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class Ghosts {
 
+	private static final Logger log = Logger.getLogger("Minecraft");
 	private String dir;
 	private HashMap<String, Boolean> isRessing;
 	
@@ -51,7 +51,6 @@ public class Ghosts {
 		this.dardrops = new Drops(plugin, this.dir);
 	}
 	
-
 	public void reloadCustomConfig() {
 	    if (ghostsFile == null) {
 	    	ghostsFile = new File(plugin.getDataFolder(), "ghosts");
@@ -74,6 +73,7 @@ public class Ghosts {
 	}
 	
 	public void saveCustomConfig() {
+		dardrops.saveCustomConfig();
 	    if (customConfig == null || ghostsFile == null) {
 	    	return;
 	    }
@@ -165,7 +165,7 @@ public class Ghosts {
 		// moved
 		
 	// drop-management
-		if (!plugin.getConfig().getBoolean("DROPPING") || Perms.hasPermission(player, "dar.nodrop") || pvp_death) {
+		if (!plugin.getConfig().getBoolean("DROPPING") || DAR.perms.has(player, "dar.nodrop") || pvp_death) {
 			dardrops.put(player, inv);  
 		}
 		else {
@@ -188,7 +188,7 @@ public class Ghosts {
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
-					System.out.println("[Death and Rebirth] Error: Could not sleep: explosion.");
+					log.info("[Death and Rebirth] Error: Could not sleep: explosion.");
 					e.printStackTrace();
 				}
 				graves.addGrave(pname,block, l1, world);
@@ -236,7 +236,7 @@ public class Ghosts {
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
-					System.out.println("[Death and Rebirth] Error: Could not sleep while giving drops.");
+					log.info("[Death and Rebirth] Error: Could not sleep while giving drops.");
 					e.printStackTrace();
 				}
 				
@@ -245,11 +245,11 @@ public class Ghosts {
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
-					System.out.println("[Death and Rebirth] Error: Could not sleep while giving drops.");
+					log.info("[Death and Rebirth] Error: Could not sleep while giving drops.");
 					e.printStackTrace();
 				}
 				
-				if (!plugin.getConfig().getBoolean("DROPPING") || Perms.hasPermission(player, "dar.nodrop") || plugin.getConfig().getBoolean("PVP_DROP")) dardrops.givePlayerInv(player);
+				if (!plugin.getConfig().getBoolean("DROPPING") || DAR.perms.has(player, "dar.nodrop") || plugin.getConfig().getBoolean("PVP_DROP")) dardrops.givePlayerInv(player);
 			}
 		}.start();
 		
@@ -342,7 +342,7 @@ public class Ghosts {
 		
 		//economy
 		double money = plugin.getConfig().getDouble("ECONOMY");
-		if(money > 0) 	plugin.darConomy.take(player, money);
+		if(money > 0) 	DAR.econ.withdrawPlayer(player.getName(), money);
 		
 		// mcMMO
 		if (plugin.getConfig().getBoolean("MCMMO")) {
@@ -556,32 +556,6 @@ public class Ghosts {
 			player.setDisplayName(getCustomConfig().getString("players."+playerName+"."+world+".displayname"));
 		}
 		saveCustomConfig();
-	}
-	
-	/**
-	 * Gives ghosts their drops back
-	 * @param plugin plugin which is using the method
-	 */
-	public void onDisable() {
-		if(!plugin.getConfig().getBoolean("DROPPING")) {
-			ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("players.");
-			if (cfgsel == null) return;
-			Set<String> names = cfgsel.getKeys(false);
-			if (names == null) return;
-			for (String name : names) {
-				cfgsel = getCustomConfig().getConfigurationSection("players."+name);
-				if (cfgsel == null) return;
-				Set<String> worlds = cfgsel.getKeys(false);
-				Player player = plugin.getServer().getPlayer(name);
-				if (player == null) continue;
-				if (!player.isOnline()) continue;
-				for (String world : worlds) {
-					if (getCustomConfig().getBoolean("players."+name+"."+world+".dead", false)) {
-						dardrops.givePlayerInv(player);
-					}
-				}
-			}
-		}
 	}
 	
 //  private methods ************************************************************************************************************
