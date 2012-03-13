@@ -10,20 +10,14 @@ Dependencies:
 CraftBukkit #2034
 http://bukkit.org/
 
-Register 1.6
-http://dev.bukkit.org/server-mods/register/
+Vault 1.2.12
+http://dev.bukkit.org/server-mods/vault/
 
 Citizens v1.1.6 #37
 http://dev.bukkit.org/server-mods/citizens/
 
 mcMMO v1.3.02 
 http://dev.bukkit.org/server-mods/mcmmo/
-
-PermissionsEX v1.19
-http://dev.bukkit.org/server-mods/permissionsex/
-
-Permissions v3.1.6
-http://forums.bukkit.org/threads/18430/
 
 Spout API v397
 http://dev.bukkit.org/server-mods/spout/
