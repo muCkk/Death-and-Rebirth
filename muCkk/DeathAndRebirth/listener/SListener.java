@@ -2,7 +2,6 @@ package muCkk.DeathAndRebirth.listener;
 
 import muCkk.DeathAndRebirth.DAR;
 import muCkk.DeathAndRebirth.messages.Errors;
-import muCkk.DeathAndRebirth.otherPlugins.DARConomy;
 import muCkk.DeathAndRebirth.otherPlugins.DARmcMMO;
 
 import org.bukkit.event.EventHandler;
@@ -12,8 +11,6 @@ import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager; 
 
-import com.nijikokun.register.payment.Methods;
-
 public class SListener implements Listener{
 
 	private DAR plugin;
@@ -22,20 +19,11 @@ public class SListener implements Listener{
 		this.plugin = plugin;
 	}
 	
-//	@Override
-//    public void onPluginDisable(PluginDisableEvent event) {
-//	}
-	
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onPluginEnable(PluginEnableEvent event) {
 		String pluginName = event.getPlugin().getDescription().getName();
 		PluginManager plugman = plugin.getServer().getPluginManager();
-		// economy plugins
-		if (!Methods.hasMethod() && Methods.setMethod(plugin.pm)) {
-			plugin.darConomy = new DARConomy(plugin);
-			DARConomy.register = Methods.getMethod();
-        }
-		
+
 		// Spout
 		if(pluginName.equalsIgnoreCase("spout")) {
 			Plugin spoutPlugin = plugman.getPlugin("Spout");

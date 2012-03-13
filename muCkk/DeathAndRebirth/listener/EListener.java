@@ -3,12 +3,12 @@ package muCkk.DeathAndRebirth.listener;
 import java.io.File;
 import java.util.List;
 import java.util.Random;
+import java.util.logging.Logger;
 
 import muCkk.DeathAndRebirth.DAR;
 import muCkk.DeathAndRebirth.ghost.Ghosts;
 import muCkk.DeathAndRebirth.ghost.Shrines;
 import muCkk.DeathAndRebirth.messages.Messages;
-import muCkk.DeathAndRebirth.otherPlugins.Perms;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -31,6 +31,7 @@ import net.citizensnpcs.api.CitizensManager;
 
 public class EListener implements Listener {
 
+	private static final Logger log = Logger.getLogger("Minecraft");
 	private DAR plugin;
 	private Ghosts ghosts;
 	private Shrines shrines;
@@ -67,7 +68,7 @@ public class EListener implements Listener {
 			return;
 		}
 	// check for ignore	
-		if (Perms.hasPermission(player, "dar.ignore")) {
+		if (DAR.perms.has(player, "dar.ignore")) {
 			return;
 		 }
 		
@@ -106,7 +107,7 @@ public class EListener implements Listener {
 		}
 		
 		// dropping OFF   OR    dar.nodrop 
-		if (!plugin.getConfig().getBoolean("DROPPING") || Perms.hasPermission(player, "dar.nodrop")) {
+		if (!plugin.getConfig().getBoolean("DROPPING") || DAR.perms.has(player, "dar.nodrop")) {
 			drops.clear();
 			ghosts.died(player, inv, false);
 			return;
@@ -243,7 +244,7 @@ public class EListener implements Listener {
 				}
             }
 		} catch (Exception e) {
-        	System.out.println("[Death and Rebirth] Error while checking for NPCs");
+			log.info("[Death and Rebirth] Error while checking for NPCs");
         	e.printStackTrace();
         }
 		

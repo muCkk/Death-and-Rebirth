@@ -1,5 +1,7 @@
 package muCkk.DeathAndRebirth;
 
+import java.util.logging.Logger;
+
 import muCkk.DeathAndRebirth.ghost.Ghosts;
 import muCkk.DeathAndRebirth.ghost.Graves;
 import muCkk.DeathAndRebirth.ghost.Shrines;
@@ -9,19 +11,17 @@ import muCkk.DeathAndRebirth.listener.PListener;
 import muCkk.DeathAndRebirth.listener.SListener;
 import muCkk.DeathAndRebirth.messages.Messenger;
 import muCkk.DeathAndRebirth.messages.Messages;
-import muCkk.DeathAndRebirth.otherPlugins.DARConomy;
 import muCkk.DeathAndRebirth.otherPlugins.DARmcMMO;
-import muCkk.DeathAndRebirth.otherPlugins.Perms;
 import muCkk.DeathAndRebirth.otherPlugins.DARSpout;
-import muCkk.DeathAndRebirth.tools.DARArmor;
-import muCkk.DeathAndRebirth.tools.DARInventory;
+import net.milkbowl.vault.economy.Economy;
+import net.milkbowl.vault.permission.Permission;
 
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin; 
 
 public class DAR extends JavaPlugin {
@@ -33,34 +33,41 @@ public class DAR extends JavaPlugin {
 	private Graves graves;
 	private Shrines shrines;
 	
-	public static Perms perms;
+    private static final Logger log = Logger.getLogger("Minecraft");
+    public static Economy econ = null;
+    public static Permission perms = null;
+    
 	public Messenger message;
 	public  DARSpout darSpout;
-	public DARConomy darConomy;
 	public DARmcMMO darmcmmo = null;
 	public PluginManager pm;
 	
 	public void onDisable() {
-		ghosts.onDisable();
 		getServer().getScheduler().cancelTasks(this);
-		saveConfig();
-		ghosts.saveCustomConfig();
-		graves.saveCustomConfig();
-		shrines.saveCustomConfig();
+		try {
+			//saveConfig();
+			ghosts.saveCustomConfig();
+			graves.saveCustomConfig();
+			shrines.saveCustomConfig();
+		}catch (NullPointerException e) {
+			// TODO: handle exception
+		}
 	}
 
 	public void onEnable() {
+		if (!setupPermissions()) {
+	        log.info(String.format("[%s] - Disabled due to no Vault dependency found!", getDescription().getName()));
+	        getServer().getPluginManager().disablePlugin(this);
+	        return;
+	    }
+		setupEconomy();
+		
 	// Config
 		getConfig().options().copyDefaults(true);
-		
-	// Register Serialization
-		ConfigurationSerialization.registerClass(DARInventory.class, "DARInventory");
-		ConfigurationSerialization.registerClass(DARArmor.class, "DARArmor");
 		
 	// DAR Classes
 		darSpout = new DARSpout(this, dataDir);
 		message = new Messenger(this);
-		Perms.setup(this);
 
 		graves = new Graves(this, dataDir);
 		ghosts = new Ghosts(this, dir, graves);
@@ -76,6 +83,25 @@ public class DAR extends JavaPlugin {
 		pm.registerEvents(serverListener, this);
 		serverListener.checkForPlugins();
 	}
+	
+	private Boolean setupPermissions()
+    {
+        RegisteredServiceProvider<Permission> permissionProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.permission.Permission.class);
+        if (permissionProvider != null) {
+        	perms = permissionProvider.getProvider();
+        }
+        return (perms != null);
+    }
+	
+	private Boolean setupEconomy()
+    {
+        RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
+        if (economyProvider != null) {
+            econ = economyProvider.getProvider();
+        }
+
+        return (econ != null);
+    }
 	
 	public boolean checkAdminPerms() {
 		return getConfig().getBoolean("ADMIN_PERMS");
@@ -112,7 +138,7 @@ public class DAR extends JavaPlugin {
 			// resurrect target
 			if (args.length > 0) {
 				// permission check
-				if (!Perms.hasPermission(player, "dar.reb")) {
+				if (!perms.has(player, "dar.reb") && !player.isOp()) {
 					message.send(player, Messages.noPermission);
 					return true;
 				 }
@@ -160,7 +186,7 @@ public class DAR extends JavaPlugin {
 		 */
 		if (cmd.getName().equalsIgnoreCase("shrine")) {
 		// check permission
-			if (!Perms.hasPermission(player, "dar.admin")) {
+			if (!perms.has(player, "dar.admin") && !player.isOp()) {
 				message.send(player, Messages.noPermission);
 				return true;
 			 }
@@ -300,7 +326,7 @@ public class DAR extends JavaPlugin {
 			
 		// check permission
 			if (sender instanceof Player) {
-				if (!Perms.hasPermission(player, "dar.admin")) {
+				if (!perms.has(player, "dar.admin") && !player.isOp()) {
 					message.send(player, Messages.noPermission);
 					return true;
 				 }
@@ -375,6 +401,7 @@ public class DAR extends JavaPlugin {
 					getConfig().set(name, false);
 					message.sendChat(player, Messages.worldDisabled, " "+name);
 				}
+				saveConfig();
 				return true;
 			}
 		// show and hide ghosts
@@ -455,10 +482,12 @@ public class DAR extends JavaPlugin {
 	public boolean toggle(String node) {
 		if(getConfig().getBoolean(node)) {
 			getConfig().set(node, false);
+			saveConfig();
 			return false;
 		}
 		else {
 			getConfig().set(node, true);
+			saveConfig();
 			return true;
 		}
 	}
