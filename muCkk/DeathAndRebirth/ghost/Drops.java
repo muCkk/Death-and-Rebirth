@@ -2,19 +2,21 @@ package muCkk.DeathAndRebirth.ghost;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import muCkk.DeathAndRebirth.DAR;
-import muCkk.DeathAndRebirth.tools.Blacklist;
-import muCkk.DeathAndRebirth.tools.DARArmor;
-import muCkk.DeathAndRebirth.tools.DARInventory;
-
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -22,29 +24,25 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class Drops {
 
+	private static final Logger log = Logger.getLogger("Minecraft");
 	private FileConfiguration customConfig = null;
 	private File dropsFile;
+	private String dir;
 	private DAR plugin;
 	private Blacklist blacklist;
 	
 	public Drops(DAR instance, String dir2) {
 		this.plugin = instance;
-		this.dropsFile = new File(dir2+"/drops");
+		this.dir = dir2;
+		this.dropsFile = new File(dir+"/drops");
 		this.blacklist = new Blacklist(instance);
 	}
 	
 	public void reloadCustomConfig() {
 	    if (dropsFile == null) {
-	    	dropsFile = new File(plugin.getDataFolder(), "drops");
+	    	dropsFile = new File(plugin.getDataFolder(), dir+"/drops");
 	    }
 	    customConfig = YamlConfiguration.loadConfiguration(dropsFile);
-	 
-	    // Look for defaults in the jar
-	    InputStream defConfigStream = plugin.getResource("drops");
-	    if (defConfigStream != null) {
-	        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
-	        customConfig.setDefaults(defConfig);
-	    }
 	}
 	
 	public FileConfiguration getCustomConfig() {
@@ -73,11 +71,19 @@ public class Drops {
 	public void put(Player player, PlayerInventory inv) {
 		String playerName = player.getName();
 		
-		DARInventory darinv = new DARInventory(inv);
-		getCustomConfig().set("drops."+playerName+"."+player.getWorld().getName()+".inventory", darinv);
+		int i=0;
 		
-		DARArmor dararmor = new DARArmor(inv);
-		getCustomConfig().set("drops."+playerName+"."+player.getWorld().getName()+".armor", dararmor);
+		for (ItemStack itemStack : inv.getContents()) {
+			if(itemStack == null) continue;
+			getCustomConfig().set("drops."+playerName+"."+player.getWorld().getName()+".inventory.item"+String.valueOf(i++), itemStack.serialize());
+		}
+		
+		i=0;
+		
+		for (ItemStack itemStack : inv.getArmorContents()) {
+			if(itemStack == null || itemStack.getTypeId() == 0) continue;
+			getCustomConfig().set("drops."+playerName+"."+player.getWorld().getName()+".armor.armor"+String.valueOf(i++), itemStack.serialize());
+		}		
 		
 		saveCustomConfig();
 	}
@@ -91,44 +97,76 @@ public class Drops {
 		String worldName = player.getWorld().getName();
 		ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("drops."+playerName+"."+worldName);
 		if(cfgsel == null) return;
+		ItemStack [] items = getItemsFromConfig("drops."+playerName+"."+player.getWorld().getName()+".inventory");
+		if (items != null)
+			player.getInventory().setContents(items);
 		
-		DARInventory darinv = (DARInventory) getCustomConfig().get("drops."+playerName+"."+player.getWorld().getName()+".inventory");
-		player.getInventory().setContents(darinv.getContents());
-		
-		DARArmor dararmor = (DARArmor) getCustomConfig().get("drops."+playerName+"."+player.getWorld().getName()+".armor");
-		player.getInventory().setArmorContents(dararmor.getArmor());
-		
+		items = getItemsFromConfig("drops."+playerName+"."+player.getWorld().getName()+".armor");
+		if (items != null) {
+			HashMap<Integer, ItemStack> dropthis = player.getInventory().addItem(items);
+			for (Entry<Integer, ItemStack> e : dropthis.entrySet()) {
+				player.getWorld().dropItemNaturally(player.getLocation(), e.getValue());
+			}
+		}
 		remove(player);
 		saveCustomConfig();
 	}
 	
-	//TODO 
+	@SuppressWarnings("unchecked")
+	private ItemStack[] getItemsFromConfig(String path) {
+		if (getCustomConfig().getConfigurationSection(path) == null) return null;
+		Set<String> keys = getCustomConfig().getConfigurationSection(path).getKeys(false);
+		ItemStack [] itemstack = new ItemStack[keys.size()];
+		Map<String, Object> item = null;
+		int i = 0;
+		Map<Enchantment, Integer> enchant = null;
+		for (String key : keys) {
+			if (!(getCustomConfig().get(path+"."+key) instanceof LinkedHashMap)) {
+				if (!(getCustomConfig().get(path+"."+key) instanceof MemorySection)) {
+					return null;
+				}
+				Map<String, Object> map = ((MemorySection) getCustomConfig().get(path+"."+key)).getValues(false);
+				item = map;
+				// enchantments
+				if (map.containsKey("enchantments")) {
+					enchant = new HashMap<Enchantment, Integer>();
+		             Object raw = ((MemorySection) map.get("enchantments")).getValues(false);
+		 
+		             if (raw instanceof Map) {
+		                 Map<?, ?> enchants = (Map<?, ?>) raw;
+		 
+		                 for (Map.Entry<?, ?> entry : enchants.entrySet()) {
+		                     Enchantment enchantment = Enchantment.getByName(entry.getKey().toString());
+		 
+		                     if ((enchantment != null) && (entry.getValue() instanceof Integer)) {
+		                         enchant.put(enchantment, (Integer) entry.getValue());
+		                     }
+		                 }
+		             }
+				}
+				else {
+					enchant = null;
+				}
+				// end enchantments
+			}
+			else {
+				item = (LinkedHashMap<String, Object>) getCustomConfig().get(path+"."+key);
+			}
+			itemstack[i] = ItemStack.deserialize(item);
+			if (enchant != null) itemstack[i].addUnsafeEnchantments(enchant);
+			i++;
+		}
+		return itemstack;
+	}
+	
 	public void selfResPunish(Player player) {
 		int percent = plugin.getConfig().getInt("PERCENT");
 		if(percent == 0) return;
-		
 		String playerName = player.getName();
-		
-		DARInventory darinv = (DARInventory) getCustomConfig().get("drops."+playerName+"."+player.getWorld().getName()+".inventory");
-		ItemStack [] daritems = darinv.getContents();
-		
-		int size = 0;
-		
-		for(int i=0; i<daritems.length; i++) {
-			if (daritems[i] == null) 
-				continue;
-			size++;
-			
-		}
-		ItemStack [] items = new ItemStack[size];
-		int cnt = 0;
-		for(int i=0; i<daritems.length; i++) {
-			if (daritems[i] == null) 
-				continue;
-			items[cnt++] = daritems[i];
-		}
+		ItemStack [] daritems = getItemsFromConfig("drops."+playerName+"."+player.getWorld().getName()+".inventory");
 		
 		int r, stopper;
+		int size = daritems.length;
 		int counter = (size/100)*percent;
 		if (counter < 1) counter = 1;
 		Random rand = new Random();
@@ -137,16 +175,22 @@ public class Drops {
 			r = rand.nextInt(size);
 			stopper = 0;
 			
-			while (stopper < 20 || blacklist.contains(new Integer(items[r].getTypeId()))) {
+			while (stopper < 20 || blacklist.contains(new Integer(daritems[r].getTypeId()))) {
 				r = rand.nextInt(size);
 				stopper++;
 			}
-			if(!blacklist.contains(new Integer(items[r].getTypeId()))) {
-				items[r] = null;
+			if(!blacklist.contains(new Integer(daritems[r].getTypeId()))) {
+				daritems[r] = null;
 			}
 			counter--;
 		}
-		getCustomConfig().set("drops."+playerName+"."+player.getWorld().getName()+".inventory", new DARInventory(items));
+		
+		getCustomConfig().set("drops."+player.getName()+"."+player.getWorld().getName()+".inventory", null);
+		for (int i=0; i<size; i++) {
+			if (daritems[i] == null) continue;
+			getCustomConfig().set("drops."+playerName+"."+player.getWorld().getName()+".inventory.item"+String.valueOf(i), daritems[i].serialize());
+		}
+		saveCustomConfig();
 	}
 	
 
@@ -156,7 +200,7 @@ public class Drops {
 	 */
 	public void remove(Player player) {
 		if(player == null) {
-			System.out.println("[Death and Rebirth] Error - Remove Players Inventory From Database");
+			log.info("[Death and Rebirth] Error - Remove Players Inventory From Database");
 			return;
 		}
 		getCustomConfig().set("drops."+player.getName()+"."+player.getWorld().getName(), null);
