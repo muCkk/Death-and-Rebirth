@@ -68,6 +68,19 @@ public class PListener implements Listener {
 	// if dead players join
 		if(ghosts.isGhost(player)) {
 			ghosts.setDisplayName(player, true);
+			
+			// compass
+			// reverse spawning
+			if (!plugin.getConfig().getBoolean("CORPSE_SPAWNING")) {
+				Location corpse = ghosts.getLocation(player);
+				player.setCompassTarget(corpse);
+			}
+			// corpse spawning
+			else {
+				Location nearestShrine = shrines.getNearestShrineSpawn(player.getLocation());
+				if (nearestShrine != null) player.setCompassTarget(nearestShrine);
+			}
+			// end compass
 			if(plugin.getConfig().getBoolean("INVISIBILITY")) ghosts.vanish(player);
 			if (plugin.getConfig().getBoolean("SPOUT_ENABLED")) {
 				plugin.darSpout.setDeathOptions(player, plugin.getConfig().getString("GHOST_SKIN"));
