@@ -18,6 +18,7 @@ import org.getspout.spoutapi.player.SpoutPlayer;
 
 public class Messenger {
 
+	private static final Logger log = Logger.getLogger("Minecraft");
 	private boolean spoutEnabled;
 	private DAR plugin;
 	private File messagesFile; 
@@ -122,7 +123,7 @@ public class Messenger {
 				try {
 					Thread.sleep(1500);
 				} catch (InterruptedException e) {
-					System.out.println("[Death and Rebirth] Error: Could not sleep while playerDied().");
+					log.info("[Death and Rebirth] Error: Could not sleep while playerDied().");
 					e.printStackTrace();
 				}
 				if (checkSpout(player)) {
