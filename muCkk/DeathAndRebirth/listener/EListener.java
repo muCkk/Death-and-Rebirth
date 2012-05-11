@@ -24,6 +24,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
@@ -135,6 +136,23 @@ public class EListener implements Listener {
 			}
 		}catch (NullPointerException e) {
 			// this happens sometimes, i guess when mobs target something
+		}
+	}
+	
+	/*
+	 * Prevents ghosts from losing hunger points
+	 */
+	
+	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+	public void onFoodLevelChangeEvent(FoodLevelChangeEvent event) {
+		// check if the world is enabled
+		if(!plugin.getConfig().getBoolean(event.getEntity().getWorld().getName())) {
+			return;
+		}
+		Entity entity = event.getEntity();
+		if(entity instanceof Player) {
+			Player player = (Player) entity;
+			if(ghosts.isGhost(player)) event.setCancelled(true);
 		}
 	}
 	

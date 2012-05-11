@@ -160,6 +160,7 @@ public class Ghosts {
 	// lightning
 		if (plugin.getConfig().getBoolean("LIGHTNING_DEATH")) {
 			player.getWorld().strikeLightningEffect(player.getLocation());
+			player.getLocation().getBlock().getState().update(); //TODO update block
 		}
 	// saving location of death	
 		// moved
@@ -203,7 +204,7 @@ public class Ghosts {
 		saveCustomConfig();
 	}
 	public String getGhostDisplayName(Player player) {
-		return plugin.getConfig().getString("GHOST_NAME").replace("%player%", player.getName()).replace("%displayname%", player.getDisplayName());
+		return plugin.getConfig().getString("GHOST_NAME").replace("%player%", player.getDisplayName()).replace("%displayname%", player.getDisplayName());
 	}
 	/**
 	 * Brings players back to life

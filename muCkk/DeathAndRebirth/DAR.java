@@ -45,7 +45,6 @@ public class DAR extends JavaPlugin {
 	public void onDisable() {
 		getServer().getScheduler().cancelTasks(this);
 		try {
-			//saveConfig();
 			ghosts.saveCustomConfig();
 			graves.saveCustomConfig();
 			shrines.saveCustomConfig();
@@ -64,6 +63,7 @@ public class DAR extends JavaPlugin {
 		
 	// Config
 		getConfig().options().copyDefaults(true);
+		saveConfig();
 		
 	// DAR Classes
 		darSpout = new DARSpout(this, dataDir);
