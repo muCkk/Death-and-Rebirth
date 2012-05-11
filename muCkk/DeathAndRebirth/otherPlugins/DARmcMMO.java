@@ -22,7 +22,7 @@ public class DARmcMMO {
 	public void xpPenality(Player player, String type, int value) {
 		if (mcmmo == null) return;
 		SkillType skillType = SkillType.valueOf(type);
-		mcMMO.getPlayerProfile(player).removeXP(skillType, value);
+		mcmmo.getPlayerProfile(player).removeXP(skillType, value);
 		plugin.message.sendSkill(player, Messages.skillDropped, skillType.name());
 	}
 }
