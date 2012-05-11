@@ -1,3 +1,7 @@
+Version 2.6.3
+	temporialy removed texturepack feature
+	fixed mcmmo bug
+
 Version 2.6.1
 	switched from Register to Vault
 	changed the way the inventory is saved, fixes losing it due to a reload
