@@ -102,7 +102,8 @@ public class DARSpout {
 		resetTtitle(player);
 
 		String textPack = plugin.getConfig().getString("GHOST_TEXTPACK");
-		if(textPack != null && !textPack.equalsIgnoreCase("")) sp.resetTexturePack(); 
+		if(textPack != null && !textPack.equalsIgnoreCase(""))
+		sp.resetTexturePack();
 		
 		SkyManager sky = SpoutManager.getSkyManager();
 		if(plugin.getConfig().getBoolean("CHANGE_COLORS")) {
@@ -171,8 +172,9 @@ public class DARSpout {
 				sPlayer.setSkin(skin);
 				
 				// texturepack
-				String textPack = plugin.getConfig().getString("GHOST_TEXTPACK");
-				if(!textPack.equalsIgnoreCase("")) sPlayer.setTexturePack(textPack);
+				/* String textPack = plugin.getConfig().getString("GHOST_TEXTPACK");
+			    if(!textPack.equalsIgnoreCase(""))
+				sPlayer.setTexturePack(textPack); */
 				
 				// colors
 				if(plugin.getConfig().getBoolean("CHANGE_COLORS")) {
