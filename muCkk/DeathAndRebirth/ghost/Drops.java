@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,13 +28,13 @@ public class Drops {
 	private File dropsFile;
 	private String dir;
 	private DAR plugin;
-	private Blacklist blacklist;
+//	private Blacklist blacklist;
 	
 	public Drops(DAR instance, String dir2) {
 		this.plugin = instance;
 		this.dir = dir2;
 		this.dropsFile = new File(dir+"/drops");
-		this.blacklist = new Blacklist(instance);
+//		this.blacklist = new Blacklist(instance);
 	}
 	
 	public void reloadCustomConfig() {
@@ -114,7 +113,7 @@ public class Drops {
 	
 	@SuppressWarnings("unchecked")
 	private ItemStack[] getItemsFromConfig(String path) {
-		if (getCustomConfig().getConfigurationSection(path) == null) return null;
+		if (getCustomConfig().getConfigurationSection(path) == null)  return new ItemStack[0];
 		Set<String> keys = getCustomConfig().getConfigurationSection(path).getKeys(false);
 		ItemStack [] itemstack = new ItemStack[keys.size()];
 		Map<String, Object> item = null;
@@ -159,11 +158,12 @@ public class Drops {
 		return itemstack;
 	}
 	
-	public void selfResPunish(Player player) {
+     /* public void selfResPunish(Player player) {
 		int percent = plugin.getConfig().getInt("PERCENT");
 		if(percent == 0) return;
 		String playerName = player.getName();
 		ItemStack [] daritems = getItemsFromConfig("drops."+playerName+"."+player.getWorld().getName()+".inventory");
+		System.out.println("Debug:" + daritems);
 		
 		int r, stopper;
 		int size = daritems.length;
@@ -173,6 +173,7 @@ public class Drops {
 		
 		while (counter >0) {
 			r = rand.nextInt(size);
+			System.out.println("Debug:" + r);
 			stopper = 0;
 			
 			while (stopper < 20 || blacklist.contains(new Integer(daritems[r].getTypeId()))) {
@@ -191,7 +192,7 @@ public class Drops {
 			getCustomConfig().set("drops."+playerName+"."+player.getWorld().getName()+".inventory.item"+String.valueOf(i), daritems[i].serialize());
 		}
 		saveCustomConfig();
-	}
+	} */
 	
 
 	/**

@@ -157,6 +157,8 @@ public class Ghosts {
 		final Block block = player.getWorld().getBlockAt(player.getLocation());
 	
 		getCustomConfig().set("players."+pname +"."+world +".dead", true);
+		saveCustomConfig();
+		
 	// lightning
 		if (plugin.getConfig().getBoolean("LIGHTNING_DEATH")) {
 			player.getWorld().strikeLightningEffect(player.getLocation());
@@ -255,6 +257,7 @@ public class Ghosts {
 		}.start();
 		
 		getCustomConfig().set("players."+pname +"."+world +".dead", false);
+		saveCustomConfig();
 		graves.deleteGrave(player.getWorld().getBlockAt(getLocation(player)), pname, world);
 		plugin.message.send(player, Messages.reborn);
 	}
@@ -339,7 +342,7 @@ public class Ghosts {
 		player.setHealth(plugin.getConfig().getInt("HEALTH"));
 		
 		//drops
-		dardrops.selfResPunish(player);
+        //dardrops.selfResPunish(player);
 		
 		//economy
 		double money = plugin.getConfig().getDouble("ECONOMY");
@@ -357,9 +360,10 @@ public class Ghosts {
 		}
 	}
 	
-	public void removeItems(Player player) {
+	
+   /* public void removeItems(Player player) {
 		dardrops.selfResPunish(player);
-	}
+	} */
 	
 	/**
 	 * Called when a player tries to resurrect someone.
