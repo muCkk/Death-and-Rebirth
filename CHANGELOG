@@ -1,6 +1,9 @@
 Version 2.6.2
+    first alpha release for craftbukkit 1.2.5-R1.4
 	temporialy removed texturepack feature
 	fixed mcmmo bug
+	fixed 'player life status' not being saved
+	temporialy removed item removal on self ressurect
 
 Version 2.6.1
 	switched from Register to Vault
