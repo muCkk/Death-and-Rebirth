@@ -281,7 +281,7 @@ public class PListener implements Listener {
 						String shrine = shrines.getClose(player.getLocation());
 						if (shrine != null) {
 							ghosts.resurrect(player);
-						 // ghosts.removeItems(player);
+						    ghosts.removeItems(player); //selfres
 							player.setHealth(plugin.getConfig().getInt("HEALTH"));
 						}
 					}
@@ -293,7 +293,7 @@ public class PListener implements Listener {
 					else {
 						if (event.getClickedBlock().getLocation().distance(locDeath) < 3) {
 							ghosts.resurrect(player);
-					     // ghosts.removeItems(player);
+					        ghosts.removeItems(player); //selfres
 							player.setHealth(plugin.getConfig().getInt("HEALTH"));
 						}
 					}

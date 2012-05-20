@@ -1,5 +1,6 @@
 package muCkk.DeathAndRebirth;
 
+import java.util.HashMap;
 import java.util.logging.Logger;
 
 import muCkk.DeathAndRebirth.ghost.Ghosts;
@@ -115,6 +116,9 @@ public class DAR extends JavaPlugin {
 		}
 		return array;
 	}
+	//overgives the worldName as String
+	public HashMap<String, String> worldData = new HashMap<String, String>();
+	
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
 		Player player = null;
 		if (sender instanceof Player) {
@@ -383,6 +387,27 @@ public class DAR extends JavaPlugin {
 				ghosts.resurrect(target);
 				return true;
 			}
+			//msg display for each player
+			if(arg.equalsIgnoreCase("msg"))
+			{
+			   String worldName = player.getWorld().getName();
+			   String playerName = player.getName();
+			   if (ghosts.getCustomConfig().getBoolean("players." +playerName +"."+worldName +".msg") == true)
+			   {
+				    message.send(player, Messages.messagesDisabled);
+					ghosts.getCustomConfig().set("players." +playerName +"."+worldName +".msg", false);
+					worldData.put("worldName", worldName);
+
+			   }
+			   if (ghosts.getCustomConfig().getBoolean("players." +playerName +"."+worldName +".msg") == false)
+			   {
+				  ghosts.getCustomConfig().set("players." +playerName +"."+worldName +".msg", true);
+				  worldData.put("worldName", worldName);
+				  message.send(player, Messages.messagesEnabled);
+			   }
+			}
+
+			
 		// world toggle
 			if (arg.equalsIgnoreCase("enable") || arg.equalsIgnoreCase("disable")) {
 				if (args.length == 1) name = player.getWorld().getName();

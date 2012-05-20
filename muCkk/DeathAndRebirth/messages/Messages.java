@@ -27,6 +27,8 @@ public enum Messages {
 	shrineProtectedDestroy	("Shrines are protected"), 
 	shrineProtectedBuild	("Can't build on shrines"), 
 	cantAttackGhosts		("Can't attack ghosts"),
+	messagesEnabled         ("Messages Enabled"),
+	messagesDisabled        ("Messages Disabled"),
 	
 	// chat form only
 	notEnoughItems			("Resurrection is not possible. You need"),

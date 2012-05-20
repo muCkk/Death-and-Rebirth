@@ -342,7 +342,7 @@ public class Ghosts {
 		player.setHealth(plugin.getConfig().getInt("HEALTH"));
 		
 		//drops
-        //dardrops.selfResPunish(player);
+        dardrops.selfResPunish(player); //selfres
 		
 		//economy
 		double money = plugin.getConfig().getDouble("ECONOMY");
@@ -361,9 +361,9 @@ public class Ghosts {
 	}
 	
 	
-   /* public void removeItems(Player player) {
+    public void removeItems(Player player) {  //selfres
 		dardrops.selfResPunish(player);
-	} */
+	} 
 	
 	/**
 	 * Called when a player tries to resurrect someone.
@@ -573,6 +573,8 @@ public class Ghosts {
 		
 		saveCustomConfig();
 	}
+	
+
 		
 	// **************************************************************
 	// *** code from DwarfCraft, found on the bukkit forum - THX! ***

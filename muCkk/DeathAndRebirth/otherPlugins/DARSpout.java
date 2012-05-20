@@ -177,7 +177,7 @@ public class DARSpout {
 					if(!textPack.equalsIgnoreCase(""))
 					sPlayer.setTexturePack(textPack);
 				} catch (Exception e) {
-					plugin.getLogger().info("No texturepack given or could not change it for player: " + sPlayer);
+					plugin.getLogger().info("No texturepack given or could not change it for player: " + sPlayer.getName());
 				}
 				
 				// colors

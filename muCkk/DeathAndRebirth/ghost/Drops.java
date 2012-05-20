@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,13 +29,13 @@ public class Drops {
 	private File dropsFile;
 	private String dir;
 	private DAR plugin;
-//	private Blacklist blacklist;
+	private Blacklist blacklist;  //selfres
 	
 	public Drops(DAR instance, String dir2) {
 		this.plugin = instance;
 		this.dir = dir2;
 		this.dropsFile = new File(dir+"/drops");
-//		this.blacklist = new Blacklist(instance);
+		this.blacklist = new Blacklist(instance); //selfres
 	}
 	
 	public void reloadCustomConfig() {
@@ -158,7 +159,7 @@ public class Drops {
 		return itemstack;
 	}
 	
-     /* public void selfResPunish(Player player) {
+      public void selfResPunish(Player player) {
 		int percent = plugin.getConfig().getInt("PERCENT");
 		if(percent == 0) return;
 		String playerName = player.getName();
@@ -190,9 +191,8 @@ public class Drops {
 			getCustomConfig().set("drops."+playerName+"."+player.getWorld().getName()+".inventory.item"+String.valueOf(i), daritems[i].serialize());
 		}
 		saveCustomConfig();
-	} */
+	}
 	
-
 	/**
 	 * Deletes all drops from a player
 	 * @param player

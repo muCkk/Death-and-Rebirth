@@ -1,6 +1,8 @@
 Version 2.6.3
     removed debug messages
-    added texturepack feature again
+    readded texturepack feature
+    readded item removal
+    added /dar msg to disable or enable messages
 
 Version 2.6.2
     first alpha release for craftbukkit 1.2.5-R1.4
