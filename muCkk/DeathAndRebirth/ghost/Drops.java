@@ -163,7 +163,6 @@ public class Drops {
 		if(percent == 0) return;
 		String playerName = player.getName();
 		ItemStack [] daritems = getItemsFromConfig("drops."+playerName+"."+player.getWorld().getName()+".inventory");
-		System.out.println("Debug:" + daritems);
 		
 		int r, stopper;
 		int size = daritems.length;
@@ -173,7 +172,6 @@ public class Drops {
 		
 		while (counter >0) {
 			r = rand.nextInt(size);
-			System.out.println("Debug:" + r);
 			stopper = 0;
 			
 			while (stopper < 20 || blacklist.contains(new Integer(daritems[r].getTypeId()))) {
