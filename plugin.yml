@@ -18,7 +18,7 @@ commands:
         usage: /<command> <add, setSpawn, list, rm, pos1, pos2, select, update, binding> <name>
     dar:
         description: Resurrects any player. Reloads the config files. Enables or disables the support for each world. Gives the name of the current world. Toggles flying, shrinemode, ghost-interactions and ghost-chat.
-        usage: /<command> <reb, reload, enable, disable, world, fly, shrinemode, ghostinteraction, ghostchat, dropping, versionCheck, lightningD, lightningR, signs, spawn, pvpDrop, invis, showghosts, hideghosts, msg> <name>
+        usage: /<command> <reb, reload, enable, disable, world, fly, shrinemode, ghostinteraction, ghostchat, dropping, versionCheck, lightningD, lightningR, signs, spawn, pvpDrop, invis, showghosts, hideghosts> <name>
 
 permissions:
     dar.*:

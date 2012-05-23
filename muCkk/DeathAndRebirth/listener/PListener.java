@@ -175,7 +175,7 @@ public class PListener implements Listener {
 		}
 	}
 	
-	private void giveGhostCompass(final Player player, final Location loc) {
+	public void giveGhostCompass(final Player player, final Location loc) {
 		new Thread() {
 			@Override
 			public void run() {

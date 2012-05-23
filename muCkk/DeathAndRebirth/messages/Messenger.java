@@ -7,7 +7,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import muCkk.DeathAndRebirth.DAR;
-import muCkk.DeathAndRebirth.ghost.Ghosts;
 
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -22,7 +21,6 @@ public class Messenger {
 	private static final Logger log = Logger.getLogger("Minecraft");
 	private boolean spoutEnabled;
 	private DAR plugin;
-	private Ghosts ghosts;
 	private File messagesFile; 
 	private FileConfiguration customConfig = null;
 	
@@ -99,41 +97,13 @@ public class Messenger {
 	}
 //	************************************************************************************
 	private void spout(Player player, String msg) {
-	  String playerName = player.getName();
-	  String worldName = plugin.worldData.get("worldName");
-	  //checks if player wants to get Messages
-	  if(ghosts.getCustomConfig().getBoolean("players." +playerName +"."+worldName +".msg") == true)
-	  {
 		SpoutPlayer sp = (SpoutPlayer) player;
 		sp.sendNotification(title, msg, mat);
 	  }
-	  else if(ghosts.getCustomConfig().getBoolean("players." +playerName +"."+worldName +".msg") == false)
-	  return;
-	  else
-	  {
-			SpoutPlayer sp = (SpoutPlayer) player;
-			sp.sendNotification(title, msg, mat);
-	  }
-	}
 	
-	@SuppressWarnings("unused")
 	public void chat(Player player, String msg) {
-	  String playerName = player.getName();
-	  String worldName = plugin.worldData.get("worldName");
-	  //checks if player wants to get Messages
-	  if(ghosts.getCustomConfig().getBoolean("players." +playerName +"."+worldName +".msg") == true)
-	  {
 		if(player != null)	player.sendMessage(msg);
 		else				System.out.println(msg);
-	  }
-	  else if(ghosts.getCustomConfig().getBoolean("players." +playerName +"."+worldName +".msg") == false)
-	  return;
-	  else
-	  {
-		if(player != null)	player.sendMessage(msg);
-		else				System.out.println(msg);
-	  }
-		  
 	}
 //	********************************************************************************
 	public void setSpout(boolean b) {

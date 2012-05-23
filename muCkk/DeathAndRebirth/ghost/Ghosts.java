@@ -9,6 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import muCkk.DeathAndRebirth.DAR;
+import muCkk.DeathAndRebirth.listener.PListener;
 import muCkk.DeathAndRebirth.messages.Errors;
 import muCkk.DeathAndRebirth.messages.Messages;
 import net.minecraft.server.Packet201PlayerInfo;
@@ -37,6 +38,8 @@ public class Ghosts {
 	private DAR plugin;
 	private Graves graves;
 	private Drops dardrops;
+	private Shrines shrines;
+	private PListener plistener;
 	
 	private FileConfiguration customConfig = null;
 	private File ghostsFile;
@@ -529,6 +532,8 @@ public class Ghosts {
 				worldChangeHelper(name, worldName, player.getLocation());
 				return;
 			}
+			Location nearestShrine = shrines.getNearestShrineSpawn(player.getLocation());
+			plistener.giveGhostCompass(player, nearestShrine);
 			worldChangeHelper(name, worldName, player.getLocation());
 		}
 	}

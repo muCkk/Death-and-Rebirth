@@ -2,10 +2,17 @@
 #      Detailed information on how to edit the config     #
 #                     can be found here:                  #
 #  http://dev.bukkit.org/server-mods/death-and-rebirth/   #
-###########################################################
-
-###########################################################
-#                         Ghost                           #
+#                                                         #
+#                         Spout                           #
+#                                                         #
+# No need to edit this if you aren't using Spout.         #
+# Remember to put a backslash in front of a colon in URLs.#
+# Colors use RGB values, so 1;0;0 would be red.           #
+#                                                         #
+#               Additional information                    #
+#                Don't edit this lines:                   #
+#            SPOUT_ENABLED and CITIZENS_ENABLED           #
+#                                                         #
 ###########################################################
 BLOCK_GHOST_INTERACTION: false
 FLY: false
@@ -16,16 +23,9 @@ INVISIBILITY: true
 LIGHTNING_DEATH: true
 LIGHTNING_REBIRTH: true
 
-###########################################################
-#                       Dropping                          #
-###########################################################
 DROPPING: false
 PVP_DROP: true
 
-
-###########################################################
-#               Self-Resurrection effects                 #
-###########################################################
 HEALTH: 10
 PERCENT: 15
 ECONOMY: 0
@@ -45,23 +45,14 @@ SKILLS:
     UNARMED: false
     WOODCUTTING: false
 
-###########################################################
-#                     Resurrection                        #
-###########################################################
 NEED_ITEM: false
 ITEM_ID: 288
 AMOUNT: 1
 DISTANCE: 10
 TIME: 10
 
-###########################################################
-#                       Spawning                          #
-###########################################################
 CORPSE_SPAWNING: false
 
-###########################################################
-#                       Plugin                            #
-###########################################################
 GRAVE_SIGNS: true
 SHRINE_NOTE: true
 SHRINE_RADIUS: 3
@@ -71,30 +62,18 @@ VOID_DEATH: true
 ADMIN_PERMS: false
 SHRINE_PROTECTION: true
 
-###########################################################
-#                            Spout                        #
-#                                                         #
-# No need to edit this if you aren't using Spout.         #
-# Remember to put a backslash infront of a colon in URLs. #
-# Colors use RGB values, so 1;0;0 would be red.           #
-###########################################################
 GHOST_SOUND_EFFECTS: true
 DEATH_SOUND: http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/death.wav
 REB_SOUND: http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/res.wav
 RES_SOUND: 
 
 GHOST_SKIN: http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/skins/ghost1.png
-GHOST_TEXTPACK: 
+GHOST_TEXTPACK: http://your_texturepack.com
 
 CHANGE_COLORS: true
 GHOST_SKY: 0.8;0;0
 GHOST_FOG: 0.8;0;0
 GHOST_CLOUDS: 0;0;0
 
-###########################################################
-#               Additional information                    #
-#   These options are set by the plugin automatically     #
-#             Do not edit below this line                 #
-###########################################################
 SPOUT_ENABLED: false
 CITIZENS_ENABLED: false
