@@ -3,14 +3,16 @@ Version 2.6.3
     readded texturepack feature
     readded item removal
     fixed not aiming nearest shrine after teleport/switching world
-    added the GHOST_TEXTPACK line to the config
+    added the GHOST_TEXTPACK to the config
+    hopefully fixed the item removal bug
+    updated for CB 1.2.5-R2.0
 
 Version 2.6.2
     first alpha release for craftbukkit 1.2.5-R1.4
-	temporialy removed texturepack feature
+	temporally removed texturepack feature
 	fixed mcmmo bug
 	fixed 'player life status' not being saved
-	temporialy removed item removal on self ressurect
+	temporally removed item removal on self ressurect
 
 Version 2.6.1
 	switched from Register to Vault

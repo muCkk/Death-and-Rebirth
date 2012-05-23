@@ -160,6 +160,7 @@ public class Drops {
 	}
 	
       public void selfResPunish(Player player) {
+      try{
 		int percent = plugin.getConfig().getInt("PERCENT");
 		if(percent == 0) return;
 		String playerName = player.getName();
@@ -191,7 +192,13 @@ public class Drops {
 			getCustomConfig().set("drops."+playerName+"."+player.getWorld().getName()+".inventory.item"+String.valueOf(i), daritems[i].serialize());
 		}
 		saveCustomConfig();
+
 	}
+	catch(Exception e)
+	{
+		System.out.println("Could not remove items");
+	}
+    }
 	
 	/**
 	 * Deletes all drops from a player
