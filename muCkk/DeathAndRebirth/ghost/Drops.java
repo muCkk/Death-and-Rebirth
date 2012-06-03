@@ -12,6 +12,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import muCkk.DeathAndRebirth.DAR;
+
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -37,7 +38,7 @@ public class Drops {
 		this.dropsFile = new File(dir+"/drops");
 		this.blacklist = new Blacklist(instance); //selfres
 	}
-	
+	    
 	public void reloadCustomConfig() {
 	    if (dropsFile == null) {
 	    	dropsFile = new File(plugin.getDataFolder(), dir+"/drops");

@@ -72,7 +72,7 @@ public class Graves {
 		int z = block.getZ();
 		Block otherBlock;
 		boolean placed = false;
-		// water
+	/*	// water
 		if (block.getTypeId() == 8 || block.getTypeId() == 9) {
 			otherBlock = block.getRelative(BlockFace.UP);
 			while (otherBlock.getTypeId() != 0) {
@@ -87,7 +87,7 @@ public class Graves {
 				ghosts.setLocationOfDeath(otherBlock, name);
 				placed = true;
 			}
-		}
+		} */
 //		else if (config.getBoolean(CFG.GRAVE_SIGNS)) placeSign(block, l1, name);
 		
 		// explosion
@@ -121,8 +121,8 @@ public class Graves {
 	}
 	
 	public void deleteGrave(Block block, String name, String worldName) {
-		// check for lava
-		if (getCustomConfig().getInt("graves."+block.getWorld().getName()+"."+name+".blockid", 0) != 10 && getCustomConfig().getInt("graves."+block.getWorld().getName()+"."+name+".blockid", 0) != 11) {
+		// check for lava, now for water too
+		if (getCustomConfig().getInt("graves."+block.getWorld().getName()+"."+name+".blockid", 0) != 10 && getCustomConfig().getInt("graves."+block.getWorld().getName()+"."+name+".blockid", 0) != 11 && getCustomConfig().getInt("graves."+block.getWorld().getName()+"."+name+".blockid", 0) != 10 && getCustomConfig().getInt("graves."+block.getWorld().getName()+"."+name+".blockid", 0) != 9) {
 			if (plugin.getConfig().getBoolean("GRAVE_SIGNS")) removeSign(block, name, worldName);
 		}
 		getCustomConfig().set("graves." +worldName +"." +name, null);
@@ -136,8 +136,8 @@ public class Graves {
 			int data = (int) block.getData();
 			getCustomConfig().set("graves."+block.getWorld().getName()+"."+name+".blockdata", data);
 		}
-		//avoid placing signs in lava
-		if(id == 10 || id == 11) return;
+		//avoid placing signs in lava, now on water too
+		if(id == 10 || id == 11 || id == 9 || id == 8) return;
 		
 		block.setType(Material.SIGN_POST);
 		Sign sign = (Sign) block.getState();

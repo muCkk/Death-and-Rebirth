@@ -74,5 +74,6 @@ public class SListener implements Listener{
 		// mcMMO
 		Plugin mcmmoPlug = plugman.getPlugin("mcMMO");
 		if (mcmmoPlug != null) plugin.darmcmmo = new DARmcMMO(plugin, mcmmoPlug);
+		
 	}
 }

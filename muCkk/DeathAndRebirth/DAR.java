@@ -38,7 +38,7 @@ public class DAR extends JavaPlugin {
     public static Permission perms = null;
     
 	public Messenger message;
-	public  DARSpout darSpout;
+	public DARSpout darSpout;
 	public DARmcMMO darmcmmo = null;
 	public PluginManager pm;
 	

@@ -1,3 +1,7 @@
+Version 2.6.4
+    fixed compass aiming in wrong direction on tp
+    removed sign placed on water (feature placed a dirt block which wont be removed)
+    
 Version 2.6.3
     removed debug messages
     readded texturepack feature

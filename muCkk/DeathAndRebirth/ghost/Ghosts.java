@@ -178,8 +178,8 @@ public class Ghosts {
 			dardrops.remove(player);
 		}
 		
-	// invisibility
-	//	if (config.getBoolean("INVISIBILITY)) vanish(player);
+	// invisibility (WAS UNUSED)
+	   if (plugin.getConfig().getBoolean("INVISIBILITY")) vanish(player);
 		
 	// spout related
 		if (plugin.getConfig().getBoolean("SPOUT_ENABLED")) {
