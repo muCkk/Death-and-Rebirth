@@ -137,9 +137,8 @@ public class Ghosts {
 	 * @return The state of the player (dead/alive).
 	 */
 	public boolean isGhost(Player player) {
-		if(player == null) {
+		if(player == null)
 			return false;
-		}
 		String pname = player.getName();
 		String world = player.getWorld().getName();
 		
@@ -154,11 +153,11 @@ public class Ghosts {
 	 * Manages the death of players.
 	 * @param player which died
 	 */
-	public void died(Player player, PlayerInventory inv, boolean pvp_death) { 
+	public void died(Player player, PlayerInventory inv, Location loc, boolean pvp_death) { 
 		final String pname = player.getName();
 		final String world = player.getWorld().getName();
-		final Block block = player.getWorld().getBlockAt(player.getLocation());
-	
+		final Block block = player.getWorld().getBlockAt(loc);
+			
 		getCustomConfig().set("players."+pname +"."+world +".dead", true);
 		saveCustomConfig();
 		
@@ -171,7 +170,7 @@ public class Ghosts {
 		// moved
 		
 	// drop-management
-		if (!plugin.getConfig().getBoolean("DROPPING") || DAR.perms.has(player, "dar.nodrop") || pvp_death) {
+		if (!plugin.getConfig().getBoolean("DROPPING") || player.hasPermission("dar.nodrop") || pvp_death) {
 			dardrops.put(player, inv);  
 		}
 		else {
@@ -187,7 +186,7 @@ public class Ghosts {
 		}
 
 	// grave related
-		final String l1 = "R.I.P";
+	/*	final String l1 = "R.I.P";
 		new Thread() {
 			@Override
 			public void run() {				
@@ -201,13 +200,24 @@ public class Ghosts {
 			}
 		}.start();
 		saveCustomConfig();
+	*/
+	
+	final String l1 = plugin.getConfig().getString("GRAVE_TEXT");
+	if(plugin.getConfig().getBoolean("GRAVE_SIGNS"))
+	{
+			graves.addGrave(pname, block, l1, world);
 	}
-	public void setLocationOfDeath(Block block, String pname) {
+
+	saveCustomConfig();
+	}
+	
+	public void setLocationOfDeath(Block block, String pname) {		
 		getCustomConfig().set("players."+pname +"."+block.getWorld().getName() +".location.x", block.getX());
 		getCustomConfig().set("players."+pname +"."+block.getWorld().getName() +".location.y", block.getY());
 		getCustomConfig().set("players."+pname +"."+block.getWorld().getName() +".location.z", block.getZ());		
 		saveCustomConfig();
 	}
+	
 	public String getGhostDisplayName(Player player) {
 		return plugin.getConfig().getString("GHOST_NAME").replace("%player%", player.getDisplayName()).replace("%displayname%", player.getDisplayName());
 	}
@@ -255,7 +265,7 @@ public class Ghosts {
 					e.printStackTrace();
 				}
 				
-				if (!plugin.getConfig().getBoolean("DROPPING") || DAR.perms.has(player, "dar.nodrop") || plugin.getConfig().getBoolean("PVP_DROP")) dardrops.givePlayerInv(player);
+				if (!plugin.getConfig().getBoolean("DROPPING") || player.hasPermission("dar.nodrop") || plugin.getConfig().getBoolean("PVP_DROP")) dardrops.givePlayerInv(player);
 			}
 		}.start();
 		
@@ -455,12 +465,13 @@ public class Ghosts {
 		World world = player.getWorld();
 		String worldName = world.getName();
 		
-		double x = getCustomConfig().getDouble("players."+pname +"."+worldName +".location.x", 0);
-		double y = getCustomConfig().getDouble("players."+pname +"."+worldName +".location.y", 64);
-		double z = getCustomConfig().getDouble("players."+pname +"."+worldName +".location.z", 0);
+		double x = getCustomConfig().getDouble("players."+pname +"."+worldName +".location.x"); //0
+		double y = getCustomConfig().getDouble("players."+pname +"."+worldName +".location.y"); //64
+		double z = getCustomConfig().getDouble("players."+pname +"."+worldName +".location.z"); //0
 		Location loc = new Location(world, x, y, z);
 		return loc;
 	}
+
 
 	
 

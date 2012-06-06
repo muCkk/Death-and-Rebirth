@@ -145,11 +145,10 @@ public class PListener implements Listener {
 	public void onPlayerRespawn(PlayerRespawnEvent event) {
 		Player player = event.getPlayer();
 	// check if the world is enabled
-		if(!plugin.getConfig().getBoolean(player.getWorld().getName())) {
-			return;
-		}
+		if(!plugin.getConfig().getBoolean(player.getWorld().getName())) return;
+		
 		if(ghosts.isGhost(player)) {
-			// reverse spawning
+			// reverse spawning		
 			Location nearestShrine = shrines.getNearestShrineSpawn(player.getLocation());
 			Location corpse = ghosts.getLocation(player);
 			if (!plugin.getConfig().getBoolean("CORPSE_SPAWNING")) {
@@ -253,8 +252,7 @@ public class PListener implements Listener {
 		// check if the world is enabled
 		if(!plugin.getConfig().getBoolean(player.getWorld().getName())) {
 			return;
-		}
-		
+		}		
 
 	// *** ghost interactions ***
 		if (ghosts.isGhost(player)) {
@@ -275,7 +273,8 @@ public class PListener implements Listener {
 			if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
 				Location locDeath = ghosts.getLocation(player);
 			// reverse spawning
-				if(!plugin.getConfig().getBoolean("CORPSE_SPAWNING")) {
+				if(!plugin.getConfig().getBoolean("CORPSE_SPAWNING"))
+				{
 					if (event.getClickedBlock().getLocation().distance(locDeath) < 3) ghosts.resurrect(player);
 					else {
 						String shrine = shrines.getClose(player.getLocation());
@@ -291,10 +290,14 @@ public class PListener implements Listener {
 					String shrine = shrines.getClose(player.getLocation());
 					if (shrine != null) ghosts.resurrect(player);
 					else {
-						if (event.getClickedBlock().getLocation().distance(locDeath) < 3) {
+						if (event.getClickedBlock().getLocation().distance(locDeath) < 3 && !plugin.getConfig().getBoolean("SHRINE_ONLY")) {							
 							ghosts.resurrect(player);
 					        ghosts.removeItems(player); //selfres
 							player.setHealth(plugin.getConfig().getInt("HEALTH"));
+						}
+						if(plugin.getConfig().getBoolean("SHRINE_ONLY") && plugin.getConfig().getBoolean("OTHERS_IGNORE_SHRINE_ONLY") && event.getClickedBlock().getLocation().distance(locDeath) < 3)
+						{
+							ghosts.resurrect(player);
 						}
 					}
 				}

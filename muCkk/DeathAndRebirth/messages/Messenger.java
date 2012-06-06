@@ -65,8 +65,8 @@ public class Messenger {
 	    }
 	}
 //	********************************************************************************************	
-	public void send(Player player, Messages msg) {
-		String ownMessage = getCustomConfig().getString(msg.toString(), msg.msg());//yml.getString(msg.toString());
+	public void send(Player player, Messages havetostandonshrine) {
+		String ownMessage = getCustomConfig().getString(havetostandonshrine.toString(), havetostandonshrine.msg());//yml.getString(msg.toString());
 		if (checkSpout(player)) spout(player, ownMessage);
 		else					chat(player, ownMessage);
 	}

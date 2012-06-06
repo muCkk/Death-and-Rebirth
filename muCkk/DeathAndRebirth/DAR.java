@@ -16,13 +16,21 @@ import muCkk.DeathAndRebirth.otherPlugins.DARSpout;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 
+import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin; 
+
+import com.garbagemule.MobArena.MobArena;
+import com.garbagemule.MobArena.MobArenaHandler;
+import com.garbagemule.MobArena.framework.ArenaMaster;
+
+
 
 public class DAR extends JavaPlugin {
 
@@ -33,7 +41,8 @@ public class DAR extends JavaPlugin {
 	private Graves graves;
 	private Shrines shrines;
 	
-    private static final Logger log = Logger.getLogger("Minecraft");
+    @SuppressWarnings("unused")
+	private static final Logger log = Logger.getLogger("Minecraft");
     public static Economy econ = null;
     public static Permission perms = null;
     
@@ -41,6 +50,9 @@ public class DAR extends JavaPlugin {
 	public DARSpout darSpout;
 	public DARmcMMO darmcmmo = null;
 	public PluginManager pm;
+    private static MobArenaHandler maHandler;
+    private static ArenaMaster am;
+    private static MobArena mobArena;
 	
 	public void onDisable() {
 		getServer().getScheduler().cancelTasks(this);
@@ -54,11 +66,6 @@ public class DAR extends JavaPlugin {
 	}
 
 	public void onEnable() {
-		if (!setupPermissions()) {
-	        log.info(String.format("[%s] - Disabled due to no Vault dependency found!", getDescription().getName()));
-	        getServer().getPluginManager().disablePlugin(this);
-	        return;
-	    }
 		setupEconomy();
 		
 	// Config
@@ -82,16 +89,11 @@ public class DAR extends JavaPlugin {
 		SListener serverListener = new SListener(this);
 		pm.registerEvents(serverListener, this);
 		serverListener.checkForPlugins();
+		
+        mobArena = (MobArena)Bukkit.getPluginManager().getPlugin("MobArena");
+        if(mobArena != null && mobArena.isEnabled())
+            setupMobArena(mobArena);
 	}
-	
-	private Boolean setupPermissions()
-    {
-        RegisteredServiceProvider<Permission> permissionProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.permission.Permission.class);
-        if (permissionProvider != null) {
-        	perms = permissionProvider.getProvider();
-        }
-        return (perms != null);
-    }
 	
 	private Boolean setupEconomy()
     {
@@ -101,6 +103,26 @@ public class DAR extends JavaPlugin {
         }
 
         return (econ != null);
+    }
+	
+    public static void setupMobArena(MobArena instance)
+    {
+        maHandler = new MobArenaHandler();
+        am = instance.getArenaMaster();
+    }
+    public static MobArena getMA()
+    {
+        return mobArena;
+    }
+    
+    public static MobArenaHandler getMAH()
+    {
+        return maHandler;
+    }
+    
+    public static ArenaMaster getAM()
+    {
+        return am;
     }
 	
 	public boolean checkAdminPerms() {
@@ -138,7 +160,7 @@ public class DAR extends JavaPlugin {
 			// resurrect target
 			if (args.length > 0) {
 				// permission check
-				if (!perms.has(player, "dar.reb") && !player.isOp()) {
+				if (!player.hasPermission("dar.reb") && !player.isOp()) {
 					message.send(player, Messages.noPermission);
 					return true;
 				 }
@@ -186,7 +208,7 @@ public class DAR extends JavaPlugin {
 		 */
 		if (cmd.getName().equalsIgnoreCase("shrine")) {
 		// check permission
-			if (!perms.has(player, "dar.admin") && !player.isOp()) {
+			if (!player.hasPermission("dar.admin") && !player.isOp()) {
 				message.send(player, Messages.noPermission);
 				return true;
 			 }
@@ -326,7 +348,7 @@ public class DAR extends JavaPlugin {
 			
 		// check permission
 			if (sender instanceof Player) {
-				if (!perms.has(player, "dar.admin") && !player.isOp()) {
+				if (!player.hasPermission("dar.admin") && !player.isOp()) {
 					message.send(player, Messages.noPermission);
 					return true;
 				 }
@@ -476,18 +498,24 @@ public class DAR extends JavaPlugin {
 				else message.sendChat(player, Messages.spawningToggle, " enabled");
 				return true;
 			}
+/*			if (arg.equalsIgnoreCase("others")) {
+				if(toggle("OTHERS_IGNORE_SHRINE_ONLY")) message.sendChat(player, Messages.othersToggle, " disabled");
+				else message.sendChat(player, Messages.othersToggle, " enabled");
+				return true;
+			}
+			*/
 		}
 		return false;		
 	}
 	
 	public boolean toggle(String node) {
-		if(getConfig().getBoolean(node)) {
-			getConfig().set(node, false);
+		if(!getConfig().getBoolean(node)) {
+			getConfig().set(node, true);
 			saveConfig();
 			return false;
 		}
 		else {
-			getConfig().set(node, true);
+			getConfig().set(node, false);
 			saveConfig();
 			return true;
 		}

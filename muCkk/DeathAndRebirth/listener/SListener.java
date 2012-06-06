@@ -50,6 +50,12 @@ public class SListener implements Listener{
 			Plugin mcmmoPlug = plugman.getPlugin("mcMMO");
 			if (mcmmoPlug != null) plugin.darmcmmo = new DARmcMMO(plugin, mcmmoPlug);
 		}
+		// MobArena
+		if(pluginName.equalsIgnoreCase("MobArena")) {
+			Plugin maPlug = plugman.getPlugin("MobArena");
+			if (maPlug != null)	plugin.getConfig().set("MOBARENA_ENABLED", true);
+			else				plugin.getConfig().set("MOBARENA_ENABLED", false);
+		}
 	}
 	
 	public void checkForPlugins() {
@@ -75,5 +81,14 @@ public class SListener implements Listener{
 		Plugin mcmmoPlug = plugman.getPlugin("mcMMO");
 		if (mcmmoPlug != null) plugin.darmcmmo = new DARmcMMO(plugin, mcmmoPlug);
 		
-	}
+		// MobArena
+		Plugin maPlug = plugman.getPlugin("MobArena");
+		if (maPlug != null) {
+			plugin.getConfig().set("MOBARENA_ENABLED", true);
+		}
+		else {
+			plugin.getConfig().set("SPOUT_ENABLED", false);
+		}
+	}	
 }
+

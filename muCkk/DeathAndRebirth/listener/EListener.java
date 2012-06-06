@@ -1,6 +1,7 @@
 package muCkk.DeathAndRebirth.listener;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
@@ -10,6 +11,8 @@ import muCkk.DeathAndRebirth.ghost.Ghosts;
 import muCkk.DeathAndRebirth.ghost.Shrines;
 import muCkk.DeathAndRebirth.messages.Messages;
 
+import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
@@ -28,6 +31,10 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
+import com.garbagemule.MobArena.events.ArenaPlayerDeathEvent;
+import com.garbagemule.MobArena.events.ArenaPlayerLeaveEvent;
+
+
 import net.citizensnpcs.api.CitizensManager;
 
 public class EListener implements Listener {
@@ -36,12 +43,27 @@ public class EListener implements Listener {
 	private DAR plugin;
 	private Ghosts ghosts;
 	private Shrines shrines;
+	public HashMap<String,String> madata = new HashMap<String,String>();
 	
 	public EListener(DAR plugin, Ghosts ghosts, Shrines shrines) {
 		this.plugin = plugin;
 		this.ghosts = ghosts;
 		this.shrines = shrines;
 	}
+	
+    @EventHandler
+    public void onArenaPlayerDeath(ArenaPlayerDeathEvent event)
+    {
+    	String maplayer = event.getPlayer().getName();
+    	madata.put("maplayer", maplayer);
+    }
+    
+    @EventHandler
+    public void onArenaPlayerLeave(ArenaPlayerLeaveEvent event)
+    {
+    	String maplayer = event.getPlayer().getName();
+    	madata.put("maplayer", maplayer);
+    }
 	
 	/**
 	 * Checks for dying players
@@ -52,6 +74,16 @@ public class EListener implements Listener {
 		if(!(entity instanceof Player)) return;
 		Player player = (Player) entity;
 		
+		String maplayer = madata.get("maplayer");
+		if(!(player.getName() == maplayer)) return;
+
+		//Defines Location of death
+		Location loc = player.getLocation();
+		Block block = player.getWorld().getBlockAt(loc);	
+		ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".location.x", block.getX());
+		ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".location.y", block.getY());
+		ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".location.z", block.getZ());
+				
 		// other plugins which avoid death - for example mob arena
 		if (player.getHealth() > 0) return;
 		
@@ -69,7 +101,7 @@ public class EListener implements Listener {
 			return;
 		}
 	// check for ignore	
-		if (DAR.perms.has(player, "dar.ignore")) {
+		if (player.hasPermission("dar.ignore")) {
 			return;
 		 }
 		
@@ -81,6 +113,7 @@ public class EListener implements Listener {
 	// checking items
 		List<ItemStack> drops = event.getDrops();
 		PlayerInventory inv = player.getInventory();
+
 		// PVP kill
 		if (entity.getLastDamageCause() instanceof EntityDamageByEntityEvent && plugin.getConfig().getBoolean("PVP_DROP") && drops.size() > 0) {
 			 Entity damager = ((EntityDamageByEntityEvent)entity.getLastDamageCause()).getDamager();
@@ -101,20 +134,21 @@ public class EListener implements Listener {
 				 
 				 player.getWorld().dropItemNaturally(player.getLocation(), droppedItem);
 				 inv.remove(droppedItem);
-				 drops.clear();				 
-				 ghosts.died(player, inv, true);
+				 drops.clear();
+				 ghosts.died(player, inv, loc, true);
 				 return;
 			 }
 		}
 		
 		// dropping OFF   OR    dar.nodrop 
-		if (!plugin.getConfig().getBoolean("DROPPING") || DAR.perms.has(player, "dar.nodrop")) {
+		if (!plugin.getConfig().getBoolean("DROPPING") || player.hasPermission("dar.nodrop")) {
 			drops.clear();
-			ghosts.died(player, inv, false);
+			ghosts.died(player, inv, loc, false);
 			return;
 		}
-		ghosts.died(player, inv, false);
+		ghosts.died(player, inv, loc, false);
 	}
+		
 	
 	/**
 	 * Stops creatures from attacking ghosts
@@ -226,7 +260,6 @@ public class EListener implements Listener {
 			event.setCancelled(true);
 		}
 	}
-	
 	
 // *** private methods *******************************************************************
 	private boolean checkForNPC(Entity entity) {

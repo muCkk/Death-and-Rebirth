@@ -1,6 +1,16 @@
+Version 2.6.5
+    added OTHERS_IGNORE_SHRINE_ONLY to allow others to ressurect players when shrine_only is enabled
+
 Version 2.6.4
+    added editable grave text
+    added mobarena support
+    fixed shrinemode not working
+    fixed corpse spawning
+    fixed enable/disable messages
+    fixed error on placing grave
     fixed compass aiming in wrong direction on tp
     removed sign placed on water (feature placed a dirt block which wont be removed)
+    moved to superperms (also supported by pex)
     
 Version 2.6.3
     removed debug messages
