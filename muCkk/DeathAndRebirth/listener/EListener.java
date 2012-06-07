@@ -75,7 +75,7 @@ public class EListener implements Listener {
 		Player player = (Player) entity;
 		
 		String maplayer = madata.get("maplayer");
-		if(!(player.getName() == maplayer)) return;
+		if(player.getName() == maplayer) return;
 
 		//Defines Location of death
 		Location loc = player.getLocation();

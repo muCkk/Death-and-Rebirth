@@ -24,6 +24,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerChatEvent;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -379,5 +380,21 @@ public class PListener implements Listener {
 	public void onPlayerPortal(PlayerPortalEvent event) {
 		Player player = event.getPlayer();
 		ghosts.worldChange(player);
+	}
+	
+	@EventHandler(ignoreCancelled = true)
+	public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event)
+	{
+		Player player = event.getPlayer();
+		if(!ghosts.isGhost(player)) return;
+		for(String command : plugin.getConfig().getStringList("DISABLED_COMMANDS"))
+		{
+			if(event.getMessage().startsWith(command))
+			{
+				event.setCancelled(true);
+				plugin.message.send(player, Messages.disabledCommand);
+			}
+
+		}
 	}
 }

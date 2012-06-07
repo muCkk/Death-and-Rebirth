@@ -88,6 +88,7 @@ public enum Messages {
 	shrineArea				("Entering a shrine area"),
 	lostMoney				("You lost"),
 	skillDropped			("%skill% skill dropped"),
+	disabledCommand			("Command disabled"),
 	
 	// for players - plugin protection
 	//	max length:			("12345678901234567890123456")

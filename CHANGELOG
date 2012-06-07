@@ -1,9 +1,7 @@
-Version 2.6.5
-    added OTHERS_IGNORE_SHRINE_ONLY to allow others to ressurect players when shrine_only is enabled
-
 Version 2.6.4
     added editable grave text
     added mobarena support
+    added disabled command function
     fixed shrinemode not working
     fixed corpse spawning
     fixed enable/disable messages
