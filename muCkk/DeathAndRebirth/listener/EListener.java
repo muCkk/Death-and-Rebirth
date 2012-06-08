@@ -31,10 +31,6 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
-import com.garbagemule.MobArena.events.ArenaPlayerDeathEvent;
-import com.garbagemule.MobArena.events.ArenaPlayerLeaveEvent;
-
-
 import net.citizensnpcs.api.CitizensManager;
 
 public class EListener implements Listener {
@@ -43,28 +39,14 @@ public class EListener implements Listener {
 	private DAR plugin;
 	private Ghosts ghosts;
 	private Shrines shrines;
-	public HashMap<String,String> madata = new HashMap<String,String>();
+	public HashMap<String,Player> madata = new HashMap<String,Player>();
 	
 	public EListener(DAR plugin, Ghosts ghosts, Shrines shrines) {
 		this.plugin = plugin;
 		this.ghosts = ghosts;
 		this.shrines = shrines;
 	}
-	
-    @EventHandler
-    public void onArenaPlayerDeath(ArenaPlayerDeathEvent event)
-    {
-    	String maplayer = event.getPlayer().getName();
-    	madata.put("maplayer", maplayer);
-    }
-    
-    @EventHandler
-    public void onArenaPlayerLeave(ArenaPlayerLeaveEvent event)
-    {
-    	String maplayer = event.getPlayer().getName();
-    	madata.put("maplayer", maplayer);
-    }
-	
+
 	/**
 	 * Checks for dying players
 	 */
@@ -74,8 +56,8 @@ public class EListener implements Listener {
 		if(!(entity instanceof Player)) return;
 		Player player = (Player) entity;
 		
-		String maplayer = madata.get("maplayer");
-		if(player.getName() == maplayer) return;
+		//Checks if player is in a MobArena
+    	if(DAR.getAM().getArenaWithPlayer(player) != null) return;
 
 		//Defines Location of death
 		Location loc = player.getLocation();

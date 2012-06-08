@@ -68,7 +68,7 @@ SHRINE_PROTECTION: true
 GHOST_SOUND_EFFECTS: true
 DEATH_SOUND: http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/death.wav
 REB_SOUND: http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/res.wav
-RES_SOUND: 
+RES_SOUND: http://your_res_sound.com
 
 GHOST_SKIN: http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/skins/ghost1.png
 GHOST_TEXTPACK: http://your_texturepack.com
@@ -82,3 +82,4 @@ GRAVE_TEXT: R.I.P
 
 SPOUT_ENABLED: false
 CITIZENS_ENABLED: false
+MOBARENA_ENABLED: false

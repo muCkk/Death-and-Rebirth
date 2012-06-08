@@ -87,7 +87,7 @@ public class SListener implements Listener{
 			plugin.getConfig().set("MOBARENA_ENABLED", true);
 		}
 		else {
-			plugin.getConfig().set("SPOUT_ENABLED", false);
+			plugin.getConfig().set("MOBARENA_ENABLED", false);
 		}
 	}	
 }

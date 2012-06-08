@@ -4,6 +4,7 @@ version: 2.6.4
 author: muCkk
 
 depend: [Vault]
+softdepend: [MobArena]
 
 commands:
     rebirth:
@@ -22,7 +23,7 @@ commands:
 
 permissions:
     dar.*:
-        descriptopn: Gives access to all plugin functions
+        description: Gives access to all plugin functions
         children:
             dar.res: true
             dar.ignore: false

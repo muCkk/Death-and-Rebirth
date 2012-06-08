@@ -68,6 +68,10 @@ public class DAR extends JavaPlugin {
 	public void onEnable() {
 		setupEconomy();
 		
+		mobArena = (MobArena)Bukkit.getPluginManager().getPlugin("MobArena");
+        if(mobArena != null && mobArena.isEnabled())
+            setupMobArena(mobArena);
+		
 	// Config
 		getConfig().options().copyDefaults(true);
 		saveConfig();
@@ -89,10 +93,6 @@ public class DAR extends JavaPlugin {
 		SListener serverListener = new SListener(this);
 		pm.registerEvents(serverListener, this);
 		serverListener.checkForPlugins();
-		
-        mobArena = (MobArena)Bukkit.getPluginManager().getPlugin("MobArena");
-        if(mobArena != null && mobArena.isEnabled())
-            setupMobArena(mobArena);
 	}
 	
 	private Boolean setupEconomy()

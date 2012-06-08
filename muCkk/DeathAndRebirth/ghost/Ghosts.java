@@ -138,7 +138,7 @@ public class Ghosts {
 	 */
 	public boolean isGhost(Player player) {
 		if(player == null)
-			return false;
+			return false;		
 		String pname = player.getName();
 		String world = player.getWorld().getName();
 		
