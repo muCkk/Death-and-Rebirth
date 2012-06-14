@@ -60,6 +60,7 @@ public class DAR extends JavaPlugin {
 			ghosts.saveCustomConfig();
 			graves.saveCustomConfig();
 			shrines.saveCustomConfig();
+			message.saveCustomConfig();
 		}catch (NullPointerException e) {
 			// TODO: handle exception
 		}
@@ -76,6 +77,8 @@ public class DAR extends JavaPlugin {
 		getConfig().options().copyDefaults(true);
 		saveConfig();
 		
+
+		
 	// DAR Classes
 		darSpout = new DARSpout(this, dataDir);
 		message = new Messenger(this);
@@ -84,6 +87,11 @@ public class DAR extends JavaPlugin {
 		ghosts = new Ghosts(this, dir, graves);
 		darSpout.setGhosts(ghosts);
 		shrines = new Shrines(this, dataDir);
+		
+	//Messages file
+		System.out.println("Messenger: " + message);
+		message.reloadCustomConfig();
+		message.saveCustomConfig();
 
 	// Listener
 		pm = getServer().getPluginManager();
@@ -368,6 +376,7 @@ public class DAR extends JavaPlugin {
 				graves.reloadCustomConfig();
 				ghosts.reloadCustomConfig();
 				shrines.reloadCustomConfig();
+				message.reloadCustomConfig();
 				message.sendChat(player, Messages.reloadComplete);
 				return true;
 			}

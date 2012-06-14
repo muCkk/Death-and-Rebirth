@@ -34,8 +34,9 @@ public class Messenger {
 	}
 		
 	public void reloadCustomConfig() {
+		try{
 	    if (messagesFile == null) {
-	    	messagesFile = new File(plugin.getDataFolder(), "messages.yml");
+	    	messagesFile = new File(plugin.getDataFolder()+"/messages.yml");
 	    }
 	    customConfig = YamlConfiguration.loadConfiguration(messagesFile);
 	 
@@ -45,6 +46,11 @@ public class Messenger {
 	        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
 	        customConfig.setDefaults(defConfig);
 	    }
+		}
+		catch(NullPointerException e)
+		{
+			plugin.getLogger().info("Could not reload messages.yml");
+		}
 	}
 	
 	public FileConfiguration getCustomConfig() {

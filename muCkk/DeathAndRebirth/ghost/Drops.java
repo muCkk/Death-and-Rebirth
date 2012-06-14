@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
@@ -30,13 +29,13 @@ public class Drops {
 	private File dropsFile;
 	private String dir;
 	private DAR plugin;
-	private Blacklist blacklist;  //selfres
+	private Blacklist blacklist;
 	
 	public Drops(DAR instance, String dir2) {
 		this.plugin = instance;
 		this.dir = dir2;
 		this.dropsFile = new File(dir+"/drops");
-		this.blacklist = new Blacklist(instance); //selfres
+		this.blacklist = new Blacklist(instance);
 	}
 	    
 	public void reloadCustomConfig() {
@@ -102,13 +101,14 @@ public class Drops {
 		if (items != null)
 			player.getInventory().setContents(items);
 		
-		items = getItemsFromConfig("drops."+playerName+"."+player.getWorld().getName()+".armor");
-		if (items != null) {
-			HashMap<Integer, ItemStack> dropthis = player.getInventory().addItem(items);
+		ItemStack[] armor = getItemsFromConfig("drops."+playerName+"."+player.getWorld().getName()+".armor");
+		if (armor != null) {
+			player.getInventory().setArmorContents(armor);
+/*			HashMap<Integer, ItemStack> dropthis = player.getInventory().setArmorContents(armor);
 			for (Entry<Integer, ItemStack> e : dropthis.entrySet()) {
 				player.getWorld().dropItemNaturally(player.getLocation(), e.getValue());
-			}
-		}
+			}*/
+		} 
 		remove(player);
 		saveCustomConfig();
 	}

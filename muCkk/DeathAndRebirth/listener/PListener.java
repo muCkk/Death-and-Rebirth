@@ -249,7 +249,6 @@ public class PListener implements Listener {
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		Player player = event.getPlayer();
 		
-		
 		// check if the world is enabled
 		if(!plugin.getConfig().getBoolean(player.getWorld().getName())) {
 			return;
@@ -276,12 +275,12 @@ public class PListener implements Listener {
 			// reverse spawning
 				if(!plugin.getConfig().getBoolean("CORPSE_SPAWNING"))
 				{
-					if (event.getClickedBlock().getLocation().distance(locDeath) < 3) ghosts.resurrect(player);
+					if (event.getClickedBlock().getLocation().distance(locDeath) < 3 && !plugin.getConfig().getBoolean("SHRINE_ONLY")) ghosts.resurrect(player);
 					else {
 						String shrine = shrines.getClose(player.getLocation());
 						if (shrine != null) {
 							ghosts.resurrect(player);
-						    ghosts.removeItems(player); //selfres
+						    ghosts.removeItems(player);
 							player.setHealth(plugin.getConfig().getInt("HEALTH"));
 						}
 					}
@@ -291,14 +290,10 @@ public class PListener implements Listener {
 					String shrine = shrines.getClose(player.getLocation());
 					if (shrine != null) ghosts.resurrect(player);
 					else {
-						if (event.getClickedBlock().getLocation().distance(locDeath) < 3 && !plugin.getConfig().getBoolean("SHRINE_ONLY")) {							
+						if (event.getClickedBlock().getLocation().distance(locDeath) < 3 && !plugin.getConfig().getBoolean("SHRINE_ONLY") && plugin.getConfig().getBoolean("GRAVE_SIGNS")) {							
 							ghosts.resurrect(player);
-					        ghosts.removeItems(player); //selfres
+					        ghosts.removeItems(player);
 							player.setHealth(plugin.getConfig().getInt("HEALTH"));
-						}
-						if(plugin.getConfig().getBoolean("SHRINE_ONLY") && plugin.getConfig().getBoolean("OTHERS_IGNORE_SHRINE_ONLY") && event.getClickedBlock().getLocation().distance(locDeath) < 3)
-						{
-							ghosts.resurrect(player);
 						}
 					}
 				}
@@ -387,6 +382,7 @@ public class PListener implements Listener {
 	{
 		Player player = event.getPlayer();
 		if(!ghosts.isGhost(player)) return;
+		//for every command which is in the disabledCommands list it creates an string command and if the used command starts with that string it will be cancelled
 		for(String command : plugin.getConfig().getStringList("DISABLED_COMMANDS"))
 		{
 			if(event.getMessage().startsWith(command))

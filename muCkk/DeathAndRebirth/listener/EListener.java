@@ -1,7 +1,6 @@
 package muCkk.DeathAndRebirth.listener;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
@@ -39,7 +38,6 @@ public class EListener implements Listener {
 	private DAR plugin;
 	private Ghosts ghosts;
 	private Shrines shrines;
-	public HashMap<String,Player> madata = new HashMap<String,Player>();
 	
 	public EListener(DAR plugin, Ghosts ghosts, Shrines shrines) {
 		this.plugin = plugin;
@@ -57,7 +55,7 @@ public class EListener implements Listener {
 		Player player = (Player) entity;
 		
 		//Checks if player is in a MobArena
-    	if(DAR.getAM().getArenaWithPlayer(player) != null) return;
+    	if(plugin.getConfig().getBoolean("MOBARENA_ENABLED") && DAR.getAM().getArenaWithPlayer(player) != null) return;
 
 		//Defines Location of death
 		Location loc = player.getLocation();

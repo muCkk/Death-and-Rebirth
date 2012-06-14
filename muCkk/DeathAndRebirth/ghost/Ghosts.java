@@ -465,9 +465,9 @@ public class Ghosts {
 		World world = player.getWorld();
 		String worldName = world.getName();
 		
-		double x = getCustomConfig().getDouble("players."+pname +"."+worldName +".location.x"); //0
-		double y = getCustomConfig().getDouble("players."+pname +"."+worldName +".location.y"); //64
-		double z = getCustomConfig().getDouble("players."+pname +"."+worldName +".location.z"); //0
+		double x = getCustomConfig().getDouble("players."+pname +"."+worldName +".location.x", 0);
+		double y = getCustomConfig().getDouble("players."+pname +"."+worldName +".location.y", 64);
+		double z = getCustomConfig().getDouble("players."+pname +"."+worldName +".location.z", 0);
 		Location loc = new Location(world, x, y, z);
 		return loc;
 	}
