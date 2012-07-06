@@ -1,5 +1,6 @@
 Version 2.6.5
 	added armor set into armor slots
+	fixed/added messages file creation
 	fixed shrine only not working
 	fixed respawning on right clicking air (if grave signs are disabled)
 	fixed config wont show RES_SOUND option

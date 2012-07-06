@@ -40,6 +40,7 @@ public class DAR extends JavaPlugin {
 	private Ghosts ghosts;
 	private Graves graves;
 	private Shrines shrines;
+	private PListener plistener;
 	
     @SuppressWarnings("unused")
 	private static final Logger log = Logger.getLogger("Minecraft");
@@ -84,12 +85,11 @@ public class DAR extends JavaPlugin {
 		message = new Messenger(this);
 
 		graves = new Graves(this, dataDir);
-		ghosts = new Ghosts(this, dir, graves);
+		ghosts = new Ghosts(this, dir, graves, shrines, plistener);
 		darSpout.setGhosts(ghosts);
 		shrines = new Shrines(this, dataDir);
 		
 	//Messages file
-		System.out.println("Messenger: " + message);
 		message.reloadCustomConfig();
 		message.saveCustomConfig();
 
@@ -101,6 +101,19 @@ public class DAR extends JavaPlugin {
 		SListener serverListener = new SListener(this);
 		pm.registerEvents(serverListener, this);
 		serverListener.checkForPlugins();
+		
+		if(this.getConfig().getBoolean("CITIZENS_ENABLED"))
+			this.getLogger().info("Citizens found, support enabled");
+		
+		if(this.getConfig().getBoolean("MOBARENA_ENABLED"))
+			this.getLogger().info("MobArena found, support enabled");
+		
+		if(this.getConfig().getBoolean("SPOUT_ENABLED"))
+			this.getLogger().info("Spout found, features supported now");
+		
+		this.getLogger().warning("If config-/messages.yml wasn't created");
+		this.getLogger().warning("well, download defaults at:");
+		this.getLogger().warning("http://dev.bukkit.org/server-mods/death-and-rebirth/");
 	}
 	
 	private Boolean setupEconomy()

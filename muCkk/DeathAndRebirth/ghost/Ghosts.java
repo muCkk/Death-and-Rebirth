@@ -44,7 +44,7 @@ public class Ghosts {
 	private FileConfiguration customConfig = null;
 	private File ghostsFile;
 	
-	public Ghosts(DAR plugin, String dir, Graves graves) {
+	public Ghosts(DAR plugin, String dir, Graves graves, Shrines shrines, PListener plistener) {
 		this.plugin = plugin;
 		this.dir = dir+"/data";
 		this.ghostsFile = new File(this.dir+"/ghosts");
@@ -52,6 +52,8 @@ public class Ghosts {
 		graves.setGhosts(this);
 		this.isRessing = new HashMap<String, Boolean>();
 		this.dardrops = new Drops(plugin, this.dir);
+		this.shrines = shrines;
+		this.plistener = plistener;
 	}
 	
 	public void reloadCustomConfig() {
@@ -539,10 +541,15 @@ public class Ghosts {
 						return;
 					}
 				}
-			}catch (NullPointerException e) {
+			}
+			catch (NullPointerException e) {
 				worldChangeHelper(name, worldName, player.getLocation());
 				return;
 			}
+			
+			//Debug
+			System.out.println("Debug: " + shrines + ", " + plistener);
+			
 			Location nearestShrine = shrines.getNearestShrineSpawn(player.getLocation());
 			plistener.giveGhostCompass(player, nearestShrine);
 			worldChangeHelper(name, worldName, player.getLocation());

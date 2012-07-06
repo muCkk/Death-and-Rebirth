@@ -20,19 +20,14 @@ shrineArea:              Entering a shrine area
 lostMoney:               You lost
 skillDropped:            '%skill% skill dropped'
 disabledCommand:         Command disabled
-
 graveProtected:          The grave is protected
 shrineProtectedDestroy:  Shrines are protected
 shrineProtectedBuild:    Can't build on shrines
 cantAttackGhosts:        Can't attack ghosts
-
-# Messages which only shown in the chat, can be as long as you want
 notEnoughItems:         Resurrection is not possible. You need
 noPermission:           No permission
 yourGraveIsHere:        Your grave is here
 youHaveNoGrave:         You have no grave
-
-# Admin messages
 nameAlreadyExists:      Name already exists.
 nameNotFound:           Name not found.
 reloadComplete:         Reload complete.
@@ -45,7 +40,6 @@ noSelectionMade:        You have to select an area to create a shrine.
 update:                 Shrine updated.
 showGhosts:             Revealing ghosts.
 hideGhosts:             Hiding ghosts.
-
 newVersion:             Death and Rebirth - A new version is available
 worldEnabled:           World enabled
 worldDisabled:          World disabled
