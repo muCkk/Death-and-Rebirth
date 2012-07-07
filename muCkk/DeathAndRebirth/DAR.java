@@ -84,10 +84,10 @@ public class DAR extends JavaPlugin {
 		darSpout = new DARSpout(this, dataDir);
 		message = new Messenger(this);
 
-		graves = new Graves(this, dataDir);
-		ghosts = new Ghosts(this, dir, graves, shrines, plistener);
-		darSpout.setGhosts(ghosts);
 		shrines = new Shrines(this, dataDir);
+		graves = new Graves(this, dataDir);
+		ghosts = new Ghosts(this, dir, graves, shrines);
+		darSpout.setGhosts(ghosts);
 		
 	//Messages file
 		message.reloadCustomConfig();
@@ -95,7 +95,10 @@ public class DAR extends JavaPlugin {
 
 	// Listener
 		pm = getServer().getPluginManager();
-		pm.registerEvents(new PListener(this, ghosts, shrines), this);
+		plistener = new PListener(this, ghosts, shrines);
+		pm.registerEvents(plistener, this);
+		ghosts.setPListener(plistener);
+		
 		pm.registerEvents(new EListener(this, ghosts, shrines), this);
 		pm.registerEvents(new BListener(this, shrines,ghosts,graves), this);
 		SListener serverListener = new SListener(this);

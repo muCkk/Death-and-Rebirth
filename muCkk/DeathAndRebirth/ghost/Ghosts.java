@@ -44,7 +44,7 @@ public class Ghosts {
 	private FileConfiguration customConfig = null;
 	private File ghostsFile;
 	
-	public Ghosts(DAR plugin, String dir, Graves graves, Shrines shrines, PListener plistener) {
+	public Ghosts(DAR plugin, String dir, Graves graves, Shrines shrines) {
 		this.plugin = plugin;
 		this.dir = dir+"/data";
 		this.ghostsFile = new File(this.dir+"/ghosts");
@@ -53,6 +53,9 @@ public class Ghosts {
 		this.isRessing = new HashMap<String, Boolean>();
 		this.dardrops = new Drops(plugin, this.dir);
 		this.shrines = shrines;
+	}
+	
+	public void setPListener(PListener plistener) {
 		this.plistener = plistener;
 	}
 	
