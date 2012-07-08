@@ -1,3 +1,8 @@
+Version 2.6.6
+	added compass option to config
+	added player gets teleported to shrine or grave when he's falling into void while he's a ghost
+	added /dar compass to toggle compass
+
 Version 2.6.5
 	added armor set into armor slots
 	fixed/added messages file creation

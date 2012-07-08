@@ -217,11 +217,26 @@ public class EListener implements Listener {
 				// *** check if a player tries to attack a ghost ***
 				if (event instanceof EntityDamageByEntityEvent) {
 					 Entity damager = ((EntityDamageByEntityEvent)event).getDamager();
+
 					 if (damager instanceof Player) {
 						 Player attacker = (Player) damager;
 						 plugin.message.send(attacker, Messages.cantAttackGhosts);
 					 }
 				}
+		//If the players fall into the void while dead he gets teleported back to...
+	    if(event.getCause().toString().equals("VOID"))
+		{
+			//... his death location if cropse spawning is enabled
+			if (!plugin.getConfig().getBoolean("CORPSE_SPAWNING"))
+			{
+				player.teleport(ghosts.getLocation(player));
+			}
+			//... the next shrine if he needs to ressurect at his grave
+			else
+			{
+				player.teleport(shrines.getNearestShrineSpawn(player.getLocation()));
+			}
+		}
 				// *************************************************
 				// TODO evil citizens do damage
 				event.setDamage(0);

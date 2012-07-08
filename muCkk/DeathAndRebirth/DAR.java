@@ -520,6 +520,11 @@ public class DAR extends JavaPlugin {
 				else message.sendChat(player, Messages.spawningToggle, " enabled");
 				return true;
 			}
+			if (arg.equalsIgnoreCase("compass")) {
+				if(toggle("COMPASS")) message.sendChat(player, Messages.compassToggle, " disabled");
+				else message.sendChat(player, Messages.compassToggle, " enabled");
+				return true;
+			}
 /*			if (arg.equalsIgnoreCase("others")) {
 				if(toggle("OTHERS_IGNORE_SHRINE_ONLY")) message.sendChat(player, Messages.othersToggle, " disabled");
 				else message.sendChat(player, Messages.othersToggle, " enabled");

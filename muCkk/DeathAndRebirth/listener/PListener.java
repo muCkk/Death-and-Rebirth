@@ -176,22 +176,26 @@ public class PListener implements Listener {
 	}
 	
 	public void giveGhostCompass(final Player player, final Location loc) {
-		new Thread() {
-			@Override
-			public void run() {
-				try {
-					sleep(1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+	    if(plugin.getConfig().getBoolean("COMPASS") == true)
+	    {
+	        new Thread() {
+	        	@Override
+	        	public void run() {
+	        		try {
+	        			sleep(1000);
+	        		} catch (InterruptedException e) {
+	        			e.printStackTrace();
+	        		}
 				
-				ItemStack compass = new ItemStack(345);
-				compass.setAmount(1);
-				player.getInventory().addItem(compass);
-				player.setCompassTarget(loc);
-			}
-		}.start();
+	        		ItemStack compass = new ItemStack(345);
+	        		compass.setAmount(1);
+	        		player.getInventory().addItem(compass);
+	        		player.setCompassTarget(loc);
+	        	}
+	        }.start();
+	    }
 	}
+
 	
 	/**
 	 * Prevents dead players from picking up items

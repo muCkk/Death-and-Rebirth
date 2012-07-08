@@ -133,6 +133,7 @@ public enum Messages {
 	spawningToggle			("Corpse spawning is now"),
 	bindingToggle			("Soulbinding for this shrine is now"),
 	othersToggle			("Others ignore shrine only is now"),
+	compassToggle			("Compass is now"),
 	invisToggle				("Invisibility for ghosts is now");	
 	
 	private String msg;
