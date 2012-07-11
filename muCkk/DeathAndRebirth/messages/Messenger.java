@@ -73,20 +73,34 @@ public class Messenger {
 //	********************************************************************************************	
 	public void send(Player player, Messages havetostandonshrine) {
 		String ownMessage = getCustomConfig().getString(havetostandonshrine.toString(), havetostandonshrine.msg());//yml.getString(msg.toString());
-		if (checkSpout(player)) spout(player, ownMessage);
+		if (checkSpout(player) && ownMessage.length() <= 26) spout(player, ownMessage);
 		else					chat(player, ownMessage);
 	}
 	
 	public void sendSkill(Player player, Messages msg, String skillType) {
 		String ownMessage = getCustomConfig().getString(msg.toString(), msg.msg()); //yml.getString(msg.msg());
-		if (checkSpout(player)) spout(player,ownMessage.replace("%skill%", skillType));
+		if (checkSpout(player) && ownMessage.length() <= 26) spout(player,ownMessage.replace("%skill%", skillType));
 		else					chat(player, ownMessage.replace("%skill%", skillType));
+	}
+	
+	public void sendRobbed(Player robbed, Player robber, Messages msg, double amount) {
+		String robberName = robber.getName();
+		String ownMessage = getCustomConfig().getString(msg.toString(), msg.msg()); //yml.getString(msg.msg());
+		if (checkSpout(robbed) && ownMessage.length() <= 26) spout(robbed,ownMessage.replace("%robber%", robberName).replace("%amount%", DAR.econ.format(amount)));
+		else					chat(robbed, ownMessage.replace("%robber%", robberName).replace("%amount%", DAR.econ.format(amount)));
+	}
+	
+	public void sendRobber(Player robbed, Player robber, Messages msg, double amount) {
+		String robbedName = robbed.getName();
+		String ownMessage = getCustomConfig().getString(msg.toString(), msg.msg()); //yml.getString(msg.msg());
+		if (checkSpout(robbed) && ownMessage.length() <= 26) spout(robbed,ownMessage.replace("%robbed%", robbedName).replace("%amount%", DAR.econ.format(amount)));
+		else					chat(robbed, ownMessage.replace("%robbed%", robbedName).replace("%amount%", DAR.econ.format(amount)));
 	}
 	
 	public void send(Player player, Messages msg, String arg) {
 		String ownMessage = getCustomConfig().getString(msg.toString(), msg.msg());
 		String message = ownMessage+" "+arg;
-		if (checkSpout(player)) spout(player, message);
+		if (checkSpout(player) && message.length() <= 26) spout(player, message);
 		else					chat(player, message);
 	}
 //	*******************

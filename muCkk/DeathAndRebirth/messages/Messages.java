@@ -89,6 +89,9 @@ public enum Messages {
 	lostMoney				("You lost"),
 	skillDropped			("%skill% skill dropped"),
 	disabledCommand			("Command disabled"),
+	robbedYou				("%robber% robbed %amount%"),
+	youRobbed				("You robbed %amount%"),
+	alreadyRobbed			("Grave already robbed"),
 	
 	// for players - plugin protection
 	//	max length:			("12345678901234567890123456")

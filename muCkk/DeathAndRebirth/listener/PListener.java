@@ -14,6 +14,7 @@ import muCkk.DeathAndRebirth.messages.Errors;
 import muCkk.DeathAndRebirth.messages.Messages;
 import net.minecraft.server.Packet29DestroyEntity;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -256,7 +257,8 @@ public class PListener implements Listener {
 		// check if the world is enabled
 		if(!plugin.getConfig().getBoolean(player.getWorld().getName())) {
 			return;
-		}		
+		}
+		
 
 	// *** ghost interactions ***
 		if (ghosts.isGhost(player)) {
@@ -360,6 +362,53 @@ public class PListener implements Listener {
 				player.sendMessage("Shrine: "+shrine);
 			}
 			return;
+		}
+		
+		
+		//grave robbery
+		//Checks if grave robbery is enabled
+		if (!(plugin.getConfig().getDouble("GRAVEROBBERY") == 0.0))
+		{
+			Player[] all = Bukkit.getServer().getOnlinePlayers();
+			//for each player which is online is checked if he is a ghost
+			for(Player robbed:all)
+			{
+				Player robber = event.getPlayer();
+				String robberName = robber.getName();
+				String robbedName = robbed.getName();
+				Location robbedGrave = ghosts.getLocation(robbed);
+				Location ownGrave = ghosts.getLocation(robber);
+				String worldName = robbedGrave.getWorld().getName();
+				double percent = plugin.getConfig().getDouble("GRAVEROBBERY");
+				
+				//if he's a ghost it's checked if his grave is right clicked
+				if((!ghosts.isGhost(robber)) && ghosts.isGhost(robbed) && event.getClickedBlock().getLocation().distance(robbedGrave) == 0 && !(event.getClickedBlock().getLocation().distance(ownGrave) == 0))
+				{
+					if(!ghosts.getCustomConfig().getBoolean("players."+robbedName +"."+ worldName +".graveRobbed"))
+					{
+						double robbedBalance = DAR.econ.getBalance(robbedName);
+						double amount = (robbedBalance/100)*percent;
+					
+						amount = amount*100;
+						amount = Math.round(amount);
+						amount = amount/100;
+					
+						DAR.econ.withdrawPlayer(robbedName, amount);
+						DAR.econ.depositPlayer(robberName, amount);
+					
+						//plugin.message.sendRobber(robbed, robber, Messages.robbedYou, amount);
+						//plugin.message.sendRobbed(robbed, robber, Messages.youRobbed, amount);
+					
+						robber.sendMessage("Du hast geraubt: "+ amount);
+						robbed.sendMessage("Du wurdest beraubt: "+ amount);
+					
+						ghosts.getCustomConfig().set("players."+robbedName +"."+ worldName +".graveRobbed", true);
+						ghosts.saveCustomConfig();
+					}
+					else
+						plugin.message.send(robber, Messages.alreadyRobbed);
+				}
+			}			
 		}
 	}
 	

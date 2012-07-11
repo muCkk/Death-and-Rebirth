@@ -275,6 +275,7 @@ public class Ghosts {
 		}.start();
 		
 		getCustomConfig().set("players."+pname +"."+world +".dead", false);
+		getCustomConfig().set("players."+pname +"."+world +".graveRobbed", false);
 		saveCustomConfig();
 		graves.deleteGrave(player.getWorld().getBlockAt(getLocation(player)), pname, world);
 		plugin.message.send(player, Messages.reborn);
@@ -357,7 +358,9 @@ public class Ghosts {
 	
 	private void selfResPunish(Player player) {
 		// health
-		player.setHealth(plugin.getConfig().getInt("HEALTH"));
+		int percent = plugin.getConfig().getInt("HELATH");
+		int health = (player.getHealth()/100)*percent;
+		player.setHealth(health);
 		
 		//drops
         dardrops.selfResPunish(player); //selfres
@@ -534,6 +537,7 @@ public class Ghosts {
 	public void worldChange(Player player) {
 		String worldName = player.getWorld().getName();
 		String name = player.getName();
+		Location nearestShrine = shrines.getNearestShrineSpawn(player.getLocation());
 		ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("players."+name);
 		if(cfgsel != null) { 
 			Set<String> worlds = cfgsel.getKeys(false);
@@ -546,14 +550,11 @@ public class Ghosts {
 				}
 			}
 			catch (NullPointerException e) {
+				plistener.giveGhostCompass(player, nearestShrine);
 				worldChangeHelper(name, worldName, player.getLocation());
 				return;
 			}
-			
-			//Debug
-			System.out.println("Debug: " + shrines + ", " + plistener);
-			
-			Location nearestShrine = shrines.getNearestShrineSpawn(player.getLocation());
+
 			plistener.giveGhostCompass(player, nearestShrine);
 			worldChangeHelper(name, worldName, player.getLocation());
 		}
