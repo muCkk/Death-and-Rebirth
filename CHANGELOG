@@ -1,10 +1,19 @@
-Version 2.7
+Version 3.0
 	updated for CB 1.3.1-R1.0
 	updated all APIs
 	added Citizens 2 (Beta) support
 	added to config
 		- compass option
 		- 'resurrection only at day time'-option
+		- hardcore mode
+			- timer
+			- others resurrect
+				- others payment
+            	- need item
+           		- res item
+            		- amount
+            	- distance
+            	- resurrect time
 	added player gets teleported to shrine or grave when he's falling into void while he's a ghost
 	added toggle commands for...
 		- /dar compass to toggle the compass
@@ -25,13 +34,17 @@ Version 2.7
 	added permissions
 		- dar.reb.others
 		- dar.robb
+		- dar.shrine.<shrinename> OR dar.shrine.*
 	added grave will show '(offline)' if a player is offline
 	added option to decide if players can (be) resurrected at daytime only
 	added OP acts like dar.admin permission
+	added spout notifications will be displayed in chat if they're too long
 	changed health from static amount to percentage
 	changed that some permissions won't touch the resurrection
 	fixed error on ghost teleportation
 	fixed dar.admin only working as OP
+	fixed blacklist isn't created
+	fixed reload can also be done in console
 	removed Citizens 1 support
 	removed (temporally) Heroes support, will be included again since Heroes is up to date
 

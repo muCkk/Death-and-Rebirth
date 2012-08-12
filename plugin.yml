@@ -1,10 +1,10 @@
 name: Death and Rebirth
 main: muCkk.DeathAndRebirth.DAR
-version: 2.6.5
-author: muCkk
+version: 3.0
+author: [muCkk, G4meM0ment]
 
 depend: [Vault]
-softdepend: [MobArena,Heroes,Citizens]
+softdepend: [MobArena, Heroes, Citizens, Spout]
 
 commands:
     rebirth:
@@ -20,24 +20,3 @@ commands:
     dar:
         description: Resurrects any player. Reloads the config files. Enables or disables the support for each world. Gives the name of the current world. Toggles flying, shrinemode, ghost-interactions and ghost-chat.
         usage: /<command> <reb, reload, enable, disable, world, fly, shrinemode, ghostinteraction, ghostchat, dropping, versionCheck, lightningD, lightningR, signs, spawn, pvpDrop, invis, showghosts, hideghosts, compass> <name>
-
-permissions:
-    dar.*:
-        description: Gives access to all plugin functions
-        children:
-            dar.res: true
-            dar.ignore: false
-            dar.nodrop: false
-            dar.admin: false
-    dar.res:
-        description: Allows you to use resurrection
-        default: true
-    dar.ignore:
-        description: Plugin ignores the player
-        default: false
-    dar.nodrop:
-        description: Player will not drop items and regains them on rebirth
-        default: false
-    dar.admin:
-        description: Access to /dar command
-        default: OP

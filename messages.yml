@@ -1,5 +1,8 @@
+#
 # Normal Messages, for users.
-# !IMPORTANT! the messages can be only 26 chars long
+# IMPORTANT: the messages can be only 26 chars long
+# if you want to display them with spout notifications
+#
 soulNotBound:            Soul not bound
 tooFarAway:              You are too far away
 cantDoThat:              You can't do that
@@ -21,6 +24,15 @@ skillDropped:            '%skill% skill dropped'
 disabledCommand:         Command disabled
 youRobbed:               '%robber% robbed %amnt%'
 robbedYou:               'You robbed %amnt%'
+alreadyRobbed:           'Grave already robbed'
+timerNotExpired:         'Resurrection in %time% min'
+cantResurrect:           'You cant resurrect them'
+mustBeDay:               'It must be daytime'
+resurrectedBy:           'Resurrected by %reser'
+resurrectedGhost:        'Resurrected %resed'
+#
+# Protection/admin and player messages
+#
 graveProtected:          The grave is protected
 shrineProtectedDestroy:  Shrines are protected
 shrineProtectedBuild:    Can't build on shrines
@@ -57,4 +69,8 @@ signsToggle:             Grave-Signs are now
 spawningToggle:          Corpse spawning is now
 bindingToggle:           Soulbinding for this shrine is now
 othersToggle:            Others ignore shrine only is now
+compassToggle:           Compass is now
+hardcoreToggle:          Hardcore Mode is now
+needItemToggle:          Need Item is now
+onlyDayToggle:           Day only resurrection is now
 invisToggle:             Invisibility for ghosts is now

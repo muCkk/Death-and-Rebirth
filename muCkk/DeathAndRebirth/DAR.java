@@ -2,6 +2,7 @@ package muCkk.DeathAndRebirth;
 
 import java.util.logging.Logger;
 
+import muCkk.DeathAndRebirth.ghost.Blacklist;
 import muCkk.DeathAndRebirth.ghost.Ghosts;
 import muCkk.DeathAndRebirth.ghost.Graves;
 import muCkk.DeathAndRebirth.ghost.Shrines;
@@ -40,8 +41,8 @@ public class DAR extends JavaPlugin {
 	private Graves graves;
 	private Shrines shrines;
 	private PListener plistener;
+	private Blacklist blacklist;
 	
-    @SuppressWarnings("unused")
 	private static final Logger log = Logger.getLogger("Minecraft");
     public static Economy econ = null;
     public static Permission perms = null;
@@ -61,6 +62,7 @@ public class DAR extends JavaPlugin {
 			graves.saveCustomConfig();
 			shrines.saveCustomConfig();
 			message.saveCustomConfig();
+			blacklist.saveCustomConfig();
 		}catch (NullPointerException e) {
 			// TODO: handle exception
 		}
@@ -86,11 +88,18 @@ public class DAR extends JavaPlugin {
 		shrines = new Shrines(this, dataDir);
 		graves = new Graves(this, dataDir);
 		ghosts = new Ghosts(this, dir, graves, shrines, heroes);
+		blacklist = new Blacklist(this);
 		darSpout.setGhosts(ghosts);
 		
-	//Messages file
+	// custom configs
 		message.reloadCustomConfig();
 		message.saveCustomConfig();
+		blacklist.reloadCustomConfig();
+		blacklist.saveCustomConfig();
+		ghosts.reloadCustomConfig();
+		ghosts.saveCustomConfig();
+		shrines.reloadCustomConfig();
+		shrines.saveCustomConfig();
 
 	// Listener
 		pm = getServer().getPluginManager();
@@ -112,6 +121,8 @@ public class DAR extends JavaPlugin {
 		
 		if(this.getConfig().getBoolean("SPOUT_ENABLED"))
 			this.getLogger().info("Spout found, features supported now");
+		
+		this.getLogger().info("Configs loaded!");
 		
 		this.getLogger().warning("If config-/messages.yml wasn't created");
 		this.getLogger().warning("well, download defaults at:");
@@ -356,6 +367,33 @@ public class DAR extends JavaPlugin {
 		 * dar <reb, reload, enable, disable, world, fly, shrinemode, ghostinteraction, ghostchat, dropping, versionCheck, lightningD, lightningD, invis> <arg>
 		 * Errects, removes and lists shrines. Admins can resurrect any player.
 		 */
+		if(cmd.getName().equalsIgnoreCase("dar") && !(sender instanceof Player)) {
+			String arg = "";
+			try {
+				arg = args[0];
+			}catch (ArrayIndexOutOfBoundsException e) {
+				return false;
+			}
+			
+			// reloading all config files
+			if(arg.equalsIgnoreCase("reload")) {
+				reloadConfig();
+				saveConfig();
+				graves.reloadCustomConfig();
+				graves.saveCustomConfig();
+				ghosts.reloadCustomConfig();
+				ghosts.saveCustomConfig();
+				shrines.reloadCustomConfig();
+				shrines.saveCustomConfig();
+				message.reloadCustomConfig();
+				message.saveCustomConfig();
+				blacklist.reloadCustomConfig();
+				blacklist.saveCustomConfig();
+				log.info("[Death and Rebirth] Configs reloaded");
+				return true;
+			}
+		}
+		
 		if(cmd.getName().equalsIgnoreCase("dar") && sender instanceof Player && (player.hasPermission("dar.admin") || player.isOp())) {
 			
 			String arg = "";

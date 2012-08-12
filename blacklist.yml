@@ -1,0 +1,9 @@
+#
+# Just add the data values of the items you don't want to be removed
+# from players inventory.
+#
+blacklist:
+- 310
+- 311
+- 312
+- 313
