@@ -1,9 +1,7 @@
 package muCkk.DeathAndRebirth.listener;
 
-import java.io.File;
 import java.util.List;
 import java.util.Random;
-import java.util.logging.Logger;
 
 import muCkk.DeathAndRebirth.DAR;
 import muCkk.DeathAndRebirth.ghost.Ghosts;
@@ -12,8 +10,6 @@ import muCkk.DeathAndRebirth.messages.Messages;
 
 import org.bukkit.Location;
 import org.bukkit.block.Block;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -30,11 +26,11 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
-import net.citizensnpcs.api.CitizensManager;
+import net.citizensnpcs.api.CitizensAPI;
 
 public class EListener implements Listener {
 
-	private static final Logger log = Logger.getLogger("Minecraft");
+	//private static final Logger log = Logger.getLogger("Minecraft"); Used for citizens 1
 	private DAR plugin;
 	private Ghosts ghosts;
 	private Shrines shrines;
@@ -63,6 +59,12 @@ public class EListener implements Listener {
 		ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".location.x", block.getX());
 		ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".location.y", block.getY());
 		ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".location.z", block.getZ());
+		
+		if(plugin.getConfig().getBoolean("HARDCORE"))
+		{
+			long startTime = System.currentTimeMillis();
+			ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".starttime", startTime);
+		}
 				
 		// other plugins which avoid death - for example mob arena
 		if (player.getHealth() > 0) return;
@@ -231,7 +233,7 @@ public class EListener implements Listener {
 			{
 				player.teleport(ghosts.getLocation(player));
 			}
-			//... the next shrine if he needs to ressurect at his grave
+			//... the next shrine if he needs to resurrect at his grave
 			else
 			{
 				player.teleport(shrines.getNearestShrineSpawn(player.getLocation()));
@@ -258,7 +260,11 @@ public class EListener implements Listener {
 	
 // *** private methods *******************************************************************
 	private boolean checkForNPC(Entity entity) {
-		if(CitizensManager.isNPC(entity)) {
+		
+		if(CitizensAPI.getNPCRegistry().isNPC(entity))
+			return true;
+		
+		/*if(CitizensManager.isNPC(entity)) {
 			return true;
 		}
 		// *** checking all names for evil npcs ... ***
@@ -292,8 +298,7 @@ public class EListener implements Listener {
 		} catch (Exception e) {
 			log.info("[Death and Rebirth] Error while checking for NPCs");
         	e.printStackTrace();
-        }
-		
+        }*/
 		return false;
 	}
 }

@@ -1,10 +1,39 @@
-Version 2.6.6
-	added compass option to config
+Version 2.7
+	updated for CB 1.3.1-R1.0
+	updated all APIs
+	added Citizens 2 (Beta) support
+	added to config
+		- compass option
+		- 'resurrection only at day time'-option
 	added player gets teleported to shrine or grave when he's falling into void while he's a ghost
-	added /dar compass to toggle compass
+	added toggle commands for...
+		- /dar compass to toggle the compass
+		- /dar hardcore to toggle hardcore mode
+		- /dar needitem to toggle if item is for resurrection by others needed
+		- /dar dayonly to toggle only_day option in config
 	added grave robbery
+		- with item to robb out the grave
+		- setable amount of money to robb
+	added hardcoremode
+        - timer, ghost need to wait this time, after they died till they can resurrect
+		- resurrection by others
+	added others can resurrect players
+		- with item needed
+		- money needed
+		- with casting time
+		- variable distance
+	added permissions
+		- dar.reb.others
+		- dar.robb
+	added grave will show '(offline)' if a player is offline
+	added option to decide if players can (be) resurrected at daytime only
+	added OP acts like dar.admin permission
 	changed health from static amount to percentage
+	changed that some permissions won't touch the resurrection
 	fixed error on ghost teleportation
+	fixed dar.admin only working as OP
+	removed Citizens 1 support
+	removed (temporally) Heroes support, will be included again since Heroes is up to date
 
 Version 2.6.5
 	added armor set into armor slots

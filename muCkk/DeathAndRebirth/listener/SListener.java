@@ -23,7 +23,7 @@ public class SListener implements Listener{
 	public void onPluginEnable(PluginEnableEvent event) {
 		String pluginName = event.getPlugin().getDescription().getName();
 		PluginManager plugman = plugin.getServer().getPluginManager();
-
+		
 		// Spout
 		if(pluginName.equalsIgnoreCase("spout")) {
 			Plugin spoutPlugin = plugman.getPlugin("Spout");
@@ -55,6 +55,12 @@ public class SListener implements Listener{
 			Plugin maPlug = plugman.getPlugin("MobArena");
 			if (maPlug != null)	plugin.getConfig().set("MOBARENA_ENABLED", true);
 			else				plugin.getConfig().set("MOBARENA_ENABLED", false);
+		}
+		// Heroes
+		if(pluginName.equalsIgnoreCase("Heroes")) {
+			Plugin maPlug = plugman.getPlugin("Heroes");
+			if (maPlug != null)	plugin.getConfig().set("HEROES_ENABLED", true);
+			else				plugin.getConfig().set("HEROES_ENABLED", false);
 		}
 	}
 	
@@ -88,6 +94,15 @@ public class SListener implements Listener{
 		}
 		else {
 			plugin.getConfig().set("MOBARENA_ENABLED", false);
+		}
+		
+		// Heroes
+		Plugin heroPlug = plugman.getPlugin("Heroes");
+		if (heroPlug != null) {
+			plugin.getConfig().set("HEROES_ENABLED", true);
+		}
+		else {
+			plugin.getConfig().set("HEROES_ENABLED", false);
 		}
 	}	
 }

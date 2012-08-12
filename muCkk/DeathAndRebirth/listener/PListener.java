@@ -9,6 +9,7 @@ import java.util.ArrayList;
 
 import muCkk.DeathAndRebirth.DAR;
 import muCkk.DeathAndRebirth.ghost.Ghosts;
+import muCkk.DeathAndRebirth.ghost.Graves;
 import muCkk.DeathAndRebirth.ghost.Shrines;
 import muCkk.DeathAndRebirth.messages.Errors;
 import muCkk.DeathAndRebirth.messages.Messages;
@@ -24,7 +25,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.player.PlayerChatEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -32,6 +33,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
@@ -39,17 +41,19 @@ import org.bukkit.inventory.ItemStack;
 public class PListener implements Listener {
 
 	private Ghosts ghosts;
+	private Graves graves;
 	private Shrines shrines;
 	private DAR plugin;
 	private double flySpeed;
 	
 	private ArrayList<String> checkList;
 	
-	public PListener(DAR plugin, Ghosts ghosts, Shrines shrines) {
+	public PListener(DAR plugin, Ghosts ghosts, Shrines shrines, Graves graves) {
 		this.plugin = plugin;
 		this.flySpeed = plugin.getConfig().getDouble("FLY_SPEED");
 		this.ghosts = ghosts;
 		this.shrines = shrines;
+		this.graves = graves;
 		checkList = new ArrayList<String>();
 	}
 	
@@ -70,6 +74,18 @@ public class PListener implements Listener {
 	// if dead players join
 		if(ghosts.isGhost(player)) {
 			ghosts.setDisplayName(player, true);
+			
+			if(plugin.getConfig().getBoolean("GRAVE_SIGNS"))
+			{
+				String playerName = player.getName();
+				String worldName = player.getWorld().getName();
+				String l1 = plugin.getConfig().getString("GRAVE_TEXT");
+				Block block = ghosts.getLocation(player).getBlock();
+				
+				ghosts.getCustomConfig().set("players."+ playerName +"."+ worldName +".offline", false);
+				graves.removeSign(block, playerName, worldName);
+				graves.placeSign(block, l1, playerName);
+			}
 			
 			// compass
 			// reverse spawning
@@ -93,11 +109,11 @@ public class PListener implements Listener {
 		
 	// version checking
 	// in it's own thread because it takes some time and would stop the rest of the world to load
-		if(player.isOp()) {
+		if(player.isOp() || player.hasPermission("dar.admin")) {
 			new Thread() {
 				public void run() {
 					try {
-						URL versionURL = new URL("http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/version.txt");
+						URL versionURL = new URL("http://dl.dropbox.com/u/96045686/DeathAndRebirth/Version.txt");
 						BufferedReader reader = new BufferedReader(new InputStreamReader(versionURL.openStream()));
 						
 						String line = reader.readLine();
@@ -131,8 +147,10 @@ public class PListener implements Listener {
 	/**
 	 * Checks if ghosts are allowed to chat
 	 */
+
+	
 	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-	public void onPlayerChat(PlayerChatEvent event) {
+	public void onAsyncPlayerChat(AsyncPlayerChatEvent event) {
 		Player player = event.getPlayer();
 		if(ghosts.isGhost(player) && !plugin.getConfig().getBoolean("GHOST_CHAT")) {
 			plugin.message.send(player, Messages.ghostNoChat);
@@ -255,10 +273,182 @@ public class PListener implements Listener {
 		Player player = event.getPlayer();
 		
 		// check if the world is enabled
-		if(!plugin.getConfig().getBoolean(player.getWorld().getName())) {
+		if(!plugin.getConfig().getBoolean(player.getWorld().getName()))
 			return;
+		
+	// *** hardcore mode ***
+		if(plugin.getConfig().getBoolean("HARDCORE"))
+		{
+			Player[] all = Bukkit.getServer().getOnlinePlayers();
+			for(Player hPlayer:all)
+			{
+				Player resurrecter = event.getPlayer();
+				String resurrecterName = resurrecter.getName();
+				String hPlayerName = hPlayer.getName();
+				Location hGrave = ghosts.getLocation(hPlayer);
+				String worldName = hGrave.getWorld().getName();
+				String shrine = shrines.getClose(hPlayer.getLocation());
+				int timer = plugin.getConfig().getInt("TIMER")*60;
+				
+				//if he's a ghost it's checked if his grave is right clicked				
+				if(hPlayer != resurrecter && (!player.hasPermission("dar.reb.others") || !player.hasPermission("dar.admin") || !player.isOp()) && !ghosts.isGhost(resurrecter) && ghosts.isGhost(hPlayer) && plugin.getConfig().getBoolean("GRAVE_SIGNS") && event.getClickedBlock().getLocation().distance(hGrave) < 3 && plugin.getConfig().getBoolean("OTHERS_RESURRECT"))
+				{
+					if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime()  >= 12000 && player.getWorld().getTime() <= 24000)
+						plugin.message.send(resurrecter, Messages.mustBeDay);
+					
+					if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime()  >= 0 && player.getWorld().getTime() <= 12000)
+					{
+						ghosts.resurrect(resurrecter, hPlayer);
+						ghosts.selfResPunish(hPlayer);
+						if(plugin.getConfig().getInt("OTHERS_PAYMENT") != 0)
+						{
+							DAR.econ.withdrawPlayer(resurrecterName, plugin.getConfig().getInt("OTHERS_PAYMENT")); 
+						}
+					}
+					else if(hPlayer != resurrecter)
+					{
+						ghosts.resurrect(resurrecter, hPlayer);
+						ghosts.selfResPunish(hPlayer);
+						if(plugin.getConfig().getInt("OTHERS_PAYMENT") != 0)
+						{
+							DAR.econ.withdrawPlayer(resurrecterName, plugin.getConfig().getInt("OTHERS_PAYMENT")); 
+						}
+					}
+					else
+					{
+						plugin.message.send(resurrecter, Messages.cantResurrect);						
+					}
+				}
+				else if(ghosts.isGhost(hPlayer))
+				{
+					long currentTime = System.currentTimeMillis();
+					long startTime = ghosts.getCustomConfig().getLong("players."+hPlayerName +"."+worldName +".starttime");
+					long diff = (currentTime - startTime)/1000;
+					
+					//normal spawning
+					if(!plugin.getConfig().getBoolean("CORPSE_SPAWNING"))
+					{
+						//checks if players grave is clicked and timer is expired
+						if (diff > timer && event.getClickedBlock().getLocation().distance(hGrave) < 3 && !plugin.getConfig().getBoolean("SHRINE_ONLY"))
+						{
+							if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime()  >= 12000 && player.getWorld().getTime() <= 24000)
+								plugin.message.sendChat(hPlayer, Messages.mustBeDay);
+							
+							if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime()  >= 0 && player.getWorld().getTime() <= 12000)
+							{
+								ghosts.resurrect(hPlayer);
+								ghosts.selfResPunish(hPlayer);
+							}
+							else if(diff > timer)
+							{
+								ghosts.resurrect(hPlayer);
+								ghosts.selfResPunish(hPlayer);
+							}
+							else
+							{
+								plugin.message.sendTime(hPlayer, Messages.timerNotExpired, checkTime(startTime));
+							}
+						}
+						else if (shrine != null && diff > timer && (!player.hasPermission("dar.shrine." + shrine) || !player.hasPermission("dar.shrine.*") || !player.hasPermission("dar.admin") || !player.isOp())){
+							if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime()  >= 12000 && player.getWorld().getTime() <= 24000)
+								plugin.message.sendChat(hPlayer, Messages.mustBeDay);
+							
+							if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime()  >= 0 && player.getWorld().getTime() <= 12000)
+							{
+								ghosts.resurrect(player);
+								ghosts.selfResPunish(hPlayer);
+							}
+							else if(diff > timer)
+							{
+								ghosts.resurrect(player);
+								ghosts.selfResPunish(hPlayer);
+							}
+							else
+							{
+								plugin.message.sendTime(hPlayer, Messages.timerNotExpired, checkTime(startTime));
+							}	
+						}
+					}
+				// corpse spawning
+					else {
+						if (shrine != null && diff > timer && (!player.hasPermission("dar.shrine." + shrine) || !player.hasPermission("dar.shrine.*") || !player.hasPermission("dar.admin") || !player.isOp()))	
+						{							
+							if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime()  >= 12000 && player.getWorld().getTime() <= 24000)
+								plugin.message.sendChat(hPlayer, Messages.mustBeDay);
+							
+							if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime()  >= 0 && player.getWorld().getTime() <= 12000)
+							{
+								ghosts.resurrect(hPlayer);
+								ghosts.selfResPunish(hPlayer);
+							}
+							else if(diff > timer)
+							{
+								ghosts.resurrect(hPlayer);
+								ghosts.selfResPunish(hPlayer);
+							}
+							else
+							{
+								plugin.message.sendTime(hPlayer, Messages.timerNotExpired, checkTime(startTime));
+							}	
+						}
+						else if(event.getClickedBlock().getLocation().distance(hGrave) < 3 && !plugin.getConfig().getBoolean("SHRINE_ONLY") && plugin.getConfig().getBoolean("GRAVE_SIGNS")){
+							
+							if(diff > timer && plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime()  >= 12000 && player.getWorld().getTime() <= 24000)
+								plugin.message.sendChat(hPlayer, Messages.mustBeDay);
+							
+							if(diff > timer && plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime()  >= 0 && player.getWorld().getTime() <= 12000)
+							{
+								ghosts.resurrect(player);
+								ghosts.selfResPunish(player);
+							}
+							else if(diff > timer)
+							{
+								ghosts.resurrect(player);
+								ghosts.selfResPunish(player);
+							}
+							else
+							{	
+								plugin.message.sendTime(hPlayer, Messages.timerNotExpired, checkTime(startTime));
+							}
+						}
+					}
+				}
+			}
 		}
 		
+		if(plugin.getConfig().getBoolean("OTHERS_RESURRECT") && !plugin.getConfig().getBoolean("HARDCORE"))
+		{
+			Player [] all = Bukkit.getServer().getOnlinePlayers();
+			for(Player dPlayer:all)
+			{	
+				Player resurrecter = event.getPlayer();
+				Location hGrave = ghosts.getLocation(dPlayer);
+				if(!ghosts.isGhost(resurrecter) && event.getClickedBlock().getLocation().distance(hGrave) < 3 && ghosts.isGhost(dPlayer) && plugin.getConfig().getBoolean("GRAVE_SIGNS") && (!player.hasPermission("dar.reb.others") || !player.hasPermission("dar.admin") || !player.isOp()))
+				{
+					if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime() >= 12000 && player.getWorld().getTime() <= 24000)
+						plugin.message.sendChat(resurrecter, Messages.mustBeDay);
+				
+					if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime() >= 0 && player.getWorld().getTime() <= 12000)
+					{
+						ghosts.resurrect(resurrecter, dPlayer);
+						if(plugin.getConfig().getInt("OTHERS_PAYMENT") != 0)
+						{
+							DAR.econ.withdrawPlayer(resurrecter.getName(), plugin.getConfig().getInt("OTHERS_PAYMENT"));
+						}
+					}
+					else if(!ghosts.isGhost(resurrecter))
+					{
+						ghosts.resurrect(resurrecter, dPlayer);
+						if(plugin.getConfig().getInt("OTHERS_PAYMENT") != 0)
+						{
+							DAR.econ.withdrawPlayer(resurrecter.getName(), plugin.getConfig().getInt("OTHERS_PAYMENT"));
+						}
+					}
+					else
+						plugin.message.sendChat(resurrecter, Messages.cantResurrect);
+				}
+			}
+		}
 
 	// *** ghost interactions ***
 		if (ghosts.isGhost(player)) {
@@ -276,30 +466,62 @@ public class PListener implements Listener {
 				// Material = null
 			}
 		// resurrection
-			if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+			if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {				
 				Location locDeath = ghosts.getLocation(player);
-			// reverse spawning
-				if(!plugin.getConfig().getBoolean("CORPSE_SPAWNING"))
+				// reverse spawning
+				if(!plugin.getConfig().getBoolean("CORPSE_SPAWNING") && !plugin.getConfig().getBoolean("HARDCORE"))
 				{
-					if (event.getClickedBlock().getLocation().distance(locDeath) < 3 && !plugin.getConfig().getBoolean("SHRINE_ONLY")) ghosts.resurrect(player);
+					if(event.getClickedBlock().getLocation().distance(locDeath) < 3 && !plugin.getConfig().getBoolean("SHRINE_ONLY") && plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime() >= 12000 && player.getWorld().getTime() <= 24000)
+						plugin.message.sendChat(player, Messages.mustBeDay);
+				
+					if(event.getClickedBlock().getLocation().distance(locDeath) < 3 && !plugin.getConfig().getBoolean("SHRINE_ONLY") && plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime() >= 0 && player.getWorld().getTime() <= 12000) 
+						ghosts.resurrect(player);
+					
+					else if(event.getClickedBlock().getLocation().distance(locDeath) < 3 && !plugin.getConfig().getBoolean("SHRINE_ONLY")) 
+						ghosts.resurrect(player);
+					
 					else {
+						//Checks for shrine permission
 						String shrine = shrines.getClose(player.getLocation());
-						if (shrine != null) {
+						
+						if(shrine != null && (player.hasPermission("dar.shrine." + shrine) || player.hasPermission("dar.shrine.*") || player.hasPermission("dar.admin") || player.isOp()) && plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime() >= 12000 && player.getWorld().getTime() <= 24000)
+							plugin.message.sendChat(player, Messages.mustBeDay);
+						
+						if(shrine != null && (player.hasPermission("dar.shrine." + shrine) || player.hasPermission("dar.shrine.*") || player.hasPermission("dar.admin") || player.isOp()) && plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime() >= 0 && player.getWorld().getTime() <= 12000) {
 							ghosts.resurrect(player);
-						    ghosts.removeItems(player);
-							player.setHealth(plugin.getConfig().getInt("HEALTH"));
+						    ghosts.selfResPunish(player);
+						}
+						
+						else if(shrine != null && (player.hasPermission("dar.shrine." + shrine) || player.hasPermission("dar.shrine.*") || player.hasPermission("dar.admin") || player.isOp())) {
+							ghosts.resurrect(player);
+						    ghosts.selfResPunish(player);
 						}
 					}
 				}
 			// corpse spawning
 				else {
 					String shrine = shrines.getClose(player.getLocation());
-					if (shrine != null) ghosts.resurrect(player);
+					
+					if (shrine != null && !plugin.getConfig().getBoolean("HARDCORE") && (player.hasPermission("dar.shrine." + shrine) || !player.hasPermission("dar.shrine.*") || !player.hasPermission("dar.admin") || !player.isOp()) && plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime() >= 12000 && player.getWorld().getTime() <= 24000)
+						plugin.message.sendChat(player, Messages.mustBeDay);
+
+					if (shrine != null && !plugin.getConfig().getBoolean("HARDCORE") && (player.hasPermission("dar.shrine." + shrine) || !player.hasPermission("dar.shrine.*") || !player.hasPermission("dar.admin") || !player.isOp()) && plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime() >= 0 && player.getWorld().getTime() <= 12000)
+						ghosts.resurrect(player);
+					
+					else if (shrine != null && !plugin.getConfig().getBoolean("HARDCORE") && (player.hasPermission("dar.shrine." + shrine) || !player.hasPermission("dar.shrine.*") || !player.hasPermission("dar.admin") || !player.isOp()))
+						ghosts.resurrect(player);
+					
 					else {
-						if (event.getClickedBlock().getLocation().distance(locDeath) < 3 && !plugin.getConfig().getBoolean("SHRINE_ONLY") && plugin.getConfig().getBoolean("GRAVE_SIGNS")) {							
+						if (event.getClickedBlock().getLocation().distance(locDeath) < 3 && !plugin.getConfig().getBoolean("SHRINE_ONLY") && plugin.getConfig().getBoolean("GRAVE_SIGNS") && !plugin.getConfig().getBoolean("HARDCORE") && plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime() >= 12000 && player.getWorld().getTime() <= 24000)
+							plugin.message.sendChat(player, Messages.mustBeDay);
+						
+						if (event.getClickedBlock().getLocation().distance(locDeath) < 3 && !plugin.getConfig().getBoolean("SHRINE_ONLY") && plugin.getConfig().getBoolean("GRAVE_SIGNS") && !plugin.getConfig().getBoolean("HARDCORE") && plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime() >= 0 && player.getWorld().getTime() <= 12000) {							
 							ghosts.resurrect(player);
-					        ghosts.removeItems(player);
-							player.setHealth(plugin.getConfig().getInt("HEALTH"));
+					        ghosts.selfResPunish(player);
+						}
+						else if (event.getClickedBlock().getLocation().distance(locDeath) < 3 && !plugin.getConfig().getBoolean("SHRINE_ONLY") && plugin.getConfig().getBoolean("GRAVE_SIGNS") && !plugin.getConfig().getBoolean("HARDCORE")) {							
+							ghosts.resurrect(player);
+					        ghosts.selfResPunish(player);
 						}
 					}
 				}
@@ -307,7 +529,6 @@ public class PListener implements Listener {
 			}
 			
 			// normal interactions		
-			
 			if (plugin.getConfig().getBoolean("BLOCK_GHOST_INTERACTION")) {
 				event.setCancelled(true);
 				return;
@@ -328,7 +549,7 @@ public class PListener implements Listener {
 	// *** shrine is clicked ***
 		if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
 			String shrine = shrines.getClose(player.getLocation());
-			if (shrine != null) {
+			if (shrine != null && (player.hasPermission("dar.shrine." + shrine) || !player.hasPermission("dar.shrine.*") || !player.hasPermission("dar.admin") || !player.isOp())) {
 			// check if soul can be bound at this shrine
 				if (!shrines.checkBinding(shrine, player.getWorld().getName())) {
 					plugin.message.send(player, Messages.cantBindSoul);
@@ -367,8 +588,8 @@ public class PListener implements Listener {
 		
 		//grave robbery
 		//Checks if grave robbery is enabled
-		if (!(plugin.getConfig().getDouble("GRAVEROBBERY") == 0.0))
-		{
+		if (!(plugin.getConfig().getDouble("GRAVEROBBERY") == 0.0) && plugin.getConfig().getBoolean("GRAVE_SIGNS") && (!player.hasPermission("dar.robb") || !player.hasPermission("dar.admin") || !player.isOp()))
+		{			
 			Player[] all = Bukkit.getServer().getOnlinePlayers();
 			//for each player which is online is checked if he is a ghost
 			for(Player robbed:all)
@@ -380,9 +601,11 @@ public class PListener implements Listener {
 				Location ownGrave = ghosts.getLocation(robber);
 				String worldName = robbedGrave.getWorld().getName();
 				double percent = plugin.getConfig().getDouble("GRAVEROBBERY");
-				
+								
+			for (String listedItem:plugin.getConfig().getStringList("ROBBERY_ITEMS"))
+			{				
 				//if he's a ghost it's checked if his grave is right clicked
-				if((!ghosts.isGhost(robber)) && ghosts.isGhost(robbed) && event.getClickedBlock().getLocation().distance(robbedGrave) == 0 && !(event.getClickedBlock().getLocation().distance(ownGrave) == 0))
+				if((!ghosts.isGhost(robber)) && ghosts.isGhost(robbed) && event.getClickedBlock().getLocation().distance(robbedGrave) == 0 && !(event.getClickedBlock().getLocation().distance(ownGrave) == 0) && robber.getItemInHand().getType() == getMaterial(listedItem.toUpperCase()))
 				{
 					if(!ghosts.getCustomConfig().getBoolean("players."+robbedName +"."+ worldName +".graveRobbed"))
 					{
@@ -396,18 +619,16 @@ public class PListener implements Listener {
 						DAR.econ.withdrawPlayer(robbedName, amount);
 						DAR.econ.depositPlayer(robberName, amount);
 					
-						//plugin.message.sendRobber(robbed, robber, Messages.robbedYou, amount);
-						//plugin.message.sendRobbed(robbed, robber, Messages.youRobbed, amount);
-					
-						robber.sendMessage("Du hast geraubt: "+ amount);
-						robbed.sendMessage("Du wurdest beraubt: "+ amount);
-					
+						plugin.message.sendRobber(robbed, robber, Messages.youRobbed, amount);
+						plugin.message.sendRobbed(robbed, robber, Messages.robbedYou, amount);
+						
 						ghosts.getCustomConfig().set("players."+robbedName +"."+ worldName +".graveRobbed", true);
 						ghosts.saveCustomConfig();
 					}
 					else
 						plugin.message.send(robber, Messages.alreadyRobbed);
 				}
+			}
 			}			
 		}
 	}
@@ -445,5 +666,46 @@ public class PListener implements Listener {
 			}
 
 		}
+	}
+	
+	@EventHandler(ignoreCancelled = true)
+	public void onPlayerQuit(PlayerQuitEvent event)
+	{
+		Player player = event.getPlayer();
+		String playerName = player.getName();
+		String worldName = player.getWorld().getName();
+		String l1 = plugin.getConfig().getString("GRAVE_TEXT");
+		if(ghosts.isGhost(player) && plugin.getConfig().getBoolean("GRAVE_SIGNS"))
+		{
+			Block block = ghosts.getLocation(player).getBlock();
+			ghosts.getCustomConfig().set("players."+ playerName +"."+ worldName +".offline", true);
+			graves.removeSign(block, playerName, worldName);
+			graves.placeSign(block, l1, playerName);
+		}
+		
+	}
+	
+	//gets the id or the name of the item from config and returns it as Material
+	public Material getMaterial(String id)
+	{
+		Material get = Material.getMaterial(id);
+		if(get != null) return get;
+	try
+	{
+		get = Material.getMaterial(Integer.valueOf(id));
+	}
+	catch(NumberFormatException e)
+	{
+	}
+	   return get;
+	}
+	
+	public int checkTime(long startTime)
+	{
+		int timer = plugin.getConfig().getInt("TIMER");	
+		long currentTime = System.currentTimeMillis();
+		long diff = (currentTime - startTime)/60000;
+		int time = (int) (timer-diff);
+		return time;
 	}
 }

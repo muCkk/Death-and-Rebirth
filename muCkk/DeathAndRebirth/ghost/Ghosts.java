@@ -29,6 +29,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.herocraftonline.heroes.Heroes;
+
+
 public class Ghosts {
 
 	private static final Logger log = Logger.getLogger("Minecraft");
@@ -43,8 +46,9 @@ public class Ghosts {
 	
 	private FileConfiguration customConfig = null;
 	private File ghostsFile;
+//	private Heroes heroes;
 	
-	public Ghosts(DAR plugin, String dir, Graves graves, Shrines shrines) {
+	public Ghosts(DAR plugin, String dir, Graves graves, Shrines shrines, Heroes heroes) {
 		this.plugin = plugin;
 		this.dir = dir+"/data";
 		this.ghostsFile = new File(this.dir+"/ghosts");
@@ -53,6 +57,7 @@ public class Ghosts {
 		this.isRessing = new HashMap<String, Boolean>();
 		this.dardrops = new Drops(plugin, this.dir);
 		this.shrines = shrines;
+//		this.heroes = heroes;
 	}
 	
 	public void setPListener(PListener plistener) {
@@ -233,7 +238,7 @@ public class Ghosts {
 	public void resurrect(final Player player) {
 		String pname = player.getName();
 		String world = player.getWorld().getName();
-		
+				
 		player.setCompassTarget(player.getWorld().getSpawnLocation());
 		
 	// check if lightning is enabled
@@ -356,14 +361,35 @@ public class Ghosts {
 		selfResPunish(player);
 	}
 	
-	private void selfResPunish(Player player) {
+	public void selfResPunish(Player player) {
 		// health
-		int percent = plugin.getConfig().getInt("HELATH");
-		int health = (player.getHealth()/100)*percent;
-		player.setHealth(health);
-		
+		int percent = plugin.getConfig().getInt("HEALTH");
+		if(percent > 0 && percent < 100)
+		{
+			/*if(plugin.getConfig().getBoolean("HEROES_ENABLED"))
+			{				
+				double pHealth = (double) heroes.getCharacterManager().getMaxHealth(player);
+			    pHealth = (pHealth/100)*percent;
+			    int health = (int) pHealth;
+			    
+			    if(health <= 1)
+			    	health = 1;
+				EntityRegainHealthEvent event = new EntityRegainHealthEvent(player, health, null);
+				player.getServer().getPluginManager().callEvent(event);
+			}
+			else {*/				
+				double pHealth = (double) player.getMaxHealth();
+			    pHealth = (pHealth/100)*percent;
+			    int health = (int) pHealth;
+	
+			    if(health <= 1)
+			    	health = 1;	
+				player.setHealth(health);
+//			}
+		}
+
 		//drops
-        dardrops.selfResPunish(player); //selfres
+        dardrops.selfResPunish(player);
 		
 		//economy
 		double money = plugin.getConfig().getDouble("ECONOMY");
@@ -398,20 +424,20 @@ public class Ghosts {
 			plugin.message.send(player, Messages.tooFarAway);
 			return;
 		}
-		final int itemID = plugin.getConfig().getInt("ITEM_ID");
+		final Material item = getMaterial(plugin.getConfig().getString("RES_ITEM").toUpperCase());
 		final int amount = plugin.getConfig().getInt("AMOUNT");
 	// check for items
 		if (plugin.getConfig().getBoolean("NEED_ITEM")) {	
-			ItemStack costStack = new ItemStack(itemID);
+			ItemStack costStack = new ItemStack(item);
 			costStack.setAmount(amount);
 			
 			if(!CheckItems(player, costStack)) {
-				plugin.message.sendChat(player, Messages.notEnoughItems, " "+amount +" "+Material.getMaterial(itemID).name());
+				plugin.message.sendChat(player, Messages.notEnoughItems, " "+amount +" "+item.name());
 				return;
 			}
 			
 			if(!ConsumeItems(player, costStack)) {
-				plugin.message.sendChat(player, Messages.notEnoughItems, " "+amount +" "+Material.getMaterial(itemID).name());
+				plugin.message.sendChat(player, Messages.notEnoughItems, " "+amount +" "+item.name());
 				return;
 			}
 		}
@@ -420,7 +446,7 @@ public class Ghosts {
 		new Thread() {
 			public void run() {
 				int counter = 0;
-				int time = plugin.getConfig().getInt("TIME");
+				int time = plugin.getConfig().getInt("RESURRECT_TIME");
 				int x = player.getLocation().getBlockX(),
 					z = player.getLocation().getBlockZ();
 				isRessing.put(name, true);
@@ -442,17 +468,11 @@ public class Ghosts {
 					counter++;
 				}
 				isRessing.remove(name);
-				if(plugin.getConfig().getBoolean("NEED_ITEM")) {
-					ItemStack costStack = new ItemStack(itemID);
-					costStack.setAmount(amount);
-					if(!ConsumeItems(player, costStack)) {
-						plugin.message.sendChat(player, Messages.notEnoughItems, " "+amount +" "+Material.getMaterial(itemID).name());
-						counter = time-1;
-					}
-				}
-				if(counter == time) {					
+				if(counter >= time) {					
 					resurrect(target);
 					plugin.message.send(player, Messages.resurrected, " "+target.getName());
+					plugin.message.sendResurrected(target, player, Messages.resurrectedBy);
+					plugin.message.sendResurrecter(player, target, Messages.resurrectedGhost);
 					target.teleport(getLocation(target));
 				// spout related
 					if (plugin.getConfig().getBoolean("SPOUT_ENABLED")) {
@@ -653,5 +673,20 @@ public class Ghosts {
 	        }
 	    }
 	    return true;
+	}
+	
+	//gets the id or the name of the item from config and returns it as Material
+	public Material getMaterial(String id)
+	{
+		Material get = Material.getMaterial(id);
+		if(get != null) return get;
+	try
+	{
+		get = Material.getMaterial(Integer.valueOf(id));
+	}
+	catch(NumberFormatException e)
+	{
+	}
+	   return get;
 	}
 }

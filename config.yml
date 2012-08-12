@@ -29,10 +29,14 @@ DISABLED_COMMANDS:
 DROPPING: false
 PVP_DROP: true
 
-HEALTH: 10
+HEALTH: 30
 PERCENT: 15
 ECONOMY: 0
 GRAVEROBBERY: 0.0
+ROBBERY_ITEMS:
+- 256
+- 269
+- 273
 
 MCMMO: false
 XP: 0
@@ -49,12 +53,6 @@ SKILLS:
     UNARMED: false
     WOODCUTTING: false
 
-NEED_ITEM: false
-ITEM_ID: 288
-AMOUNT: 1
-DISTANCE: 10
-TIME: 10
-
 CORPSE_SPAWNING: false
 
 COMPASS: true
@@ -70,7 +68,7 @@ SHRINE_PROTECTION: true
 GHOST_SOUND_EFFECTS: true
 DEATH_SOUND: http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/death.wav
 REB_SOUND: http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/res.wav
-RES_SOUND: http://your_res_sound.com
+RES_SOUND: http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/res.wav
 
 GHOST_SKIN: http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/skins/ghost1.png
 GHOST_TEXTPACK: http://your_texturepack.com
@@ -82,6 +80,18 @@ GHOST_CLOUDS: 0;0;0
 
 GRAVE_TEXT: R.I.P
 
+HARDCORE: false
+TIMER: 0
+OTHERS_RESURRECT: true
+OTHERS_PAYMENT: 0
+NEED_ITEM: false
+RES_ITEM: 322
+AMOUNT: 1
+DISTANCE: 3
+RESURRECT_TIME: 10
+ONLY_DAY: false
+
 SPOUT_ENABLED: false
 CITIZENS_ENABLED: false
 MOBARENA_ENABLED: false
+HEROES_ENABLED: false

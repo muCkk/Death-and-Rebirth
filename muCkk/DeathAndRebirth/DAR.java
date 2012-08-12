@@ -29,8 +29,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import com.garbagemule.MobArena.MobArena;
 import com.garbagemule.MobArena.MobArenaHandler;
 import com.garbagemule.MobArena.framework.ArenaMaster;
-
-
+import com.herocraftonline.heroes.Heroes;
 
 public class DAR extends JavaPlugin {
 
@@ -73,20 +72,20 @@ public class DAR extends JavaPlugin {
 		mobArena = (MobArena)Bukkit.getPluginManager().getPlugin("MobArena");
         if(mobArena != null && mobArena.isEnabled())
             setupMobArena(mobArena);
-		
+        
+        Heroes heroes =  (Heroes) this.getServer().getPluginManager().getPlugin("Heroes");
+        		
 	// Config
 		getConfig().options().copyDefaults(true);
 		saveConfig();
-		
-
-		
+				
 	// DAR Classes
 		darSpout = new DARSpout(this, dataDir);
 		message = new Messenger(this);
 
 		shrines = new Shrines(this, dataDir);
 		graves = new Graves(this, dataDir);
-		ghosts = new Ghosts(this, dir, graves, shrines);
+		ghosts = new Ghosts(this, dir, graves, shrines, heroes);
 		darSpout.setGhosts(ghosts);
 		
 	//Messages file
@@ -95,7 +94,7 @@ public class DAR extends JavaPlugin {
 
 	// Listener
 		pm = getServer().getPluginManager();
-		plistener = new PListener(this, ghosts, shrines);
+		plistener = new PListener(this, ghosts, shrines, graves);
 		pm.registerEvents(plistener, this);
 		ghosts.setPListener(plistener);
 		
@@ -117,6 +116,7 @@ public class DAR extends JavaPlugin {
 		this.getLogger().warning("If config-/messages.yml wasn't created");
 		this.getLogger().warning("well, download defaults at:");
 		this.getLogger().warning("http://dev.bukkit.org/server-mods/death-and-rebirth/");
+		
 	}
 	
 	private Boolean setupEconomy()
@@ -125,10 +125,9 @@ public class DAR extends JavaPlugin {
         if (economyProvider != null) {
             econ = economyProvider.getProvider();
         }
-
         return (econ != null);
     }
-	
+		
     public static void setupMobArena(MobArena instance)
     {
         maHandler = new MobArenaHandler();
@@ -180,14 +179,9 @@ public class DAR extends JavaPlugin {
 		 * rebirth | reb
 		 * resurrects a nearby player  
 		 */
-		if(cmd.getName().equalsIgnoreCase("rebirth") || cmd.getName().equalsIgnoreCase("reb")) {
+		if(cmd.getName().equalsIgnoreCase("rebirth") || cmd.getName().equalsIgnoreCase("reb") && sender instanceof Player && (player.hasPermission("dar.reb") || player.hasPermission("dar.admin") || player.isOp())) {
 			// resurrect target
 			if (args.length > 0) {
-				// permission check
-				if (!player.hasPermission("dar.reb") && !player.isOp()) {
-					message.send(player, Messages.noPermission);
-					return true;
-				 }
 				Player target = sender.getServer().getPlayer(args[0]);
 				if(ghosts.isGhost(target)) {
 					if(player.getName().equalsIgnoreCase(target.getName())) {
@@ -230,12 +224,7 @@ public class DAR extends JavaPlugin {
 		/**
 		 * shrine <add, rm, list, pos1, pos2, select, binding> <name>
 		 */
-		if (cmd.getName().equalsIgnoreCase("shrine")) {
-		// check permission
-			if (!player.hasPermission("dar.admin") && !player.isOp()) {
-				message.send(player, Messages.noPermission);
-				return true;
-			 }
+		if (cmd.getName().equalsIgnoreCase("shrine") && sender instanceof Player && (player.hasPermission("dar.admin") || player.isOp())) {
 			
 			String arg = "";
 			String name = "";
@@ -244,8 +233,7 @@ public class DAR extends JavaPlugin {
 			}catch (ArrayIndexOutOfBoundsException e) {
 				return false;
 			}
-			
-			
+				
 		// selecting a shrine area
 			if (arg.equalsIgnoreCase("pos1") || arg.equals("pos2")) {
 				Block tb = player.getTargetBlock(null, 100);
@@ -368,15 +356,7 @@ public class DAR extends JavaPlugin {
 		 * dar <reb, reload, enable, disable, world, fly, shrinemode, ghostinteraction, ghostchat, dropping, versionCheck, lightningD, lightningD, invis> <arg>
 		 * Errects, removes and lists shrines. Admins can resurrect any player.
 		 */
-		if(cmd.getName().equalsIgnoreCase("dar")) {
-			
-		// check permission
-			if (sender instanceof Player) {
-				if (!player.hasPermission("dar.admin") && !player.isOp()) {
-					message.send(player, Messages.noPermission);
-					return true;
-				 }
-			}
+		if(cmd.getName().equalsIgnoreCase("dar") && sender instanceof Player && (player.hasPermission("dar.admin") || player.isOp())) {
 			
 			String arg = "";
 			String name = "";
@@ -528,12 +508,27 @@ public class DAR extends JavaPlugin {
 				else message.sendChat(player, Messages.compassToggle, " enabled");
 				return true;
 			}
-/*			if (arg.equalsIgnoreCase("others")) {
-				if(toggle("OTHERS_IGNORE_SHRINE_ONLY")) message.sendChat(player, Messages.othersToggle, " disabled");
+			if (arg.equalsIgnoreCase("others")) {
+				if(toggle("OTHERS_RESURRECT")) message.sendChat(player, Messages.othersToggle, " disabled");
 				else message.sendChat(player, Messages.othersToggle, " enabled");
 				return true;
 			}
-			*/
+			if (arg.equalsIgnoreCase("hardcore")) {
+				if(toggle("HARDCORE")) message.sendChat(player, Messages.hardcoreToggle, " disabled");
+				else message.sendChat(player, Messages.hardcoreToggle, " enabled");
+				return true;
+			}
+			if (arg.equalsIgnoreCase("needitem")) {
+				if(toggle("NEED_ITEM")) message.sendChat(player, Messages.needItemToggle, " disabled");
+				else message.sendChat(player, Messages.needItemToggle, " enabled");
+				return true;
+			}
+			if (arg.equalsIgnoreCase("onlyday")) {
+				if(toggle("ONLY_DAY")) message.sendChat(player, Messages.onlyDayToggle, " disabled");
+				else message.sendChat(player, Messages.onlyDayToggle, " enabled");
+				return true;
+			}
+			
 		}
 		return false;		
 	}

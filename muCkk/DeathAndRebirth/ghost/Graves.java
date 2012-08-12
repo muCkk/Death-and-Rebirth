@@ -129,7 +129,7 @@ public class Graves {
 		saveCustomConfig();
 	}
 	
-	private void placeSign(Block block, String l1, String name) {
+	public void placeSign(Block block, String l1, String name) {
 		int id = block.getTypeId();
 		getCustomConfig().set("graves."+block.getWorld().getName()+"."+name+".blockid", id);
 		if (id == 43 || id == 44 || id == 35) {
@@ -143,10 +143,14 @@ public class Graves {
 		Sign sign = (Sign) block.getState();
 		sign.setLine(1, l1);
 		sign.setLine(2, name);
+		if(ghosts.getCustomConfig().getBoolean("players."+name +"."+ block.getWorld().getName() +".offline"))
+		{
+			sign.setLine(3, "(offline)");
+		}
 		sign.update(true);
 	}
 	
-	private void removeSign(Block block, String name, String worldName) {
+	public void removeSign(Block block, String name, String worldName) {
 		int id = getCustomConfig().getInt("graves."+worldName+"."+name+".blockid", 0);
 		int x =  getCustomConfig().getInt("graves."+worldName+"."+name+".x", block.getX());
 		int y =  getCustomConfig().getInt("graves."+worldName+"."+name+".y", block.getY());

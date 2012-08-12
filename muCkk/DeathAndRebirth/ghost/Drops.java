@@ -195,7 +195,6 @@ public class Drops {
 	}
 	catch(Exception e)
 	{
-		System.out.println("Could not remove items");
 	}
     }
 	

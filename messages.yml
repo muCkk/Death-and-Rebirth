@@ -1,6 +1,5 @@
 # Normal Messages, for users.
 # !IMPORTANT! the messages can be only 26 chars long
-
 soulNotBound:            Soul not bound
 tooFarAway:              You are too far away
 cantDoThat:              You can't do that
@@ -20,8 +19,8 @@ shrineArea:              Entering a shrine area
 lostMoney:               You lost
 skillDropped:            '%skill% skill dropped'
 disabledCommand:         Command disabled
-youRobbed:               '%robber% robbed %amount%'
-robbedYou:               'You robbed %amount%'
+youRobbed:               '%robber% robbed %amnt%'
+robbedYou:               'You robbed %amnt%'
 graveProtected:          The grave is protected
 shrineProtectedDestroy:  Shrines are protected
 shrineProtectedBuild:    Can't build on shrines

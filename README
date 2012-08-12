@@ -7,20 +7,20 @@ http://dev.bukkit.org/server-mods/death-and-rebirth/
 
 Dependencies:
 --------------------
-CraftBukkit #2034
+CraftBukkit 1.3.1-R1.0
 http://bukkit.org/
 
-Vault 1.2.12
+Vault 1.2.17
 http://dev.bukkit.org/server-mods/vault/
 
-Citizens v1.1.6 #37
+Citizens v2.0 #196
 http://dev.bukkit.org/server-mods/citizens/
 
-mcMMO v1.3.02 
+mcMMO v1.3.10
 http://dev.bukkit.org/server-mods/mcmmo/
 
-Spout API v397
+SpoutPlugin #1269
 http://dev.bukkit.org/server-mods/spout/
 
-MobArena v0.94.4.65
+MobArena v0.94.4.79
 http://dev.bukkit.org/server-mods/mobarena/

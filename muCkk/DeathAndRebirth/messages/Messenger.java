@@ -73,28 +73,50 @@ public class Messenger {
 //	********************************************************************************************	
 	public void send(Player player, Messages havetostandonshrine) {
 		String ownMessage = getCustomConfig().getString(havetostandonshrine.toString(), havetostandonshrine.msg());//yml.getString(msg.toString());
-		if (checkSpout(player) && ownMessage.length() <= 26) spout(player, ownMessage);
+		if (checkSpout(player)) spout(player, ownMessage);
 		else					chat(player, ownMessage);
 	}
 	
 	public void sendSkill(Player player, Messages msg, String skillType) {
 		String ownMessage = getCustomConfig().getString(msg.toString(), msg.msg()); //yml.getString(msg.msg());
-		if (checkSpout(player) && ownMessage.length() <= 26) spout(player,ownMessage.replace("%skill%", skillType));
+		if (checkSpout(player)) spout(player,ownMessage.replace("%skill%", skillType));
 		else					chat(player, ownMessage.replace("%skill%", skillType));
 	}
 	
 	public void sendRobbed(Player robbed, Player robber, Messages msg, double amount) {
 		String robberName = robber.getName();
 		String ownMessage = getCustomConfig().getString(msg.toString(), msg.msg()); //yml.getString(msg.msg());
-		if (checkSpout(robbed) && ownMessage.length() <= 26) spout(robbed,ownMessage.replace("%robber%", robberName).replace("%amount%", DAR.econ.format(amount)));
-		else					chat(robbed, ownMessage.replace("%robber%", robberName).replace("%amount%", DAR.econ.format(amount)));
+		chat(robbed, ownMessage.replace("%robber", robberName).replace("%amnt", DAR.econ.format(amount)));
 	}
 	
 	public void sendRobber(Player robbed, Player robber, Messages msg, double amount) {
 		String robbedName = robbed.getName();
 		String ownMessage = getCustomConfig().getString(msg.toString(), msg.msg()); //yml.getString(msg.msg());
-		if (checkSpout(robbed) && ownMessage.length() <= 26) spout(robbed,ownMessage.replace("%robbed%", robbedName).replace("%amount%", DAR.econ.format(amount)));
-		else					chat(robbed, ownMessage.replace("%robbed%", robbedName).replace("%amount%", DAR.econ.format(amount)));
+		if (checkSpout(robbed)) spout(robber,ownMessage.replace("%robbed", robbedName).replace("%amnt", DAR.econ.format(amount)));
+		else					chat(robber, ownMessage.replace("%robbed", robbedName).replace("%amnt", DAR.econ.format(amount)));
+	}
+	
+	public void sendResurrected(Player resed, Player reser, Messages msg) {
+		String resedName = resed.getName();
+		String reserName = reser.getName();
+		String ownMessage = getCustomConfig().getString(msg.toString(), msg.msg()); //yml.getString(msg.msg());
+		if (checkSpout(resed)) spout(resed,ownMessage.replace("%resed", resedName).replace("%reser", reserName));
+		else                                                 chat(resed,ownMessage.replace("%resed", resedName).replace("%reser", reserName));
+	}
+	
+	public void sendResurrecter(Player reser, Player resed, Messages msg) {
+		String resedName = resed.getName();
+		String reserName = reser.getName();
+		String ownMessage = getCustomConfig().getString(msg.toString(), msg.msg()); //yml.getString(msg.msg());
+		if (checkSpout(resed)) spout(reser,ownMessage.replace("%resed", resedName).replace("%reser", reserName));
+		else                                                 chat(reser,ownMessage.replace("%resed", resedName).replace("%reser", reserName));
+	}
+	
+	public void sendTime(Player player, Messages msg, int time) {
+		String stringTime = ""+time;
+		String ownMessage = getCustomConfig().getString(msg.toString(), msg.msg()); //yml.getString(msg.msg());
+		if (checkSpout(player)) spout(player,ownMessage.replace("%time%", stringTime));
+		else					chat(player,ownMessage.replace("%time%", stringTime));
 	}
 	
 	public void send(Player player, Messages msg, String arg) {
@@ -118,7 +140,9 @@ public class Messenger {
 //	************************************************************************************
 	private void spout(Player player, String msg) {
 		SpoutPlayer sp = (SpoutPlayer) player;
+		if(msg.length() < 26)
 		sp.sendNotification(title, msg, mat);
+		else chat(player, msg);
 	  }
 	
 	public void chat(Player player, String msg) {
