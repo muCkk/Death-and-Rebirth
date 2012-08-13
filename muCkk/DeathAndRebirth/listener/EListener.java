@@ -50,26 +50,25 @@ public class EListener implements Listener {
 		if(!(entity instanceof Player)) return;
 		Player player = (Player) entity;
 		
+		// check for ignore	
+		if (plugin.hasPermIgnore(player)) {
+			return;
+		 }
+		
 		//Checks if player is in a MobArena
-    	if(plugin.getConfig().getBoolean("MOBARENA_ENABLED") && DAR.getAM().getArenaWithPlayer(player) != null) return;
-
-		//Defines Location of death
-		Location loc = player.getLocation();
-		Block block = player.getWorld().getBlockAt(loc);	
-		ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".location.x", block.getX());
-		ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".location.y", block.getY());
-		ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".location.z", block.getZ());
-		
-		if(plugin.getConfig().getBoolean("HARDCORE"))
-		{
-			long startTime = System.currentTimeMillis();
-			ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".starttime", startTime);
+    	if(plugin.getConfig().getBoolean("MOBARENA_ENABLED") && DAR.getAM().getArenaWithPlayer(player) != null) return;	
+    	
+    	// check if the world is enabled
+		if(!plugin.getConfig().getBoolean(entity.getWorld().getName())) {
+			return;
 		}
-				
-		// other plugins which avoid death - for example mob arena
-		if (player.getHealth() > 0) return;
 		
-	// check for death in the void 
+		// check for citizen NPCs
+		if (plugin.getConfig().getBoolean("CITIZENS_ENABLED")) {
+			if (checkForNPC(entity)) return;
+		}
+		
+		// check for death in the void 
 		String damageCause = "";
 		try {
 			damageCause = entity.getLastDamageCause().getCause().toString();
@@ -78,18 +77,20 @@ public class EListener implements Listener {
 			}
 		if (plugin.getConfig().getBoolean("VOID_DEATH") && damageCause.equalsIgnoreCase("VOID")) return;
 		
-	// check if the world is enabled
-		if(!plugin.getConfig().getBoolean(entity.getWorld().getName())) {
-			return;
-		}
-	// check for ignore	
-		if (player.hasPermission("dar.ignore")) {
-			return;
-		 }
+		// other plugins which avoid death
+		if (player.getHealth() > 0) return;
+
+		//Defines Location of death
+		Location loc = player.getLocation();
+		Block block = player.getWorld().getBlockAt(loc);	
+		ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".location.x", block.getX());
+		ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".location.y", block.getY());
+		ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".location.z", block.getZ());
 		
-	// check for citizen NPCs
-		if (plugin.getConfig().getBoolean("CITIZENS_ENABLED")) {
-			if (checkForNPC(entity)) return;
+		if(plugin.getConfig().getBoolean("HARDCORE") && plugin.getConfig().getInt("TIMER") > 0)
+		{
+			long startTime = System.currentTimeMillis();
+			ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".starttime", startTime);
 		}
 		
 	// checking items
@@ -123,7 +124,7 @@ public class EListener implements Listener {
 		}
 		
 		// dropping OFF   OR    dar.nodrop 
-		if (!plugin.getConfig().getBoolean("DROPPING") || player.hasPermission("dar.nodrop")) {
+		if (!plugin.getConfig().getBoolean("DROPPING") || plugin.hasPermNoDrop(player)) {
 			drops.clear();
 			ghosts.died(player, inv, loc, false);
 			return;

@@ -1,6 +1,6 @@
 name: Death and Rebirth
 main: muCkk.DeathAndRebirth.DAR
-version: 3.0
+version: 3.0.1
 author: [muCkk, G4meM0ment]
 
 depend: [Vault]

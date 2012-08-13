@@ -180,7 +180,7 @@ public class Ghosts {
 		// moved
 		
 	// drop-management
-		if (!plugin.getConfig().getBoolean("DROPPING") || player.hasPermission("dar.nodrop") || pvp_death) {
+		if (!plugin.getConfig().getBoolean("DROPPING") || plugin.hasPermNoDrop(player) || pvp_death) {
 			dardrops.put(player, inv);  
 		}
 		else {
@@ -275,7 +275,7 @@ public class Ghosts {
 					e.printStackTrace();
 				}
 				
-				if (!plugin.getConfig().getBoolean("DROPPING") || player.hasPermission("dar.nodrop") || plugin.getConfig().getBoolean("PVP_DROP")) dardrops.givePlayerInv(player);
+				if (!plugin.getConfig().getBoolean("DROPPING") || plugin.hasPermNoDrop(player) || plugin.getConfig().getBoolean("PVP_DROP")) dardrops.givePlayerInv(player);
 			}
 		}.start();
 		
@@ -673,6 +673,34 @@ public class Ghosts {
 	        }
 	    }
 	    return true;
+	}
+	
+	public void punishResurrecter(Player player) {
+		if(plugin.getConfig().getInt("OTHERS_PAYMENT") != 0)
+		{
+			DAR.econ.withdrawPlayer(player.getName(), plugin.getConfig().getInt("OTHERS_PAYMENT"));
+		}
+		// health
+		int percent = plugin.getConfig().getInt("OTHERS_HEALTH");
+		if(percent > 0)
+		{
+			/*if(plugin.getConfig().getBoolean("HEROES_ENABLED"))
+			{				
+				double pHealth = (double) heroes.getCharacterManager().getMaxHealth(player);
+			    pHealth = (pHealth/100)*percent;
+			    int health = heroes.getCharacterManager().getHealth(player) - (int) pHealth;
+			    
+				EntityRegainHealthEvent event = new EntityRegainHealthEvent(player, health, null);
+				player.getServer().getPluginManager().callEvent(event);
+			}
+			else {*/				
+				double pHealth = (double) player.getMaxHealth();
+			    pHealth = (pHealth/100)*percent;
+			    int health = player.getHealth() - (int) pHealth;
+			    
+				player.setHealth(health);
+//			}
+		}
 	}
 	
 	//gets the id or the name of the item from config and returns it as Material

@@ -1,3 +1,12 @@
+Version 3.0.1
+	added config option 'PERMISSIONS' to define if permissions should be used (if false every player will have every permissions except of stuff which needs 'dar.admin' for this he needs to be OP)
+	added ability to sacrifice health to resurrect players
+	changed OPs only works like 'dar.admin' if permissions in config are disabled
+	fixed hardcore mode not working at all (was a permission problem)
+	fixed resurrection not working (was a permission problem)
+	fixed 'ADMIN_PERMS'-option should work now
+	fixed for devs: cleaned up code
+
 Version 3.0
 	updated for CB 1.3.1-R1.0
 	updated all APIs

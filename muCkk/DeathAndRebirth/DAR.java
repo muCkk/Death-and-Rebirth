@@ -67,6 +67,13 @@ public class DAR extends JavaPlugin {
 			// TODO: handle exception
 		}
 	}
+	
+	/*
+	 * TODO create checkPerms methods for all permissions
+	 * and config option which checks if permissions should be used
+	 * 
+	 * 
+	 */
 
 	public void onEnable() {
 		setupEconomy();
@@ -96,8 +103,6 @@ public class DAR extends JavaPlugin {
 		message.saveCustomConfig();
 		blacklist.reloadCustomConfig();
 		blacklist.saveCustomConfig();
-		ghosts.reloadCustomConfig();
-		ghosts.saveCustomConfig();
 		shrines.reloadCustomConfig();
 		shrines.saveCustomConfig();
 
@@ -190,7 +195,7 @@ public class DAR extends JavaPlugin {
 		 * rebirth | reb
 		 * resurrects a nearby player  
 		 */
-		if(cmd.getName().equalsIgnoreCase("rebirth") || cmd.getName().equalsIgnoreCase("reb") && sender instanceof Player && (player.hasPermission("dar.reb") || player.hasPermission("dar.admin") || player.isOp())) {
+		if(cmd.getName().equalsIgnoreCase("rebirth") || cmd.getName().equalsIgnoreCase("reb") && sender instanceof Player && hasPermReb(player)) {
 			// resurrect target
 			if (args.length > 0) {
 				Player target = sender.getServer().getPlayer(args[0]);
@@ -235,7 +240,7 @@ public class DAR extends JavaPlugin {
 		/**
 		 * shrine <add, rm, list, pos1, pos2, select, binding> <name>
 		 */
-		if (cmd.getName().equalsIgnoreCase("shrine") && sender instanceof Player && (player.hasPermission("dar.admin") || player.isOp())) {
+		if (cmd.getName().equalsIgnoreCase("shrine") && sender instanceof Player && (hasPermAdmin(player))) {
 			
 			String arg = "";
 			String name = "";
@@ -394,7 +399,7 @@ public class DAR extends JavaPlugin {
 			}
 		}
 		
-		if(cmd.getName().equalsIgnoreCase("dar") && sender instanceof Player && (player.hasPermission("dar.admin") || player.isOp())) {
+		if(cmd.getName().equalsIgnoreCase("dar") && sender instanceof Player && (hasPermAdmin(player))) {
 			
 			String arg = "";
 			String name = "";
@@ -582,5 +587,85 @@ public class DAR extends JavaPlugin {
 			saveConfig();
 			return true;
 		}
+	}
+	
+	public boolean permsEnabled() {
+		if(this.getConfig().getBoolean("PERMISSIONS"))
+			return true;
+		else
+			return false;
+	}
+	
+	public boolean hasPermIgnore(Player player) {
+		if(permsEnabled())
+			if(player.hasPermission("dar.ignore"))
+				return true;
+			else
+				if(checkAdminPerms() && player.hasPermission("dar.admin"))
+					return true;
+				else
+					return false;
+		else
+			return true;
+	}
+	public boolean hasPermNoDrop(Player player) {
+		if(permsEnabled())
+			if(player.hasPermission("dar.nodrop"))
+				return true;
+			else
+				if(checkAdminPerms() && player.hasPermission("dar.admin"))
+					return true;
+				else	
+					return false;
+		else
+			return true;
+	}
+	public boolean hasPermAdmin(Player player) {
+		if(permsEnabled())
+			if(player.hasPermission("dar.admin"))
+				return true;
+			else
+				return false;
+		else
+			if(player.isOp())
+				return true;
+			else
+				return false;
+	}
+	public boolean hasPermReb(Player player) {
+		if(permsEnabled())
+			if(player.hasPermission("dar.reb") || player.hasPermission("dar.admin"))
+				return true;
+			else
+				return false;
+		else
+			return true;
+	}
+	public boolean hasPermRebOthers(Player player) {
+		if(permsEnabled())
+			if(player.hasPermission("dar.reb.others") || player.hasPermission("dar.admin"))
+				return true;
+			else
+				return false;
+		else
+			return true;
+	}
+	public boolean hasPermRobb(Player player) {
+		if(permsEnabled())
+			if(player.hasPermission("dar.robb") || player.hasPermission("dar.admin"))
+				return true;
+			else
+				return false;
+		else
+			return true;
+	}
+	public boolean hasPermShrine(Player player, String shrine) {
+		if(permsEnabled())
+			if(player.hasPermission("dar.shrine." + shrine) || player.hasPermission("dar.shrine.*") || player.hasPermission("dar.admin"))
+				return true;
+			else
+				return false;
+		else
+			return true;
 	}
 }
