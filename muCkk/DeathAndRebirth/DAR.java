@@ -195,7 +195,10 @@ public class DAR extends JavaPlugin {
 		 * rebirth | reb
 		 * resurrects a nearby player  
 		 */
-		if(cmd.getName().equalsIgnoreCase("rebirth") || cmd.getName().equalsIgnoreCase("reb") && sender instanceof Player && hasPermReb(player)) {
+		if(cmd.getName().equalsIgnoreCase("rebirth") || cmd.getName().equalsIgnoreCase("reb") && sender instanceof Player) {
+			
+			if(!hasPermReb(player)) return true;
+			
 			// resurrect target
 			if (args.length > 0) {
 				Player target = sender.getServer().getPlayer(args[0]);
@@ -240,7 +243,9 @@ public class DAR extends JavaPlugin {
 		/**
 		 * shrine <add, rm, list, pos1, pos2, select, binding> <name>
 		 */
-		if (cmd.getName().equalsIgnoreCase("shrine") && sender instanceof Player && (hasPermAdmin(player))) {
+		if (cmd.getName().equalsIgnoreCase("shrine") && sender instanceof Player) {
+			
+			if(!hasPermAdmin(player)) return true;
 			
 			String arg = "";
 			String name = "";
@@ -399,8 +404,10 @@ public class DAR extends JavaPlugin {
 			}
 		}
 		
-		if(cmd.getName().equalsIgnoreCase("dar") && sender instanceof Player && (hasPermAdmin(player))) {
+		if(cmd.getName().equalsIgnoreCase("dar") && sender instanceof Player) {
 			
+			if(!hasPermAdmin(player)) return true;
+				
 			String arg = "";
 			String name = "";
 			try {
@@ -409,13 +416,22 @@ public class DAR extends JavaPlugin {
 				return false;
 			}
 			
+
+			
 		// reloading all config files
 			if(arg.equalsIgnoreCase("reload")) {
 				reloadConfig();
+				saveConfig();
 				graves.reloadCustomConfig();
+				graves.saveCustomConfig();
 				ghosts.reloadCustomConfig();
+				ghosts.saveCustomConfig();
 				shrines.reloadCustomConfig();
+				shrines.saveCustomConfig();
 				message.reloadCustomConfig();
+				message.saveCustomConfig();
+				blacklist.reloadCustomConfig();
+				blacklist.saveCustomConfig();
 				message.sendChat(player, Messages.reloadComplete);
 				return true;
 			}
@@ -573,6 +589,9 @@ public class DAR extends JavaPlugin {
 			}
 			
 		}
+		
+		else {}
+		
 		return false;		
 	}
 	
@@ -603,10 +622,13 @@ public class DAR extends JavaPlugin {
 			else
 				if(checkAdminPerms() && player.hasPermission("dar.admin"))
 					return true;
-				else
+				else 
 					return false;
 		else
-			return true;
+			if(checkAdminPerms() && hasPermAdmin(player))
+				return true;
+			else 
+				return false;
 	}
 	public boolean hasPermNoDrop(Player player) {
 		if(permsEnabled())
@@ -615,17 +637,38 @@ public class DAR extends JavaPlugin {
 			else
 				if(checkAdminPerms() && player.hasPermission("dar.admin"))
 					return true;
-				else	
+				else
 					return false;
 		else
-			return true;
+			if(checkAdminPerms() && hasPermAdmin(player))
+					return true;
+			else
+				return false;
 	}
 	public boolean hasPermAdmin(Player player) {
 		if(permsEnabled())
 			if(player.hasPermission("dar.admin"))
 				return true;
+			else {
+				message.send(player, Messages.noPermission);
+				return false;
+			}
+
+		else
+			if(player.isOp())
+				return true;
+			else {
+				message.send(player, Messages.noPermission);
+				return false;
+			}
+	}
+	public boolean hasPermAdminNoMsg(Player player) {
+		if(permsEnabled())
+			if(player.hasPermission("dar.admin"))
+				return true;
 			else
 				return false;
+
 		else
 			if(player.isOp())
 				return true;
@@ -636,8 +679,10 @@ public class DAR extends JavaPlugin {
 		if(permsEnabled())
 			if(player.hasPermission("dar.reb") || player.hasPermission("dar.admin"))
 				return true;
-			else
+			else {
+				message.send(player, Messages.noPermission);
 				return false;
+			}
 		else
 			return true;
 	}

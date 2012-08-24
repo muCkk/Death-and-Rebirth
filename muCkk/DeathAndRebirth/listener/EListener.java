@@ -51,7 +51,7 @@ public class EListener implements Listener {
 		Player player = (Player) entity;
 		
 		// check for ignore	
-		if (plugin.hasPermIgnore(player)) {
+		if(plugin.hasPermIgnore(player)) {
 			return;
 		 }
 		
@@ -64,8 +64,8 @@ public class EListener implements Listener {
 		}
 		
 		// check for citizen NPCs
-		if (plugin.getConfig().getBoolean("CITIZENS_ENABLED")) {
-			if (checkForNPC(entity)) return;
+		if(plugin.getConfig().getBoolean("CITIZENS_ENABLED")) {
+			if(checkForNPC(entity)) return;
 		}
 		
 		// check for death in the void 
@@ -75,10 +75,10 @@ public class EListener implements Listener {
 			}catch (NullPointerException e) {
 				// happens if there is no cause (/kill, /suicide ...)
 			}
-		if (plugin.getConfig().getBoolean("VOID_DEATH") && damageCause.equalsIgnoreCase("VOID")) return;
+		if(plugin.getConfig().getBoolean("VOID_DEATH") && damageCause.equalsIgnoreCase("VOID")) return;
 		
 		// other plugins which avoid death
-		if (player.getHealth() > 0) return;
+		if(player.getHealth() > 0) return;
 
 		//Defines Location of death
 		Location loc = player.getLocation();

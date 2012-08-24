@@ -177,7 +177,7 @@ public class Ghosts {
 			player.getLocation().getBlock().getState().update(); //TODO update block
 		}
 	// saving location of death	
-		// moved
+		// moved to entityDeathListener
 		
 	// drop-management
 		if (!plugin.getConfig().getBoolean("DROPPING") || plugin.hasPermNoDrop(player) || pvp_death) {

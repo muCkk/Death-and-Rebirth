@@ -1,3 +1,9 @@
+Version 3.0.2b
+	added beds to blocking ghost interactions
+	fixed display of no-permission messages
+	fixed no drop and ignore always used if permissions are enabled
+	fixed BLOCK_GHOST_INTERACTION
+
 Version 3.0.1
 	added config option 'PERMISSIONS' to define if permissions should be used (if false every player will have every permissions except of stuff which needs 'dar.admin' for this he needs to be OP)
 	added ability to sacrifice health to resurrect players

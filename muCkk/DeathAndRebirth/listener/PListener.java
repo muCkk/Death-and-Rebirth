@@ -109,7 +109,7 @@ public class PListener implements Listener {
 		
 	// version checking
 	// in it's own thread because it takes some time and would stop the rest of the world to load
-		if(player.isOp() || plugin.hasPermAdmin(player)) {
+		if(player.isOp() || plugin.hasPermAdminNoMsg(player)) {
 			new Thread() {
 				public void run() {
 					try {
@@ -443,7 +443,12 @@ public class PListener implements Listener {
 			try {
 				Material type = block.getType(); 			
 				if(			type.equals(Material.FURNACE)
-						||	type.equals(Material.CHEST)) {
+						||	type.equals(Material.CHEST)
+						|| (plugin.getConfig().getBoolean("BLOCK_GHOST_INTERACTION")
+						&& (type.equals(Material.BED)
+						|| type.equals(Material.LEVER)
+						|| type.equals(Material.STONE_BUTTON)
+						|| type.equals(Material.WOODEN_DOOR) || type.equals(Material.IRON_DOOR)))) {
 					plugin.message.send(player, Messages.cantDoThat);
 					event.setCancelled(true);
 					return;
@@ -467,7 +472,6 @@ public class PListener implements Listener {
 						ghosts.resurrect(player);
 					
 					else {
-						//Checks for shrine permission
 						String shrine = shrines.getClose(player.getLocation());
 						
 						if(shrine != null && plugin.hasPermShrine(player, shrine) && plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime() >= 12000 && player.getWorld().getTime() <= 24000)
