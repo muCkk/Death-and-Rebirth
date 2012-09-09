@@ -44,6 +44,8 @@ public class Ghosts {
 	private Shrines shrines;
 	private PListener plistener;
 	
+	//	private Heroes heroes;
+	
 	private FileConfiguration customConfig = null;
 	private File ghostsFile;
 //	private Heroes heroes;
@@ -159,6 +161,18 @@ public class Ghosts {
 		}		
 	}
 	
+	public boolean isGhostInWorld(Player player, String world) {
+		if(player == null)
+			return false;		
+		String pname = player.getName();
+		
+		try {
+			return getCustomConfig().getBoolean("players."+pname +"."+world +".dead", false);	
+		}catch (NullPointerException e) {
+			return false;
+		}
+	}
+	
 	/**
 	 * Manages the death of players.
 	 * @param player which died
@@ -181,10 +195,10 @@ public class Ghosts {
 		
 	// drop-management
 		if (!plugin.getConfig().getBoolean("DROPPING") || plugin.hasPermNoDrop(player) || pvp_death) {
-			dardrops.put(player, inv);  
+			dardrops.put(player, inv, player.getWorld().getName());  
 		}
 		else {
-			dardrops.remove(player);
+			dardrops.remove(player, player.getWorld().getName());
 		}
 		
 	// invisibility (WAS UNUSED)
@@ -275,14 +289,39 @@ public class Ghosts {
 					e.printStackTrace();
 				}
 				
-				if (!plugin.getConfig().getBoolean("DROPPING") || plugin.hasPermNoDrop(player) || plugin.getConfig().getBoolean("PVP_DROP")) dardrops.givePlayerInv(player);
+				if (!plugin.getConfig().getBoolean("DROPPING") || plugin.hasPermNoDrop(player) || plugin.getConfig().getBoolean("PVP_DROP")) {
+					if (plugin.getConfig().getBoolean("KEEP_INVENTORY_CROSS_WORLD"))
+						dardrops.givePlayerAllDrops(player);
+					else	
+						dardrops.givePlayerInv(player, player.getWorld().getName());
+				}
+
 			}
 		}.start();
 		
+		if(plugin.getConfig().getBoolean("CROSS_WORLD_GHOST")) {
+			ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("players."+pname);
+			if(cfgsel != null) { 
+				Set<String> worlds = cfgsel.getKeys(false);
+				
+				try {
+					for(String otherWorld : worlds) {
+						if(getCustomConfig().getBoolean("players." +pname +"."+otherWorld +".dead") && !otherWorld.equalsIgnoreCase(world)) {
+							getCustomConfig().set("players."+pname +"."+otherWorld +".dead", false);
+							getCustomConfig().set("players."+pname +"."+world +".graveRobbed", false);
+							graves.deleteGrave(plugin.getServer().getWorld(otherWorld).getBlockAt(getLocation(player, otherWorld)), pname, otherWorld);
+						}
+					}
+				} catch(NullPointerException e) {
+					
+				}
+			}
+		}
 		getCustomConfig().set("players."+pname +"."+world +".dead", false);
 		getCustomConfig().set("players."+pname +"."+world +".graveRobbed", false);
+		
 		saveCustomConfig();
-		graves.deleteGrave(player.getWorld().getBlockAt(getLocation(player)), pname, world);
+		graves.deleteGrave(player.getWorld().getBlockAt(getLocation(player, player.getWorld().getName())), pname, world);
 		plugin.message.send(player, Messages.reborn);
 	}
 	
@@ -350,7 +389,7 @@ public class Ghosts {
 	
 	public void selfRebirth(Player player, Shrines shrines) {
 		// rebirth at location of death
-		if (!plugin.getConfig().getBoolean("CORPSE_SPAWNING")) 	player.teleport(getLocation(player));
+		if (!plugin.getConfig().getBoolean("CORPSE_SPAWNING")) 	player.teleport(getLocation(player, player.getWorld().getName()));
 		// rebirth at next shrine
 		else {
 			Location loc = getBoundShrine(player);
@@ -473,7 +512,7 @@ public class Ghosts {
 					plugin.message.send(player, Messages.resurrected, " "+target.getName());
 					plugin.message.sendResurrected(target, player, Messages.resurrectedBy);
 					plugin.message.sendResurrecter(player, target, Messages.resurrectedGhost);
-					target.teleport(getLocation(target));
+					target.teleport(getLocation(target, target.getWorld().getName()));
 				// spout related
 					if (plugin.getConfig().getBoolean("SPOUT_ENABLED")) {
 						plugin.darSpout.playRebirthSound(player, plugin.getConfig().getString("REB_SOUND"));
@@ -488,10 +527,9 @@ public class Ghosts {
 	 * @param player which is checked
 	 * @return Location of death
 	 */
-	public Location getLocation(Player player) {
+	public Location getLocation(Player player, String worldName) {
 		String pname = player.getName();
-		World world = player.getWorld();
-		String worldName = world.getName();
+		World world = plugin.getServer().getWorld(worldName);
 		
 		double x = getCustomConfig().getDouble("players."+pname +"."+worldName +".location.x", 0);
 		double y = getCustomConfig().getDouble("players."+pname +"."+worldName +".location.y", 64);
@@ -554,30 +592,55 @@ public class Ghosts {
 	 * Checks if the player enters a world where he has never been before.
 	 * @param player who teleported or used a portal
 	 */
-	public void worldChange(Player player) {
-		String worldName = player.getWorld().getName();
+	public void worldChange(Player player, String oldWorldName, String worldName) {
 		String name = player.getName();
-		Location nearestShrine = shrines.getNearestShrineSpawn(player.getLocation());
 		ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("players."+name);
 		if(cfgsel != null) { 
 			Set<String> worlds = cfgsel.getKeys(false);
 			
 			try {
-				for (String world : worlds) {
-					if(world.equalsIgnoreCase(worldName)) {
-						return;
+				for(String world : worlds) {
+
+					if(world.equalsIgnoreCase(worldName) && !world.equalsIgnoreCase(oldWorldName)) {
+						if(plugin.getConfig().getBoolean("CROSS_WORLD_GHOST") && isGhostInWorld(player, oldWorldName)) {
+							transferGhost(player, oldWorldName, worldName);
+							return;
+						}
+						if(isGhostInWorld(player, worldName)) {
+							dardrops.put(player, player.getInventory(), oldWorldName);
+							transferGhost(player, oldWorldName, worldName);
+							return;
+						}
+						if(isGhostInWorld(player, oldWorldName)) {
+							player.getInventory().clear();
+							if(plugin.getConfig().getBoolean("KEEP_INVENTORY_CROSS_WORLD"))
+								dardrops.givePlayerAllDrops(player);
+							return;
+						}
 					}
 				}
-			}
-			catch (NullPointerException e) {
-				plistener.giveGhostCompass(player, nearestShrine);
-				worldChangeHelper(name, worldName, player.getLocation());
-				return;
+			} catch (NullPointerException e) {
+				if(plugin.getConfig().getBoolean("CROSS_WORLD_GHOST") && isGhostInWorld(player, oldWorldName)) {
+					transferGhost(player, oldWorldName, worldName);
+					return;
+				}
+				if(isGhostInWorld(player, oldWorldName)) {
+					if(plugin.getConfig().getBoolean("KEEP_INVENTORY_CROSS_WORLD"))
+						dardrops.givePlayerAllDrops(player);
+					return;
+				}
+				if(!isGhostInWorld(player, oldWorldName)) {
+					worldChangeHelper(name, worldName, player.getLocation(), false);
+				    player.getInventory().clear();
+					if(plugin.getConfig().getBoolean("KEEP_INVENTORY_CROSS_WORLD"))
+						dardrops.givePlayerAllDrops(player);
+					return;					
+				}
 			}
 
-			plistener.giveGhostCompass(player, nearestShrine);
-			worldChangeHelper(name, worldName, player.getLocation());
 		}
+		else
+			worldChangeHelper(name, worldName, player.getLocation(), false);		
 	}
 	
 	public String getGrave(Player player) {
@@ -611,8 +674,8 @@ public class Ghosts {
 	}
 	
 //  private methods ************************************************************************************************************
-	private void worldChangeHelper(String playerName, String worldName, Location location) {
-		getCustomConfig().set("players." +playerName +"."+worldName +".dead", false);
+	private void worldChangeHelper(String playerName, String worldName, Location location, boolean dead) {
+		getCustomConfig().set("players." +playerName +"."+worldName +".dead", dead);
 		getCustomConfig().set("players." +playerName +"."+worldName +".location.x", location.getBlockX());
 		getCustomConfig().set("players." +playerName +"."+worldName +".location.y", location.getBlockY());
 		getCustomConfig().set("players." +playerName +"."+worldName +".location.z", location.getBlockZ());
@@ -621,7 +684,32 @@ public class Ghosts {
 		saveCustomConfig();
 	}
 	
-
+	private void transferGhost(final Player player, String oldWorldName, final String worldName) {
+		String name = player.getName();
+		
+		player.getInventory().clear();
+		worldChangeHelper(name, worldName, player.getLocation(), true);
+		
+		new Thread() {
+			@Override
+			public void run() {				
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					log.info("[Death and Rebirth] Error: Could not sleep while setting compass target.");
+					e.printStackTrace();
+				}
+				final Location nearestShrine = shrines.getNearestShrine(player.getLocation());
+				final Location grave = getLocation(player, worldName);
+				if(grave != null)
+					plistener.giveGhostCompass(player, grave);
+				else if(nearestShrine != null)
+					plistener.giveGhostCompass(player, nearestShrine);
+				else
+					plistener.giveGhostCompass(player, player.getLocation());				
+			}
+		}.start();  
+	}
 		
 	// **************************************************************
 	// *** code from DwarfCraft, found on the bukkit forum - THX! ***

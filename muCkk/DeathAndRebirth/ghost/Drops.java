@@ -68,21 +68,21 @@ public class Drops {
 	 * @param player
 	 * @param drops
 	 */
-	public void put(Player player, PlayerInventory inv) {
+	public void put(Player player, PlayerInventory inv, String world) {
 		String playerName = player.getName();
 		
 		int i=0;
 		
 		for (ItemStack itemStack : inv.getContents()) {
 			if(itemStack == null) continue;
-			getCustomConfig().set("drops."+playerName+"."+player.getWorld().getName()+".inventory.item"+String.valueOf(i++), itemStack.serialize());
+			getCustomConfig().set("drops."+playerName+"."+world+".inventory.item"+String.valueOf(i++), itemStack.serialize());
 		}
 		
 		i=0;
 		
 		for (ItemStack itemStack : inv.getArmorContents()) {
 			if(itemStack == null || itemStack.getTypeId() == 0) continue;
-			getCustomConfig().set("drops."+playerName+"."+player.getWorld().getName()+".armor.armor"+String.valueOf(i++), itemStack.serialize());
+			getCustomConfig().set("drops."+playerName+"."+world+".armor.armor"+String.valueOf(i++), itemStack.serialize());
 		}		
 		
 		saveCustomConfig();
@@ -92,24 +92,24 @@ public class Drops {
 	 * Gives the player his inventory he had on death
 	 * @param player
 	 */
-	public void givePlayerInv(Player player) {
+	public void givePlayerInv(Player player, String worldName) {
 		String playerName = player.getName();
-		String worldName = player.getWorld().getName();
 		ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("drops."+playerName+"."+worldName);
 		if(cfgsel == null) return;
-		ItemStack [] items = getItemsFromConfig("drops."+playerName+"."+player.getWorld().getName()+".inventory");
+		ItemStack [] items = getItemsFromConfig("drops."+playerName+"."+worldName+".inventory");
 		if (items != null)
 			player.getInventory().setContents(items);
 		
-		ItemStack[] armor = getItemsFromConfig("drops."+playerName+"."+player.getWorld().getName()+".armor");
+		ItemStack[] armor = getItemsFromConfig("drops."+playerName+"."+worldName+".armor");
 		if (armor != null) {
 			player.getInventory().setArmorContents(armor);
-/*			HashMap<Integer, ItemStack> dropthis = player.getInventory().setArmorContents(armor);
+			// Not needed anymore, armor will be set in right place
+			/*HashMap<Integer, ItemStack> dropthis = player.getInventory().setArmorContents(armor);
 			for (Entry<Integer, ItemStack> e : dropthis.entrySet()) {
 				player.getWorld().dropItemNaturally(player.getLocation(), e.getValue());
 			}*/
 		} 
-		remove(player);
+		remove(player, worldName);
 		saveCustomConfig();
 	}
 	
@@ -198,11 +198,29 @@ public class Drops {
 	}
     }
 	
+	public void givePlayerAllDrops(Player player) {
+		String name = player.getName();
+		ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("drops."+name);
+		if(cfgsel != null) { 
+			Set<String> worlds = cfgsel.getKeys(false);
+			
+			try {
+				for(String world : worlds) {
+					if(getCustomConfig().getConfigurationSection("drops."+name+"."+world) != null) {
+						givePlayerInv(player, world);
+						return;
+					}
+				}
+			} catch (NullPointerException e) {
+			}	
+		}
+	}
+	
 	/**
 	 * Deletes all drops from a player
 	 * @param player
 	 */
-	public void remove(Player player) {
+	public void remove(Player player, String world) {
 		if(player == null) {
 			log.info("[Death and Rebirth] Error - Remove Players Inventory From Database");
 			return;

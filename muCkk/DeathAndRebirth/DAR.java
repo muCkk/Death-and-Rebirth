@@ -15,7 +15,6 @@ import muCkk.DeathAndRebirth.messages.Messages;
 import muCkk.DeathAndRebirth.otherPlugins.DARmcMMO;
 import muCkk.DeathAndRebirth.otherPlugins.DARSpout;
 import net.milkbowl.vault.economy.Economy;
-import net.milkbowl.vault.permission.Permission;
 
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
@@ -45,7 +44,6 @@ public class DAR extends JavaPlugin {
 	
 	private static final Logger log = Logger.getLogger("Minecraft");
     public static Economy econ = null;
-    public static Permission perms = null;
     
 	public Messenger message;
 	public DARSpout darSpout;
@@ -67,13 +65,6 @@ public class DAR extends JavaPlugin {
 			// TODO: handle exception
 		}
 	}
-	
-	/*
-	 * TODO create checkPerms methods for all permissions
-	 * and config option which checks if permissions should be used
-	 * 
-	 * 
-	 */
 
 	public void onEnable() {
 		setupEconomy();
@@ -587,11 +578,17 @@ public class DAR extends JavaPlugin {
 				else message.sendChat(player, Messages.onlyDayToggle, " enabled");
 				return true;
 			}
-			
+			if (arg.equalsIgnoreCase("crossWorld")) {
+				if(toggle("CROSS_WORLD_GHOST")) message.sendChat(player, Messages.crossWorldToggle, " disabled");
+				else message.sendChat(player, Messages.crossWorldToggle, " enabled");
+				return true;
+			}
+			if (arg.equalsIgnoreCase("keepInv")) {
+				if(toggle("KEEP_INVENTORY_CROSS_WORLD")) message.sendChat(player, Messages.keepInvToggle, " disabled");
+				else message.sendChat(player, Messages.keepInvToggle, " enabled");
+				return true;
+			}
 		}
-		
-		else {}
-		
 		return false;		
 	}
 	

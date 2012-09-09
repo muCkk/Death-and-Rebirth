@@ -80,7 +80,7 @@ public class PListener implements Listener {
 				String playerName = player.getName();
 				String worldName = player.getWorld().getName();
 				String l1 = plugin.getConfig().getString("GRAVE_TEXT");
-				Block block = ghosts.getLocation(player).getBlock();
+				Block block = ghosts.getLocation(player, worldName).getBlock();
 				
 				ghosts.getCustomConfig().set("players."+ playerName +"."+ worldName +".offline", false);
 				graves.removeSign(block, playerName, worldName);
@@ -90,7 +90,7 @@ public class PListener implements Listener {
 			// compass
 			// reverse spawning
 			if (!plugin.getConfig().getBoolean("CORPSE_SPAWNING")) {
-				Location corpse = ghosts.getLocation(player);
+				Location corpse = ghosts.getLocation(player, player.getWorld().getName());
 				player.setCompassTarget(corpse);
 			}
 			// corpse spawning
@@ -170,7 +170,7 @@ public class PListener implements Listener {
 		if(ghosts.isGhost(player)) {
 			// reverse spawning		
 			Location nearestShrine = shrines.getNearestShrineSpawn(player.getLocation());
-			Location corpse = ghosts.getLocation(player);
+			Location corpse = ghosts.getLocation(player, player.getWorld().getName());
 			if (!plugin.getConfig().getBoolean("CORPSE_SPAWNING")) {
 				Location loc = ghosts.getBoundShrine(player);
 				
@@ -283,7 +283,7 @@ public class PListener implements Listener {
 			for(Player hPlayer:all)
 			{
 				String hPlayerName = hPlayer.getName();
-				Location hGrave = ghosts.getLocation(hPlayer);
+				Location hGrave = ghosts.getLocation(hPlayer, hPlayer.getWorld().getName());
 				String worldName = hGrave.getWorld().getName();
 				String shrine = shrines.getClose(hPlayer.getLocation());
 				int timer = plugin.getConfig().getInt("TIMER")*60;
@@ -414,7 +414,7 @@ public class PListener implements Listener {
 			Player [] all = Bukkit.getServer().getOnlinePlayers();
 			for(Player dPlayer:all)
 			{	
-				Location hGrave = ghosts.getLocation(dPlayer);
+				Location hGrave = ghosts.getLocation(dPlayer, dPlayer.getWorld().getName());
 				if(!ghosts.isGhost(player) && event.getClickedBlock().getLocation().distance(hGrave) < 3 && ghosts.isGhost(dPlayer) && plugin.getConfig().getBoolean("GRAVE_SIGNS") && plugin.hasPermRebOthers(player))
 				{
 					if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime() >= 12000 && player.getWorld().getTime() <= 24000)
@@ -458,7 +458,7 @@ public class PListener implements Listener {
 			}
 		// resurrection
 			if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {				
-				Location locDeath = ghosts.getLocation(player);
+				Location locDeath = ghosts.getLocation(player, player.getWorld().getName());
 				// reverse spawning
 				if(!plugin.getConfig().getBoolean("CORPSE_SPAWNING") && !plugin.getConfig().getBoolean("HARDCORE"))
 				{
@@ -587,8 +587,8 @@ public class PListener implements Listener {
 				Player robber = event.getPlayer();
 				String robberName = robber.getName();
 				String robbedName = robbed.getName();
-				Location robbedGrave = ghosts.getLocation(robbed);
-				Location ownGrave = ghosts.getLocation(robber);
+				Location robbedGrave = ghosts.getLocation(robbed, robbed.getWorld().getName());
+				Location ownGrave = ghosts.getLocation(robber, robber.getWorld().getName());
 				String worldName = robbedGrave.getWorld().getName();
 				double percent = plugin.getConfig().getDouble("GRAVEROBBERY");
 								
@@ -629,7 +629,9 @@ public class PListener implements Listener {
 	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onPlayerTeleport(PlayerTeleportEvent event) {
 		Player player = event.getPlayer();
-		ghosts.worldChange(player);
+		String world = event.getFrom().getWorld().getName();
+		String newworld = event.getTo().getWorld().getName();
+		ghosts.worldChange(player, world, newworld);
 	}
 	
 	/**
@@ -638,7 +640,9 @@ public class PListener implements Listener {
 	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onPlayerPortal(PlayerPortalEvent event) {
 		Player player = event.getPlayer();
-		ghosts.worldChange(player);
+		String world = event.getFrom().getWorld().getName();
+		String newworld = event.getTo().getWorld().getName();
+		ghosts.worldChange(player, world, newworld);
 	}
 	
 	@EventHandler(ignoreCancelled = true)
@@ -667,7 +671,7 @@ public class PListener implements Listener {
 		String l1 = plugin.getConfig().getString("GRAVE_TEXT");
 		if(ghosts.isGhost(player) && plugin.getConfig().getBoolean("GRAVE_SIGNS"))
 		{
-			Block block = ghosts.getLocation(player).getBlock();
+			Block block = ghosts.getLocation(player, worldName).getBlock();
 			ghosts.getCustomConfig().set("players."+ playerName +"."+ worldName +".offline", true);
 			graves.removeSign(block, playerName, worldName);
 			graves.placeSign(block, l1, playerName);

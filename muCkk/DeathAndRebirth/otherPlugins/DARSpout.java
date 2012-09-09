@@ -198,7 +198,7 @@ public class DARSpout {
 							Random rand = new Random();
 							int r = rand.nextInt(12)+3;
 							while(ghosts.isGhost(sPlayer)) {
-								soundM.playSoundEffect(sPlayer, SoundEffect.GHAST_MOAN, player.getLocation(), 10, 100);
+								soundM.playSoundEffect(sPlayer, SoundEffect.GHAST_MOAN_1, player.getLocation(), 10, 100);
 								r = rand.nextInt(12)+3;
 								try {
 									sleep(r*1000);

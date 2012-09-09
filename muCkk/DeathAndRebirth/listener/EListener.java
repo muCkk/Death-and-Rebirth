@@ -51,22 +51,21 @@ public class EListener implements Listener {
 		Player player = (Player) entity;
 		
 		// check for ignore	
-		if(plugin.hasPermIgnore(player)) {
+		if(plugin.hasPermIgnore(player))
 			return;
-		 }
+		
+		// check if the world is enabled
+		if(!plugin.getConfig().getBoolean(entity.getWorld().getName()))
+			return;
 		
 		//Checks if player is in a MobArena
     	if(plugin.getConfig().getBoolean("MOBARENA_ENABLED") && DAR.getAM().getArenaWithPlayer(player) != null) return;	
-    	
-    	// check if the world is enabled
-		if(!plugin.getConfig().getBoolean(entity.getWorld().getName())) {
-			return;
-		}
+
 		
 		// check for citizen NPCs
-		if(plugin.getConfig().getBoolean("CITIZENS_ENABLED")) {
+		if(plugin.getConfig().getBoolean("CITIZENS_ENABLED"))
 			if(checkForNPC(entity)) return;
-		}
+
 		
 		// check for death in the void 
 		String damageCause = "";
@@ -232,7 +231,7 @@ public class EListener implements Listener {
 			//... his death location if cropse spawning is enabled
 			if (!plugin.getConfig().getBoolean("CORPSE_SPAWNING"))
 			{
-				player.teleport(ghosts.getLocation(player));
+				player.teleport(ghosts.getLocation(player, player.getWorld().getName()));
 			}
 			//... the next shrine if he needs to resurrect at his grave
 			else

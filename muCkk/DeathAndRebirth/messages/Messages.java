@@ -77,6 +77,8 @@ public enum Messages {
 	hardcoreToggle			("Hardcore Mode is now"),
 	needItemToggle			("Need Item is now"),
 	onlyDayToggle			("Day only resurrection is now"),
+	crossWorldToggle		("Cross world ghosts are now"),
+	keepInvToggle			("Keep inventory on world change"),
 	invisToggle				("Invisibility for ghosts is now");	
 	
 	private String msg;
