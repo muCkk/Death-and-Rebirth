@@ -72,8 +72,8 @@ public class Graves {
 		int z = block.getZ();
 		Block otherBlock;
 		boolean placed = false;
-	/*	// water
-		if (block.getTypeId() == 8 || block.getTypeId() == 9) {
+	// water
+		if (plugin.getConfig().getBoolean("WATER_GRAVE") && (block.getTypeId() == 8 || block.getTypeId() == 9)) {
 			otherBlock = block.getRelative(BlockFace.UP);
 			while (otherBlock.getTypeId() != 0) {
 				otherBlock = otherBlock.getRelative(BlockFace.UP);
@@ -87,7 +87,7 @@ public class Graves {
 				ghosts.setLocationOfDeath(otherBlock, name);
 				placed = true;
 			}
-		} */
+		}
 //		else if (config.getBoolean(CFG.GRAVE_SIGNS)) placeSign(block, l1, name);
 		
 		// explosion
@@ -137,7 +137,8 @@ public class Graves {
 			getCustomConfig().set("graves."+block.getWorld().getName()+"."+name+".blockdata", data);
 		}
 		//avoid placing signs in lava, now on water too
-		if(id == 10 || id == 11 || id == 9 || id == 8) return;
+		if(id == 10 || id == 11) return;
+		if(plugin.getConfig().getBoolean("WATER_GRAVE") && (id == 9 || id == 8)) return;
 		
 		block.setType(Material.SIGN_POST);
 		Sign sign = (Sign) block.getState();

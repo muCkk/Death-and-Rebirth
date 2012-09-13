@@ -289,7 +289,7 @@ public class PListener implements Listener {
 				int timer = plugin.getConfig().getInt("TIMER")*60;
 				
 				//if he's a ghost it's checked if his grave is right clicked				
-				if(hPlayer != player && plugin.hasPermRebOthers(player) && !ghosts.isGhost(player) && ghosts.isGhost(hPlayer) && plugin.getConfig().getBoolean("GRAVE_SIGNS") && event.getClickedBlock().getLocation().distance(hGrave) < 3 && plugin.getConfig().getBoolean("OTHERS_RESURRECT"))
+				if(hPlayer.getWorld() == player.getWorld() && hPlayer != player && plugin.hasPermRebOthers(player) && !ghosts.isGhost(player) && ghosts.isGhost(hPlayer) && plugin.getConfig().getBoolean("GRAVE_SIGNS") && event.getClickedBlock().getLocation().distance(hGrave) < 3 && plugin.getConfig().getBoolean("OTHERS_RESURRECT"))
 				{
 					if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime()  >= 12000 && player.getWorld().getTime() <= 24000)
 						plugin.message.send(player, Messages.mustBeDay);
@@ -415,7 +415,7 @@ public class PListener implements Listener {
 			for(Player dPlayer:all)
 			{	
 				Location hGrave = ghosts.getLocation(dPlayer, dPlayer.getWorld().getName());
-				if(!ghosts.isGhost(player) && event.getClickedBlock().getLocation().distance(hGrave) < 3 && ghosts.isGhost(dPlayer) && plugin.getConfig().getBoolean("GRAVE_SIGNS") && plugin.hasPermRebOthers(player))
+				if(player.getWorld() == dPlayer.getWorld() && !ghosts.isGhost(player) && event.getClickedBlock().getLocation().distance(hGrave) < 3 && ghosts.isGhost(dPlayer) && plugin.getConfig().getBoolean("GRAVE_SIGNS") && plugin.hasPermRebOthers(player))
 				{
 					if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime() >= 12000 && player.getWorld().getTime() <= 24000)
 						plugin.message.sendChat(player, Messages.mustBeDay);
