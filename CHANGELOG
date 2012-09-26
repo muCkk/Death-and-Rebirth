@@ -1,4 +1,4 @@
-Version 3.0.2d
+Version 3.0.2e
 	added beds to blocking ghost interactions
 	added cross world ghost option to decide if players stay as ghost if they change the world and aren't a ghost in the "new" world
 	added keep inventory cross world to decide if the ghost will get his inventory from the "old" world back if he resurrected in another one
@@ -6,6 +6,7 @@ Version 3.0.2d
 	added toggle commands for cross world ghost and keep inventory cross world
 	added 'water grave'- option to decide if signs are placed in water again
 	added signs in water again (optional)
+	added 'GHOST_WORLD_CHANGE' option to configure if ghosts can teleport or use a portal
 	fixed error on world change
 	fixed display of no-permission messages
 	fixed no drop and ignore always used if permissions are enabled
@@ -13,6 +14,9 @@ Version 3.0.2d
 	fixed creepy sound wont play while being a ghost
 	fixed (trial) the compass isn't aiming the right direction
 	fixed (not tested yet) error on resurrect others cross worlds (it's not possible)
+	fixed item disappearance on resurrect (with dropping: true)
+	fixed bug with item dupe
+	fixed bug with inventorys on world change
 
 Version 3.0.1
 	added config option 'PERMISSIONS' to define if permissions should be used (if false every player will have every permissions except of stuff which needs 'dar.admin' for this he needs to be OP)

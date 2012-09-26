@@ -181,8 +181,25 @@ public class Ghosts {
 		final String pname = player.getName();
 		final String world = player.getWorld().getName();
 		final Block block = player.getWorld().getBlockAt(loc);
-			
+		
+		//saving the 'state' of the player for all worlds if 'cross world ghosts' are enabled
+		if(plugin.getConfig().getBoolean("CROSS_WORLD_GHOST")) {
+			ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("players."+pname);
+			if(cfgsel != null) { 
+				Set<String> worlds = cfgsel.getKeys(false);
+				
+				try {
+					for(String otherWorld : worlds) {
+						if(!otherWorld.equalsIgnoreCase(world))
+							getCustomConfig().set("players."+pname +"."+otherWorld +".dead", true);
+					}
+				} catch(NullPointerException e) {
+				}
+			}
+		}
+		else
 		getCustomConfig().set("players."+pname +"."+world +".dead", true);
+		
 		saveCustomConfig();
 		
 	// lightning
@@ -194,7 +211,7 @@ public class Ghosts {
 		// moved to entityDeathListener
 		
 	// drop-management
-		if (!plugin.getConfig().getBoolean("DROPPING") || plugin.hasPermNoDrop(player) || pvp_death) {
+		if (!plugin.getConfig().getBoolean("DROPPING") || !plugin.hasPermNoDrop(player)) {
 			dardrops.put(player, inv, player.getWorld().getName());  
 		}
 		else {
@@ -273,12 +290,6 @@ public class Ghosts {
 		new Thread() {
 			@Override
 			public void run() {				
-				try {
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-					log.info("[Death and Rebirth] Error: Could not sleep while giving drops.");
-					e.printStackTrace();
-				}
 				
 				player.getInventory().clear();
 				
@@ -289,8 +300,8 @@ public class Ghosts {
 					e.printStackTrace();
 				}
 				
-				if (!plugin.getConfig().getBoolean("DROPPING") || plugin.hasPermNoDrop(player) || plugin.getConfig().getBoolean("PVP_DROP")) {
-					if (plugin.getConfig().getBoolean("KEEP_INVENTORY_CROSS_WORLD"))
+				if(!plugin.getConfig().getBoolean("DROPPING") || !plugin.hasPermNoDrop(player)) {
+					if(plugin.getConfig().getBoolean("KEEP_INVENTORY_CROSS_WORLD"))
 						dardrops.givePlayerAllDrops(player);
 					else	
 						dardrops.givePlayerInv(player, player.getWorld().getName());
@@ -308,7 +319,7 @@ public class Ghosts {
 					for(String otherWorld : worlds) {
 						if(getCustomConfig().getBoolean("players." +pname +"."+otherWorld +".dead") && !otherWorld.equalsIgnoreCase(world)) {
 							getCustomConfig().set("players."+pname +"."+otherWorld +".dead", false);
-							getCustomConfig().set("players."+pname +"."+world +".graveRobbed", false);
+							getCustomConfig().set("players."+pname +"."+otherWorld +".graveRobbed", false);
 							graves.deleteGrave(plugin.getServer().getWorld(otherWorld).getBlockAt(getLocation(player, otherWorld)), pname, otherWorld);
 						}
 					}
@@ -606,15 +617,15 @@ public class Ghosts {
 							transferGhost(player, oldWorldName, worldName);
 							return;
 						}
-						if(isGhostInWorld(player, worldName)) {
+						if(isGhostInWorld(player, worldName) && !isGhostInWorld(player, oldWorldName)) {
 							dardrops.put(player, player.getInventory(), oldWorldName);
 							transferGhost(player, oldWorldName, worldName);
 							return;
 						}
-						if(isGhostInWorld(player, oldWorldName)) {
+						if(isGhostInWorld(player, oldWorldName) && !world.equalsIgnoreCase(worldName)) {
 							player.getInventory().clear();
-							if(plugin.getConfig().getBoolean("KEEP_INVENTORY_CROSS_WORLD"))
-								dardrops.givePlayerAllDrops(player);
+							if(!plugin.getConfig().getBoolean("KEEP_INVENTORY_CROSS_WORLD"))
+								dardrops.givePlayerInv(player, worldName);
 							return;
 						}
 					}

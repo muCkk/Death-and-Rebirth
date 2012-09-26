@@ -631,7 +631,11 @@ public class PListener implements Listener {
 		Player player = event.getPlayer();
 		String world = event.getFrom().getWorld().getName();
 		String newworld = event.getTo().getWorld().getName();
-		ghosts.worldChange(player, world, newworld);
+		
+		if(ghosts.isGhostInWorld(player, world) && !plugin.getConfig().getBoolean("GHOST_WORLD_CHANGE"))
+			event.setCancelled(true);
+		else
+			ghosts.worldChange(player, world, newworld);
 	}
 	
 	/**
@@ -639,15 +643,18 @@ public class PListener implements Listener {
 	 */
 	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onPlayerPortal(PlayerPortalEvent event) {
-		Player player = event.getPlayer();
+		Player player = event.getPlayer();		
 		String world = event.getFrom().getWorld().getName();
 		String newworld = event.getTo().getWorld().getName();
-		ghosts.worldChange(player, world, newworld);
+		
+		if(ghosts.isGhostInWorld(player, world) && !plugin.getConfig().getBoolean("GHOST_WORLD_CHANGE"))
+			event.setCancelled(true);
+		else
+			ghosts.worldChange(player, world, newworld);
 	}
 	
 	@EventHandler(ignoreCancelled = true)
-	public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event)
-	{
+	public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
 		Player player = event.getPlayer();
 		if(!ghosts.isGhost(player)) return;
 		//for every command which is in the disabledCommands list it creates an string command and if the used command starts with that string it will be cancelled

@@ -225,7 +225,7 @@ public class Drops {
 			log.info("[Death and Rebirth] Error - Remove Players Inventory From Database");
 			return;
 		}
-		getCustomConfig().set("drops."+player.getName()+"."+player.getWorld().getName(), null);
+		getCustomConfig().set("drops."+player.getName()+"."+world, null);
 		saveCustomConfig();
 	}
 }
