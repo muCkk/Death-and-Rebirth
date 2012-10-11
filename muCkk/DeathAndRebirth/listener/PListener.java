@@ -271,13 +271,14 @@ public class PListener implements Listener {
 	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		Player player = event.getPlayer();
+		boolean canRes = ghosts.getCustomConfig().getBoolean("players."+player.getName() +"."+player.getWorld().getName() +".canress");
 		
 		// check if the world is enabled
 		if(!plugin.getConfig().getBoolean(player.getWorld().getName()))
 			return;
 		
 	// *** hardcore mode ***
-		if(plugin.getConfig().getBoolean("HARDCORE"))
+		if(plugin.getConfig().getBoolean("HARDCORE") && canRes)
 		{
 			Player[] all = Bukkit.getServer().getOnlinePlayers();
 			for(Player hPlayer:all)
@@ -409,7 +410,7 @@ public class PListener implements Listener {
 			}
 		}
 		
-		if(plugin.getConfig().getBoolean("OTHERS_RESURRECT") && !plugin.getConfig().getBoolean("HARDCORE"))
+		if(plugin.getConfig().getBoolean("OTHERS_RESURRECT") && !plugin.getConfig().getBoolean("HARDCORE") && canRes)
 		{
 			Player [] all = Bukkit.getServer().getOnlinePlayers();
 			for(Player dPlayer:all)
@@ -457,7 +458,7 @@ public class PListener implements Listener {
 				// Material = null
 			}
 		// resurrection
-			if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {				
+			if(event.getAction() == Action.RIGHT_CLICK_BLOCK && canRes) {				
 				Location locDeath = ghosts.getLocation(player, player.getWorld().getName());
 				// reverse spawning
 				if(!plugin.getConfig().getBoolean("CORPSE_SPAWNING") && !plugin.getConfig().getBoolean("HARDCORE"))
@@ -628,14 +629,19 @@ public class PListener implements Listener {
 	 */
 	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onPlayerTeleport(PlayerTeleportEvent event) {
-		Player player = event.getPlayer();
-		String world = event.getFrom().getWorld().getName();
-		String newworld = event.getTo().getWorld().getName();
-		
-		if(ghosts.isGhostInWorld(player, world) && !plugin.getConfig().getBoolean("GHOST_WORLD_CHANGE"))
-			event.setCancelled(true);
-		else
-			ghosts.worldChange(player, world, newworld);
+		Player player = event.getPlayer();	
+		try {
+			String world = event.getFrom().getWorld().getName();
+			String newworld = event.getTo().getWorld().getName();
+			
+			if(ghosts.isGhostInWorld(player, world) && !plugin.getConfig().getBoolean("GHOST_WORLD_CHANGE"))
+				event.setCancelled(true);
+			else
+				ghosts.worldChange(player, world, newworld);
+			
+		} catch(NullPointerException e) {
+			System.out.println("[Death and Rebirth] error: Could not find the entered world");
+		}
 	}
 	
 	/**
@@ -643,14 +649,19 @@ public class PListener implements Listener {
 	 */
 	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onPlayerPortal(PlayerPortalEvent event) {
-		Player player = event.getPlayer();		
-		String world = event.getFrom().getWorld().getName();
-		String newworld = event.getTo().getWorld().getName();
-		
-		if(ghosts.isGhostInWorld(player, world) && !plugin.getConfig().getBoolean("GHOST_WORLD_CHANGE"))
-			event.setCancelled(true);
-		else
-			ghosts.worldChange(player, world, newworld);
+		Player player = event.getPlayer();	
+		try {
+			String world = event.getFrom().getWorld().getName();
+			String newworld = event.getTo().getWorld().getName();
+			
+			if(ghosts.isGhostInWorld(player, world) && !plugin.getConfig().getBoolean("GHOST_WORLD_CHANGE"))
+				event.setCancelled(true);
+			else
+				ghosts.worldChange(player, world, newworld);
+			
+		} catch(NullPointerException e) {
+			System.out.println("[Death and Rebirth] error: Could not find the entered world");
+		}
 	}
 	
 	@EventHandler(ignoreCancelled = true)

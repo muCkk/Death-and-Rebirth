@@ -9,6 +9,7 @@ import muCkk.DeathAndRebirth.messages.Messages;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -41,10 +42,10 @@ public class BListener implements Listener {
 		if(type.equals(Material.SIGN_POST)) {
 			Block block = event.getBlock();
 			if (graves.isProtected(player.getName(), player.getWorld().getName(), block.getX(), block.getY(), block.getZ())) {
-				Sign sign = (Sign) event.getBlock().getState();
+				BlockState signState = event.getBlock().getState();
 				plugin.message.send(player, Messages.graveProtected);
 				event.setCancelled(true);
-				sign.update(true);
+				signState.update(true);
 				return;
 			}
 		}

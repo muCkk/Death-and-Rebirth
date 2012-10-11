@@ -1,4 +1,5 @@
-Version 3.0.2e
+Version 3.0.2g
+	updated for CB 1.3.2-R1.1
 	added beds to blocking ghost interactions
 	added cross world ghost option to decide if players stay as ghost if they change the world and aren't a ghost in the "new" world
 	added keep inventory cross world to decide if the ghost will get his inventory from the "old" world back if he resurrected in another one
@@ -7,6 +8,7 @@ Version 3.0.2e
 	added 'water grave'- option to decide if signs are placed in water again
 	added signs in water again (optional)
 	added 'GHOST_WORLD_CHANGE' option to configure if ghosts can teleport or use a portal
+	added security count down, which waits 3 second until you can resurrect
 	fixed error on world change
 	fixed display of no-permission messages
 	fixed no drop and ignore always used if permissions are enabled
@@ -17,6 +19,10 @@ Version 3.0.2e
 	fixed item disappearance on resurrect (with dropping: true)
 	fixed bug with item dupe
 	fixed bug with inventorys on world change
+	fixed item dupe bug (with option 'dropping: true')
+	fixed error caused by too less health (reported as 'mirror damage')
+	fixed an NPE error on entering an not existing world
+	fixed error on breaking a sign (grave sign)	
 
 Version 3.0.1
 	added config option 'PERMISSIONS' to define if permissions should be used (if false every player will have every permissions except of stuff which needs 'dar.admin' for this he needs to be OP)

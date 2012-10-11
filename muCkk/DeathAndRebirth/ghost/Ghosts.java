@@ -116,6 +116,7 @@ public class Ghosts {
 		getCustomConfig().set("players." +pname +"."+world +".location.y", player.getLocation().getBlockY());
 		getCustomConfig().set("players." +pname +"."+world +".location.z", player.getLocation().getBlockZ());
 		getCustomConfig().set("players." +pname +"."+world +".world", world);
+		getCustomConfig().set("players."+pname +"."+world +".canres", false);
 		
 		saveCustomConfig();
 	}
@@ -200,6 +201,20 @@ public class Ghosts {
 		else
 		getCustomConfig().set("players."+pname +"."+world +".dead", true);
 		
+		//This thread sleeps 3 second to have kind of security before the player can (be) resurrect(ed), needed if players kills others with a lot of strikes
+		new Thread() {
+			@Override
+			public void run() {								
+				try {
+					Thread.sleep(3000);
+				} catch (InterruptedException e) {
+					log.info("[Death and Rebirth] Error: Could not sleep while enabling resurrection.");
+					e.printStackTrace();
+				}
+				getCustomConfig().set("players."+pname +"."+world +".canres", true);
+			}
+		}.start();
+		
 		saveCustomConfig();
 		
 	// lightning
@@ -211,7 +226,7 @@ public class Ghosts {
 		// moved to entityDeathListener
 		
 	// drop-management
-		if (!plugin.getConfig().getBoolean("DROPPING") || !plugin.hasPermNoDrop(player)) {
+		if (!plugin.getConfig().getBoolean("DROPPING") || plugin.hasPermNoDrop(player)) {
 			dardrops.put(player, inv, player.getWorld().getName());  
 		}
 		else {
@@ -222,7 +237,7 @@ public class Ghosts {
 	   if (plugin.getConfig().getBoolean("INVISIBILITY")) vanish(player);
 		
 	// spout related
-		if (plugin.getConfig().getBoolean("SPOUT_ENABLED")) {
+	   if (plugin.getConfig().getBoolean("SPOUT_ENABLED")) {
 			plugin.darSpout.playerDied(player, plugin.getConfig().getString("DEATH_SOUND"));
 		}
 
@@ -300,7 +315,7 @@ public class Ghosts {
 					e.printStackTrace();
 				}
 				
-				if(!plugin.getConfig().getBoolean("DROPPING") || !plugin.hasPermNoDrop(player)) {
+				if(!plugin.getConfig().getBoolean("DROPPING") || plugin.hasPermNoDrop(player)) {
 					if(plugin.getConfig().getBoolean("KEEP_INVENTORY_CROSS_WORLD"))
 						dardrops.givePlayerAllDrops(player);
 					else	
@@ -330,8 +345,9 @@ public class Ghosts {
 		}
 		getCustomConfig().set("players."+pname +"."+world +".dead", false);
 		getCustomConfig().set("players."+pname +"."+world +".graveRobbed", false);
-		
+		getCustomConfig().set("players."+pname +"."+world +".canres", false);
 		saveCustomConfig();
+		
 		graves.deleteGrave(player.getWorld().getBlockAt(getLocation(player, player.getWorld().getName())), pname, world);
 		plugin.message.send(player, Messages.reborn);
 	}
@@ -796,6 +812,7 @@ public class Ghosts {
 				double pHealth = (double) player.getMaxHealth();
 			    pHealth = (pHealth/100)*percent;
 			    int health = player.getHealth() - (int) pHealth;
+			    if(health <= 0) health = 1;
 			    
 				player.setHealth(health);
 //			}
