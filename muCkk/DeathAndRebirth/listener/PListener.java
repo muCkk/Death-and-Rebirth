@@ -271,7 +271,7 @@ public class PListener implements Listener {
 	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		Player player = event.getPlayer();
-		boolean canRes = ghosts.getCustomConfig().getBoolean("players."+player.getName() +"."+player.getWorld().getName() +".canress");
+		boolean canRes = ghosts.getCustomConfig().getBoolean("players."+player.getName() +"."+player.getWorld().getName() +".canres");
 		
 		// check if the world is enabled
 		if(!plugin.getConfig().getBoolean(player.getWorld().getName()))

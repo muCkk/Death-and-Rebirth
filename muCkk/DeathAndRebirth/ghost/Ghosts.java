@@ -198,7 +198,6 @@ public class Ghosts {
 				}
 			}
 		}
-		else
 		getCustomConfig().set("players."+pname +"."+world +".dead", true);
 		
 		//This thread sleeps 3 second to have kind of security before the player can (be) resurrect(ed), needed if players kills others with a lot of strikes
