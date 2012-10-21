@@ -588,6 +588,21 @@ public class DAR extends JavaPlugin {
 				else message.sendChat(player, Messages.keepInvToggle, " enabled");
 				return true;
 			}
+			if (arg.equalsIgnoreCase("worldChange")) {
+				if(toggle("GHOST_WORLD_CHANGE")) message.sendChat(player, Messages.worldChangeToggle, " disabled");
+				else message.sendChat(player, Messages.worldChangeToggle, " enabled");
+				return true;
+			}
+			if (arg.equalsIgnoreCase("rightClickOnly")) {
+				if(toggle("RIGHT_CLICK_ONLY")) message.sendChat(player, Messages.rightClickOnlyToggle, " disabled");
+				else message.sendChat(player, Messages.rightClickOnlyToggle, " enabled");
+				return true;
+			}
+			if (arg.equalsIgnoreCase("waterGrave")) {
+				if(toggle("WATER_GRAVE")) message.sendChat(player, Messages.waterGraveToggle, " disabled");
+				else message.sendChat(player, Messages.waterGraveToggle, " enabled");
+				return true;
+			}
 		}
 		return false;		
 	}

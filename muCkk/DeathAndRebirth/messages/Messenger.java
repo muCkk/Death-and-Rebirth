@@ -122,7 +122,7 @@ public class Messenger {
 	public void send(Player player, Messages msg, String arg) {
 		String ownMessage = getCustomConfig().getString(msg.toString(), msg.msg());
 		String message = ownMessage+" "+arg;
-		if (checkSpout(player) && message.length() <= 26) spout(player, message);
+		if (checkSpout(player)) spout(player, message);
 		else					chat(player, message);
 	}
 //	*******************
@@ -140,8 +140,11 @@ public class Messenger {
 //	************************************************************************************
 	private void spout(Player player, String msg) {
 		SpoutPlayer sp = (SpoutPlayer) player;
-		if(msg.length() < 26)
-		sp.sendNotification(title, msg, mat);
+		////////////////////// remove to enable spout notifications again
+		boolean DISABLED = true;
+		//////////////////////
+		if(msg.length() <= 26 && !DISABLED)
+			sp.sendNotification(title, msg, mat);
 		else chat(player, msg);
 	  }
 	

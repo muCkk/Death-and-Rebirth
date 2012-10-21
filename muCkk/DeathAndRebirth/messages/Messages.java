@@ -79,6 +79,9 @@ public enum Messages {
 	onlyDayToggle			("Day only resurrection is now"),
 	crossWorldToggle		("Cross world ghosts are now"),
 	keepInvToggle			("Keep inventory on world change"),
+	worldChangeToggle		("Ghost world change is now"),
+	rightClickOnlyToggle	("Grave interaction with right click only"),
+	waterGraveToggle		("Water graves are now"),
 	invisToggle				("Invisibility for ghosts is now");	
 	
 	private String msg;

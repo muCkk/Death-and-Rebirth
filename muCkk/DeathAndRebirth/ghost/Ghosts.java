@@ -25,6 +25,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -44,11 +45,9 @@ public class Ghosts {
 	private Shrines shrines;
 	private PListener plistener;
 	
-	//	private Heroes heroes;
-	
 	private FileConfiguration customConfig = null;
 	private File ghostsFile;
-//	private Heroes heroes;
+	private Heroes heroes;
 	
 	public Ghosts(DAR plugin, String dir, Graves graves, Shrines shrines, Heroes heroes) {
 		this.plugin = plugin;
@@ -59,7 +58,7 @@ public class Ghosts {
 		this.isRessing = new HashMap<String, Boolean>();
 		this.dardrops = new Drops(plugin, this.dir);
 		this.shrines = shrines;
-//		this.heroes = heroes;
+		this.heroes = heroes;
 	}
 	
 	public void setPListener(PListener plistener) {
@@ -431,7 +430,7 @@ public class Ghosts {
 		int percent = plugin.getConfig().getInt("HEALTH");
 		if(percent > 0 && percent < 100)
 		{
-			/*if(plugin.getConfig().getBoolean("HEROES_ENABLED"))
+			if(plugin.getConfig().getBoolean("HEROES_ENABLED"))
 			{				
 				double pHealth = (double) heroes.getCharacterManager().getMaxHealth(player);
 			    pHealth = (pHealth/100)*percent;
@@ -442,7 +441,7 @@ public class Ghosts {
 				EntityRegainHealthEvent event = new EntityRegainHealthEvent(player, health, null);
 				player.getServer().getPluginManager().callEvent(event);
 			}
-			else {*/				
+			else {				
 				double pHealth = (double) player.getMaxHealth();
 			    pHealth = (pHealth/100)*percent;
 			    int health = (int) pHealth;
@@ -450,7 +449,7 @@ public class Ghosts {
 			    if(health <= 1)
 			    	health = 1;	
 				player.setHealth(health);
-//			}
+			}
 		}
 
 		//drops
@@ -798,7 +797,7 @@ public class Ghosts {
 		int percent = plugin.getConfig().getInt("OTHERS_HEALTH");
 		if(percent > 0)
 		{
-			/*if(plugin.getConfig().getBoolean("HEROES_ENABLED"))
+			if(plugin.getConfig().getBoolean("HEROES_ENABLED"))
 			{				
 				double pHealth = (double) heroes.getCharacterManager().getMaxHealth(player);
 			    pHealth = (pHealth/100)*percent;
@@ -807,14 +806,14 @@ public class Ghosts {
 				EntityRegainHealthEvent event = new EntityRegainHealthEvent(player, health, null);
 				player.getServer().getPluginManager().callEvent(event);
 			}
-			else {*/				
+			else {				
 				double pHealth = (double) player.getMaxHealth();
 			    pHealth = (pHealth/100)*percent;
 			    int health = player.getHealth() - (int) pHealth;
 			    if(health <= 0) health = 1;
 			    
 				player.setHealth(health);
-//			}
+			}
 		}
 	}
 	

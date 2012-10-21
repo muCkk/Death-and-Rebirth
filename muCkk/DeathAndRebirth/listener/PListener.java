@@ -68,6 +68,8 @@ public class PListener implements Listener {
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPlayerJoin(final PlayerJoinEvent event) {
 		final Player player = event.getPlayer();
+		String playerName = player.getName();
+		String worldName = player.getWorld().getName();
 		if(!ghosts.existsPlayer(player)) {
 			ghosts.newPlayer(player);
 		}
@@ -75,10 +77,10 @@ public class PListener implements Listener {
 		if(ghosts.isGhost(player)) {
 			ghosts.setDisplayName(player, true);
 			
+			ghosts.getCustomConfig().set("players."+playerName+"."+worldName+".canres", true);
+			
 			if(plugin.getConfig().getBoolean("GRAVE_SIGNS"))
 			{
-				String playerName = player.getName();
-				String worldName = player.getWorld().getName();
 				String l1 = plugin.getConfig().getString("GRAVE_TEXT");
 				Block block = ghosts.getLocation(player, worldName).getBlock();
 				
@@ -133,6 +135,8 @@ public class PListener implements Listener {
 				}
 			}.start();
 		}
+		
+		ghosts.saveCustomConfig();
 	}
 	
 	// if otherplayer is a ghost make him invisible
@@ -272,13 +276,23 @@ public class PListener implements Listener {
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		Player player = event.getPlayer();
 		boolean canRes = ghosts.getCustomConfig().getBoolean("players."+player.getName() +"."+player.getWorld().getName() +".canres");
+		boolean rightClickOnly = plugin.getConfig().getBoolean("RIGHT_CLICK_ONLY");
+		boolean rightClick = true;
+		
+		if(rightClickOnly)
+			if(event.getAction() == Action.RIGHT_CLICK_BLOCK)
+				rightClick = true;
+			else
+				rightClick = false;
+		else
+			rightClick = true;
 		
 		// check if the world is enabled
 		if(!plugin.getConfig().getBoolean(player.getWorld().getName()))
 			return;
 		
 	// *** hardcore mode ***
-		if(plugin.getConfig().getBoolean("HARDCORE") && canRes)
+		if(plugin.getConfig().getBoolean("HARDCORE") && canRes  && rightClick)
 		{
 			Player[] all = Bukkit.getServer().getOnlinePlayers();
 			for(Player hPlayer:all)
@@ -410,7 +424,7 @@ public class PListener implements Listener {
 			}
 		}
 		
-		if(plugin.getConfig().getBoolean("OTHERS_RESURRECT") && !plugin.getConfig().getBoolean("HARDCORE") && canRes)
+		if(plugin.getConfig().getBoolean("OTHERS_RESURRECT") && !plugin.getConfig().getBoolean("HARDCORE") && canRes && rightClick)
 		{
 			Player [] all = Bukkit.getServer().getOnlinePlayers();
 			for(Player dPlayer:all)
@@ -458,7 +472,7 @@ public class PListener implements Listener {
 				// Material = null
 			}
 		// resurrection
-			if(event.getAction() == Action.RIGHT_CLICK_BLOCK && canRes) {				
+			if(canRes && rightClick) {				
 				Location locDeath = ghosts.getLocation(player, player.getWorld().getName());
 				// reverse spawning
 				if(!plugin.getConfig().getBoolean("CORPSE_SPAWNING") && !plugin.getConfig().getBoolean("HARDCORE"))
@@ -579,7 +593,7 @@ public class PListener implements Listener {
 		
 		//grave robbery
 		//Checks if grave robbery is enabled
-		if (plugin.getConfig().getDouble("GRAVEROBBERY") > 0.0 && plugin.getConfig().getBoolean("GRAVE_SIGNS") && plugin.hasPermRobb(player))
+		if (plugin.getConfig().getDouble("GRAVEROBBERY") > 0.0 && plugin.getConfig().getBoolean("GRAVE_SIGNS") && plugin.hasPermRobb(player) && rightClick)
 		{			
 			Player[] all = Bukkit.getServer().getOnlinePlayers();
 			//for each player which is online is checked if he is a ghost
@@ -694,6 +708,8 @@ public class PListener implements Listener {
 			graves.removeSign(block, playerName, worldName);
 			graves.placeSign(block, l1, playerName);
 		}
+		ghosts.getCustomConfig().set("players."+playerName+"."+worldName+".canres", true);
+		ghosts.saveCustomConfig();
 		
 	}
 	

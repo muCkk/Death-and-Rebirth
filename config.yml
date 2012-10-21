@@ -41,6 +41,7 @@ ROBBERY_ITEMS:
 - 256
 - 269
 - 273
+RIGHT_CLICK_ONLY: true
 
 MCMMO: false
 XP: 0
