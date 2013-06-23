@@ -33,6 +33,7 @@ resurrectedGhost:        'Resurrected %resed'
 #
 # Protection/admin and player messages
 #
+noPermission:            No permission
 graveProtected:          The grave is protected
 shrineProtectedDestroy:  Shrines are protected
 shrineProtectedBuild:    Can't build on shrines

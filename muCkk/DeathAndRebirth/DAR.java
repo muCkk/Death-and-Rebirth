@@ -17,6 +17,7 @@ import muCkk.DeathAndRebirth.otherPlugins.DARSpout;
 import net.milkbowl.vault.economy.Economy;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -52,6 +53,7 @@ public class DAR extends JavaPlugin {
     private static MobArenaHandler maHandler;
     private static ArenaMaster am;
     private static MobArena mobArena;
+    private static Heroes heroes;
 	
 	public void onDisable() {
 		getServer().getScheduler().cancelTasks(this);
@@ -67,14 +69,20 @@ public class DAR extends JavaPlugin {
 	}
 
 	public void onEnable() {
-		setupEconomy();
+	    if (!setupEconomy() ) {
+	        log.severe(String.format("[%s] - Disabled due to no Vault dependency found!", getDescription().getName()));
+	        getServer().getPluginManager().disablePlugin(this);
+	        return;
+	    }
 		
 		mobArena = (MobArena)Bukkit.getPluginManager().getPlugin("MobArena");
         if(mobArena != null && mobArena.isEnabled())
             setupMobArena(mobArena);
         
-        Heroes heroes =  (Heroes) this.getServer().getPluginManager().getPlugin("Heroes");
-        		
+        /*if(Bukkit.getPluginManager().getPlugin("Heroes").isEnabled()) {
+        	heroes = (Heroes) Bukkit.getPluginManager().getPlugin("Heroes");        	
+        } */
+		
 	// Config
 		getConfig().options().copyDefaults(true);
 		saveConfig();
@@ -125,14 +133,19 @@ public class DAR extends JavaPlugin {
 		this.getLogger().warning("http://dev.bukkit.org/server-mods/death-and-rebirth/");
 		
 	}
-	
-	private Boolean setupEconomy()
-    {
-        RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
-        if (economyProvider != null) {
-            econ = economyProvider.getProvider();
-        }
-        return (econ != null);
+
+    private boolean setupEconomy() {
+    	if (getServer().getPluginManager().getPlugin("Vault") == null) {
+    		this.getLogger().info("Vault not found");
+    		return false;
+    	}
+    	RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
+    	if (rsp == null) {
+    		this.getLogger().info("No economy plugin found!");
+    		return true;
+    	}
+    	econ = rsp.getProvider();
+    	return econ != null;
     }
 		
     public static void setupMobArena(MobArena instance)
@@ -188,17 +201,34 @@ public class DAR extends JavaPlugin {
 		 */
 		if(cmd.getName().equalsIgnoreCase("rebirth") || cmd.getName().equalsIgnoreCase("reb") && sender instanceof Player) {
 			
-			if(!hasPermReb(player)) return true;
+			if(!hasPermReb(player)) {
+				message.sendChat(player, Messages.noPermission);
+				return true;
+			}
+			
+			if(args.length > 1) {
+				if(!hasPermRebOthersPos(player)) {
+					message.sendChat(player, Messages.noPermission);
+					return true;
+				}
+				Player target = sender.getServer().getPlayer(args[0]);
+				Location loc = sender.getServer().getPlayer(args[1]).getLocation();
+				ghosts.resurrect(player, target, loc, true);
+			}
 			
 			// resurrect target
 			if (args.length > 0) {
+				if(!hasPermRebOthers(player)) {
+					message.sendChat(player, Messages.noPermission);
+					return true;
+				}
 				Player target = sender.getServer().getPlayer(args[0]);
 				if(ghosts.isGhost(target)) {
 					if(player.getName().equalsIgnoreCase(target.getName())) {
 						message.send(player, Messages.cantResurrectYourself);
 						return true;
 					}
-					ghosts.resurrect(player, target);
+					ghosts.resurrect(player, target, null, true);
 					return true;
 				}
 				else {
@@ -236,7 +266,10 @@ public class DAR extends JavaPlugin {
 		 */
 		if (cmd.getName().equalsIgnoreCase("shrine") && sender instanceof Player) {
 			
-			if(!hasPermAdmin(player)) return true;
+			if(!hasPermAdmin(player)) {
+				message.sendChat(player, Messages.noPermission);
+				return true;
+			}
 			
 			String arg = "";
 			String name = "";
@@ -397,7 +430,10 @@ public class DAR extends JavaPlugin {
 		
 		if(cmd.getName().equalsIgnoreCase("dar") && sender instanceof Player) {
 			
-			if(!hasPermAdmin(player)) return true;
+			if(!hasPermAdmin(player)) {
+				message.sendChat(player, Messages.noPermission);
+				return true;
+			}
 				
 			String arg = "";
 			String name = "";
@@ -701,6 +737,15 @@ public class DAR extends JavaPlugin {
 	public boolean hasPermRebOthers(Player player) {
 		if(permsEnabled())
 			if(player.hasPermission("dar.reb.others") || player.hasPermission("dar.admin"))
+				return true;
+			else
+				return false;
+		else
+			return true;
+	}
+	public boolean hasPermRebOthersPos(Player player) {
+		if(permsEnabled())
+			if(player.hasPermission("dar.reb.others.pos") || player.hasPermission("dar.admin"))
 				return true;
 			else
 				return false;

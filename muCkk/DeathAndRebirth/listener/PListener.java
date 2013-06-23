@@ -13,18 +13,20 @@ import muCkk.DeathAndRebirth.ghost.Graves;
 import muCkk.DeathAndRebirth.ghost.Shrines;
 import muCkk.DeathAndRebirth.messages.Errors;
 import muCkk.DeathAndRebirth.messages.Messages;
-import net.minecraft.server.Packet29DestroyEntity;
+//import net.minecraft.server.Packet29DestroyEntity;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.craftbukkit.entity.CraftPlayer;
+//import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -111,7 +113,7 @@ public class PListener implements Listener {
 		
 	// version checking
 	// in it's own thread because it takes some time and would stop the rest of the world to load
-		if(player.isOp() || plugin.hasPermAdminNoMsg(player)) {
+		if(plugin.hasPermAdminNoMsg(player) && plugin.getConfig().getBoolean("VERSION_CHECK")) {
 			new Thread() {
 				public void run() {
 					try {
@@ -144,7 +146,8 @@ public class PListener implements Listener {
 		Player[] onlinePlayers = player.getServer().getOnlinePlayers();
 		for (Player otherPlayer : onlinePlayers) {
 			if (otherPlayer == player || !ghosts.isGhost(otherPlayer)) continue;
-			((CraftPlayer) player).getHandle().netServerHandler.sendPacket(new Packet29DestroyEntity(((CraftPlayer) otherPlayer).getEntityId()));
+				otherPlayer.hidePlayer(player);
+			//((CraftPlayer) player).getHandle().netServerHandler.sendPacket(new Packet29DestroyEntity(((CraftPlayer) otherPlayer).getEntityId()));
 		}
 	}
 	
@@ -167,11 +170,64 @@ public class PListener implements Listener {
 	 */
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerRespawn(PlayerRespawnEvent event) {
-		Player player = event.getPlayer();
+		plugin.getLogger().info("respawn catched");
+		final Player player = event.getPlayer();
+		final int unconsciousTime = plugin.getConfig().getInt("UNCONSCIOUSMODE");
 	// check if the world is enabled
 		if(!plugin.getConfig().getBoolean(player.getWorld().getName())) return;
+
+		if(unconsciousTime > 0 && !ghosts.isGhost(player)) {
+			ghosts.resurrect(player);
+		}
 		
 		if(ghosts.isGhost(player)) {
+			if(unconsciousTime > 0) {
+				//set respawn location where he died
+				event.setRespawnLocation(ghosts.getLocation(player, player.getWorld().getName()));
+				plugin.message.send(player, Messages.playerDied);
+				//  spout related
+				if (plugin.getConfig().getBoolean("SPOUT_ENABLED")) {
+					plugin.darSpout.setDeathOptions(player, plugin.getConfig().getString("GHOST_SKIN"));
+				}
+				ghosts.setDisplayName(player, true);
+				// invisibility
+				if (plugin.getConfig().getBoolean("INVISIBILITY")) ghosts.vanish(player);
+				
+				new Thread() {
+					@Override
+					public void run() {
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e1) {
+							e1.printStackTrace();
+						}
+						int delay = unconsciousTime/player.getMaxHealth();
+						int skip = (((int) System.currentTimeMillis() - (int) ghosts.getCustomConfig().getLong("players."+player.getName() +"."+player.getWorld().getName() +".unconsciousstart"))/1000)/delay;
+						player.setHealth(player.getMaxHealth()-skip);
+						while(player.getHealth() > 0 && ghosts.isGhost(player)) {
+							player.setHealth(player.getHealth() -1);
+							player.setFoodLevel(1);
+							
+							try {
+								Thread.sleep(delay*1000);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
+
+						if(ghosts.isGhost(player)) {
+							player.setHealth(0);
+							ghosts.getCustomConfig().set("players."+player.getName() +"."+player.getWorld().getName() +".dead", false);
+						}
+					}
+				}.start();
+				return;
+			}
+			//auto resurrection initializing
+			int autoResTime = plugin.getConfig().getInt("AUTORES");
+			if(autoResTime > 0) {
+				System.currentTimeMillis();
+			}
 			// reverse spawning		
 			Location nearestShrine = shrines.getNearestShrineSpawn(player.getLocation());
 			Location corpse = ghosts.getLocation(player, player.getWorld().getName());
@@ -239,7 +295,12 @@ public class PListener implements Listener {
 	 */
 	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onPlayerMove(PlayerMoveEvent event) {		
-		final Player player = event.getPlayer();			
+		final Player player = event.getPlayer();	
+		
+		if(ghosts.isGhost(player) && plugin.getConfig().getInt("UNCONSCIOUSMODE") > 0) {
+			event.setCancelled(true);
+			return;
+		}
 		
 		if(ghosts.isGhost(player)) {
 		// inform ghost if he is on a shrine
@@ -276,8 +337,15 @@ public class PListener implements Listener {
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		Player player = event.getPlayer();
 		boolean canRes = ghosts.getCustomConfig().getBoolean("players."+player.getName() +"."+player.getWorld().getName() +".canres");
+		boolean othersCanRes = true;
 		boolean rightClickOnly = plugin.getConfig().getBoolean("RIGHT_CLICK_ONLY");
 		boolean rightClick = true;
+		boolean autoTimerOver = true;
+		
+		if(ghosts.isGhost(player) && plugin.getConfig().getInt("UNCONSCIOUSMODE") > 0) {
+			event.setCancelled(true);
+			return;
+		}
 		
 		if(rightClickOnly)
 			if(event.getAction() == Action.RIGHT_CLICK_BLOCK)
@@ -291,8 +359,19 @@ public class PListener implements Listener {
 		if(!plugin.getConfig().getBoolean(player.getWorld().getName()))
 			return;
 		
+		int autoResTime = plugin.getConfig().getInt("AUTORES");
+		// *** autorevive ***
+		if(autoResTime > 0) {
+/*			long start = ghosts.getCustomConfig().getLong("players."+player.getName() +"."+player.getWorld().getName() +".autostarttime");
+			int diff = (int) (System.currentTimeMillis() - start);
+			if(diff/1000 > autoResTime)
+				autoTimerOver = true;
+			else */
+				autoTimerOver = false;
+		}
+		
 	// *** hardcore mode ***
-		if(plugin.getConfig().getBoolean("HARDCORE") && canRes  && rightClick)
+		if(plugin.getConfig().getBoolean("HARDCORE") && canRes  && rightClick && autoTimerOver)
 		{
 			Player[] all = Bukkit.getServer().getOnlinePlayers();
 			for(Player hPlayer:all)
@@ -303,22 +382,37 @@ public class PListener implements Listener {
 				String shrine = shrines.getClose(hPlayer.getLocation());
 				int timer = plugin.getConfig().getInt("TIMER")*60;
 				
+				int othersTimer = plugin.getConfig().getInt("OTHERS_WAIT_TIME")*60;
+				long start = ghosts.getCustomConfig().getLong("players."+hPlayer.getName() +"."+worldName +".starttime");
+				long end = System.currentTimeMillis();
+				long othersDiff = (end - start)/1000;
+				
 				//if he's a ghost it's checked if his grave is right clicked				
 				if(hPlayer.getWorld() == player.getWorld() && hPlayer != player && plugin.hasPermRebOthers(player) && !ghosts.isGhost(player) && ghosts.isGhost(hPlayer) && plugin.getConfig().getBoolean("GRAVE_SIGNS") && event.getClickedBlock().getLocation().distance(hGrave) < 3 && plugin.getConfig().getBoolean("OTHERS_RESURRECT"))
 				{
 					if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime()  >= 12000 && player.getWorld().getTime() <= 24000)
 						plugin.message.send(player, Messages.mustBeDay);
 					
-					if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime()  >= 0 && player.getWorld().getTime() <= 12000)
+					if(plugin.getConfig().getInt("OTHERS_WAIT_TIME") != 0) {
+						if(othersDiff < othersTimer)
+							othersCanRes = true;
+						else {
+							othersCanRes = false;
+							plugin.message.sendTime(player, Messages.timerNotExpired, checkTime(start));
+						}
+					}
+
+					
+					if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime()  >= 0 && player.getWorld().getTime() <= 12000 && othersCanRes)
 					{
 						ghosts.punishResurrecter(player);
-						ghosts.resurrect(player, hPlayer);
+						ghosts.resurrect(player, hPlayer, null, false);
 						ghosts.selfResPunish(hPlayer);
 					}
-					else if(hPlayer != player)
+					else if(hPlayer != player && othersCanRes)
 					{
 						ghosts.punishResurrecter(player);
-						ghosts.resurrect(player, hPlayer);
+						ghosts.resurrect(player, hPlayer, null, false);
 						ghosts.selfResPunish(hPlayer);
 
 					}
@@ -332,6 +426,7 @@ public class PListener implements Listener {
 					long currentTime = System.currentTimeMillis();
 					long startTime = ghosts.getCustomConfig().getLong("players."+hPlayerName +"."+worldName +".starttime");
 					long diff = (currentTime - startTime)/1000;
+					canRes = true;
 					
 					//normal spawning
 					if(!plugin.getConfig().getBoolean("CORPSE_SPAWNING"))
@@ -424,26 +519,41 @@ public class PListener implements Listener {
 			}
 		}
 		
-		if(plugin.getConfig().getBoolean("OTHERS_RESURRECT") && !plugin.getConfig().getBoolean("HARDCORE") && canRes && rightClick)
+		if(plugin.getConfig().getBoolean("OTHERS_RESURRECT") && !plugin.getConfig().getBoolean("HARDCORE") && canRes && rightClick && autoTimerOver)
 		{
 			Player [] all = Bukkit.getServer().getOnlinePlayers();
 			for(Player dPlayer:all)
 			{	
 				Location hGrave = ghosts.getLocation(dPlayer, dPlayer.getWorld().getName());
+				
 				if(player.getWorld() == dPlayer.getWorld() && !ghosts.isGhost(player) && event.getClickedBlock().getLocation().distance(hGrave) < 3 && ghosts.isGhost(dPlayer) && plugin.getConfig().getBoolean("GRAVE_SIGNS") && plugin.hasPermRebOthers(player))
 				{
+					int othersTimer = plugin.getConfig().getInt("OTHERS_WAIT_TIME")*60;
+					long start = ghosts.getCustomConfig().getLong("players."+dPlayer.getName() +"."+dPlayer.getWorld().getName() +".starttime");
+					long end = System.currentTimeMillis();
+					long othersDiff = (end - start)/1000;
+					
 					if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime() >= 12000 && player.getWorld().getTime() <= 24000)
 						plugin.message.sendChat(player, Messages.mustBeDay);
-				
-					if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime() >= 0 && player.getWorld().getTime() <= 12000)
-					{
-						ghosts.punishResurrecter(player);
-						ghosts.resurrect(player, dPlayer);
+					
+					if(plugin.getConfig().getInt("OTHERS_WAIT_TIME") != 0) {
+						if(othersDiff < othersTimer)
+							othersCanRes = true;
+						else {
+							othersCanRes = false;
+							plugin.message.sendTime(player, Messages.timerNotExpired, checkTime(start));
+						}
 					}
-					else if(!ghosts.isGhost(player))
+				
+					if(plugin.getConfig().getBoolean("ONLY_DAY") && player.getWorld().getTime() >= 0 && player.getWorld().getTime() <= 12000 && othersCanRes)
 					{
 						ghosts.punishResurrecter(player);
-						ghosts.resurrect(player, dPlayer);
+						ghosts.resurrect(player, dPlayer, null, false);
+					}
+					else if(!ghosts.isGhost(player) && othersCanRes)
+					{
+						ghosts.punishResurrecter(player);
+						ghosts.resurrect(player, dPlayer, null, false);
 					}
 					else
 						plugin.message.sendChat(player, Messages.cantResurrect);
@@ -472,7 +582,7 @@ public class PListener implements Listener {
 				// Material = null
 			}
 		// resurrection
-			if(canRes && rightClick) {				
+			if(canRes && rightClick && autoTimerOver) {				
 				Location locDeath = ghosts.getLocation(player, player.getWorld().getName());
 				// reverse spawning
 				if(!plugin.getConfig().getBoolean("CORPSE_SPAWNING") && !plugin.getConfig().getBoolean("HARDCORE"))
@@ -664,6 +774,12 @@ public class PListener implements Listener {
 	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onPlayerPortal(PlayerPortalEvent event) {
 		Player player = event.getPlayer();	
+		
+		if(plugin.getConfig().getInt("UNCONSCIOUSMODE") > 0) {
+			event.setCancelled(true);
+			return;
+		}
+		
 		try {
 			String world = event.getFrom().getWorld().getName();
 			String newworld = event.getTo().getWorld().getName();
@@ -711,6 +827,58 @@ public class PListener implements Listener {
 		ghosts.getCustomConfig().set("players."+playerName+"."+worldName+".canres", true);
 		ghosts.saveCustomConfig();
 		
+	}
+	
+	/*
+	 * Few events which gets cancelled if the player is chained
+	 */
+	
+	@EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+	public void onPlayerDropEvent(PlayerDropItemEvent event)
+	{
+		Player player = (Player) event.getPlayer();
+		if(ghosts.isGhost(player) && plugin.getConfig().getInt("UNCONSCIOUSMODE") > 0) {
+			event.setCancelled(true);
+			return;
+		}
+	}	
+	
+	@EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+	public void onPlayerInteractEvent(PlayerInteractEvent event)
+	{
+		Player player = (Player) event.getPlayer();
+		if(ghosts.isGhost(player) && plugin.getConfig().getInt("UNCONSCIOUSMODE") > 0) {
+			event.setCancelled(true);
+			return;
+		}
+	}
+	
+	@EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+	public void onEntityDamageByEntityEvent(EntityDamageByEntityEvent event)
+	{
+		if(event.getDamager() instanceof Player)
+		{
+			Player player = (Player) event.getDamager();
+			if(ghosts.isGhost(player) && plugin.getConfig().getInt("UNCONSCIOUSMODE") > 0) {
+				event.setCancelled(true);
+				return;
+			}
+		}
+		
+	}
+	
+	@EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+	public void onBowShot(EntityShootBowEvent event)
+	{
+		
+		if(event.getEntity() instanceof Player)
+		{
+			Player player = (Player) event.getEntity();
+			if(ghosts.isGhost(player) && plugin.getConfig().getInt("UNCONSCIOUSMODE") > 0) {
+				event.setCancelled(true);
+				return;
+			}
+		}
 	}
 	
 	//gets the id or the name of the item from config and returns it as Material

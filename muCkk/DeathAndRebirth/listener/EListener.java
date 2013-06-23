@@ -8,8 +8,10 @@ import muCkk.DeathAndRebirth.ghost.Ghosts;
 import muCkk.DeathAndRebirth.ghost.Shrines;
 import muCkk.DeathAndRebirth.messages.Messages;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftPlayer;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -23,10 +25,13 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 import net.citizensnpcs.api.CitizensAPI;
+import net.minecraft.server.v1_5_R3.Packet205ClientCommand;
 
 public class EListener implements Listener {
 
@@ -48,7 +53,7 @@ public class EListener implements Listener {
 	public void onEntityDeath(EntityDeathEvent event) {		
 		Entity entity = event.getEntity();
 		if(!(entity instanceof Player)) return;
-		Player player = (Player) entity;
+		final Player player = (Player) entity;
 		
 		// check for ignore	
 		if(plugin.hasPermIgnore(player))
@@ -80,8 +85,8 @@ public class EListener implements Listener {
 		if(player.getHealth() > 0) return;
 
 		//Defines Location of death
-		Location loc = player.getLocation();
-		Block block = player.getWorld().getBlockAt(loc);	
+		final Location loc = player.getLocation();
+		final Block block = player.getWorld().getBlockAt(loc);	
 		ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".location.x", block.getX());
 		ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".location.y", block.getY());
 		ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".location.z", block.getZ());
@@ -91,6 +96,46 @@ public class EListener implements Listener {
 			long startTime = System.currentTimeMillis();
 			ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".starttime", startTime);
 		}
+		if(plugin.getConfig().getInt("UNCONSCIOUSMODE") > 0)
+		{
+			long startTime = System.currentTimeMillis();
+			ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".unconsciousstart", startTime);
+		}
+		if(plugin.getConfig().getInt("AUTORES") > 0)
+		{
+			long startTime = System.currentTimeMillis();
+			ghosts.getCustomConfig().set("players."+player.getName() +"."+block.getWorld().getName() +".autostarttime", startTime);
+			new Thread() {
+				@Override
+				public void run() {	
+					boolean isGhost = true;
+					while(isGhost) {
+						int autoResTime = plugin.getConfig().getInt("AUTORES");
+						long start = ghosts.getCustomConfig().getLong("players."+player.getName() +"."+player.getWorld().getName() +".autostarttime");
+						int diff = (int) (System.currentTimeMillis() - start);
+						if(diff/1000 > autoResTime) {
+							isGhost = false;
+							ghosts.resurrect(player);
+						}
+						else {
+							isGhost = true;
+							try {
+								Thread.sleep(1000);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
+					}
+				}
+			}.start();
+		}
+		
+		/*if(plugin.getConfig().getInt("UNCONSCIOUSMODE") > 0) {
+			Packet205ClientCommand packet = new Packet205ClientCommand();
+		    packet.a = 1;
+		    ((CraftPlayer)player).getHandle().playerConnection.a(packet);
+		    Bukkit.getServer().getPluginManager().callEvent(new PlayerRespawnEvent(player, null, false));
+		} */
 		
 	// checking items
 		List<ItemStack> drops = event.getDrops();
@@ -158,6 +203,17 @@ public class EListener implements Listener {
 	/*
 	 * Prevents ghosts from losing hunger points
 	 */
+	
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void onPlayerInteractEntityEvent(PlayerInteractEntityEvent event)
+	{
+		if(event.getRightClicked() instanceof Player && plugin.getConfig().getInt("UNCONSCIOUSMODE") > 0) {		
+			Player player = (Player) event.getRightClicked();
+			if(ghosts.isGhost(player)) {
+				ghosts.resurrect(event.getPlayer(), player, null, false);
+			}
+		}
+	}
 	
 	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onFoodLevelChangeEvent(FoodLevelChangeEvent event) {

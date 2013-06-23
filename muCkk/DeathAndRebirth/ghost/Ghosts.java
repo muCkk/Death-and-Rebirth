@@ -12,9 +12,9 @@ import muCkk.DeathAndRebirth.DAR;
 import muCkk.DeathAndRebirth.listener.PListener;
 import muCkk.DeathAndRebirth.messages.Errors;
 import muCkk.DeathAndRebirth.messages.Messages;
-import net.minecraft.server.Packet201PlayerInfo;
-import net.minecraft.server.Packet20NamedEntitySpawn;
-import net.minecraft.server.Packet29DestroyEntity;
+//import net.minecraft.server.Packet201PlayerInfo;
+//import net.minecraft.server.Packet20NamedEntitySpawn;
+//import net.minecraft.server.Packet29DestroyEntity;
 
 import org.bukkit.Material;
 import org.bukkit.Location;
@@ -23,7 +23,7 @@ import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.craftbukkit.entity.CraftPlayer;
+//import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.inventory.ItemStack;
@@ -177,7 +177,7 @@ public class Ghosts {
 	 * Manages the death of players.
 	 * @param player which died
 	 */
-	public void died(Player player, PlayerInventory inv, Location loc, boolean pvp_death) { 
+	public void died(final Player player, PlayerInventory inv, Location loc, boolean pvp_death) { 
 		final String pname = player.getName();
 		final String world = player.getWorld().getName();
 		final Block block = player.getWorld().getBlockAt(loc);
@@ -199,6 +199,17 @@ public class Ghosts {
 		}
 		getCustomConfig().set("players."+pname +"."+world +".dead", true);
 		
+		if(plugin.getConfig().getInt("OTHERS_WAIT_TIME") != 0) {
+			int timer = plugin.getConfig().getInt("OTHERS_WAIT_TIME")*60;
+			long start = getCustomConfig().getLong("players."+player.getName() +"."+block.getWorld().getName() +".starttime");
+			long end = System.currentTimeMillis();
+			long diff = (end - start)/1000;
+			
+			if(diff > timer) {
+				
+			}
+		}
+		
 		//This thread sleeps 3 second to have kind of security before the player can (be) resurrect(ed), needed if players kills others with a lot of strikes
 		new Thread() {
 			@Override
@@ -209,7 +220,21 @@ public class Ghosts {
 					log.info("[Death and Rebirth] Error: Could not sleep while enabling resurrection.");
 					e.printStackTrace();
 				}
-				getCustomConfig().set("players."+pname +"."+world +".canres", true);
+				
+				if(plugin.getConfig().getInt("OTHERS_WAIT_TIME") != 0) {
+					int timer = plugin.getConfig().getInt("OTHERS_WAIT_TIME")*60;
+					long start = getCustomConfig().getLong("players."+player.getName() +"."+block.getWorld().getName() +".starttime");
+					long end = System.currentTimeMillis();
+					long diff = (end - start)/1000;
+					
+					if(diff > timer) {
+						getCustomConfig().set("players."+pname +"."+world +".canres", true);
+					}
+					else {
+						plugin.message.sendTime(player, Messages.timerNotExpired, plistener.checkTime(start));
+					}
+				} else
+					getCustomConfig().set("players."+pname +"."+world +".canres", true);
 			}
 		}.start();
 		
@@ -360,13 +385,15 @@ public class Ghosts {
 					if (otherPlayer == vanishingPlayer) continue;
 					// reveal other ghosts
 					if (isGhost(otherPlayer)) {
-						((CraftPlayer) vanishingPlayer).getHandle().netServerHandler.sendPacket(new Packet20NamedEntitySpawn(( (CraftPlayer) otherPlayer).getHandle()));
-						((CraftPlayer) vanishingPlayer).getHandle().netServerHandler.sendPacket(new Packet201PlayerInfo(otherPlayer.getName(), true, 1));
+						otherPlayer.showPlayer(vanishingPlayer);
+						//((CraftPlayer) vanishingPlayer).getHandle().netServerHandler.sendPacket(new Packet20NamedEntitySpawn(( (CraftPlayer) otherPlayer).getHandle()));
+						//((CraftPlayer) vanishingPlayer).getHandle().netServerHandler.sendPacket(new Packet201PlayerInfo(otherPlayer.getName(), true, 1));
 						continue;
 					}
 					// hide ghost from living players
-					((CraftPlayer) otherPlayer).getHandle().netServerHandler.sendPacket(new Packet29DestroyEntity(((CraftPlayer) vanishingPlayer).getEntityId()));
-					((CraftPlayer) otherPlayer).getHandle().netServerHandler.sendPacket(new Packet201PlayerInfo(vanishingPlayer.getName(), false, 0));
+					otherPlayer.hidePlayer(vanishingPlayer);
+					//((CraftPlayer) otherPlayer).getHandle().netServerHandler.sendPacket(new Packet29DestroyEntity(((CraftPlayer) vanishingPlayer).getEntityId()));
+					//((CraftPlayer) otherPlayer).getHandle().netServerHandler.sendPacket(new Packet201PlayerInfo(vanishingPlayer.getName(), false, 0));
 				}
 			}
 		}, 20L);	
@@ -382,13 +409,15 @@ public class Ghosts {
 						if (otherPlayer == appearingPlayer) continue;
 						// hide other ghosts
 						if (isGhost(otherPlayer)) {
-							((CraftPlayer) appearingPlayer).getHandle().netServerHandler.sendPacket(new Packet29DestroyEntity(((CraftPlayer) otherPlayer).getEntityId()));
-							((CraftPlayer) appearingPlayer).getHandle().netServerHandler.sendPacket(new Packet201PlayerInfo(otherPlayer.getName(), false, 0));
+							appearingPlayer.hidePlayer(otherPlayer);
+							//((CraftPlayer) appearingPlayer).getHandle().netServerHandler.sendPacket(new Packet29DestroyEntity(((CraftPlayer) otherPlayer).getEntityId()));
+							//((CraftPlayer) appearingPlayer).getHandle().netServerHandler.sendPacket(new Packet201PlayerInfo(otherPlayer.getName(), false, 0));
 							continue;
 						}
 						// reveal player for others
-						((CraftPlayer) otherPlayer).getHandle().netServerHandler.sendPacket(new Packet20NamedEntitySpawn(( (CraftPlayer) appearingPlayer).getHandle()));
-						((CraftPlayer) otherPlayer).getHandle().netServerHandler.sendPacket(new Packet201PlayerInfo(appearingPlayer.getName(), true, 1));
+						otherPlayer.showPlayer(appearingPlayer);
+						//((CraftPlayer) otherPlayer).getHandle().netServerHandler.sendPacket(new Packet20NamedEntitySpawn(( (CraftPlayer) appearingPlayer).getHandle()));
+						//((CraftPlayer) otherPlayer).getHandle().netServerHandler.sendPacket(new Packet201PlayerInfo(appearingPlayer.getName(), true, 1));
 					}
 				}
 			}, 20L);		
@@ -398,16 +427,18 @@ public class Ghosts {
 		Player[] onlinePlayers = admin.getServer().getOnlinePlayers();
 		for (Player ghost : onlinePlayers) {
 			if (!isGhost(ghost)) continue;
-			((CraftPlayer) admin).getHandle().netServerHandler.sendPacket(new Packet20NamedEntitySpawn(( (CraftPlayer) ghost).getHandle()));
-			((CraftPlayer) admin).getHandle().netServerHandler.sendPacket(new Packet201PlayerInfo(ghost.getName(), true, 1));
+			admin.showPlayer(ghost);
+			//((CraftPlayer) admin).getHandle().netServerHandler.sendPacket(new Packet20NamedEntitySpawn(( (CraftPlayer) ghost).getHandle()));
+			//((CraftPlayer) admin).getHandle().netServerHandler.sendPacket(new Packet201PlayerInfo(ghost.getName(), true, 1));
 		}
 	}
 	public void hideGhosts(final Player admin) {
 		Player[] onlinePlayers = admin.getServer().getOnlinePlayers();
 		for (Player ghost : onlinePlayers) {
 			if (!isGhost(ghost)) continue;
-			((CraftPlayer) admin).getHandle().netServerHandler.sendPacket(new Packet29DestroyEntity(((CraftPlayer) ghost).getEntityId()));
-			((CraftPlayer) admin).getHandle().netServerHandler.sendPacket(new Packet201PlayerInfo(ghost.getName(), false, 0));
+			admin.hidePlayer(ghost);
+			//((CraftPlayer) admin).getHandle().netServerHandler.sendPacket(new Packet29DestroyEntity(((CraftPlayer) ghost).getEntityId()));
+			//((CraftPlayer) admin).getHandle().netServerHandler.sendPacket(new Packet201PlayerInfo(ghost.getName(), false, 0));
 		}
 	}
 	
@@ -425,6 +456,7 @@ public class Ghosts {
 		selfResPunish(player);
 	}
 	
+	@SuppressWarnings("deprecation")
 	public void selfResPunish(Player player) {
 		// health
 		int percent = plugin.getConfig().getInt("HEALTH");
@@ -432,7 +464,7 @@ public class Ghosts {
 		{
 			if(plugin.getConfig().getBoolean("HEROES_ENABLED"))
 			{				
-				double pHealth = (double) heroes.getCharacterManager().getMaxHealth(player);
+				double pHealth = (double) heroes.getCharacterManager().getHero(player).getMaxHealth();
 			    pHealth = (pHealth/100)*percent;
 			    int health = (int) pHealth;
 			    
@@ -457,7 +489,7 @@ public class Ghosts {
 		
 		//economy
 		double money = plugin.getConfig().getDouble("ECONOMY");
-		if(money > 0) 	DAR.econ.withdrawPlayer(player.getName(), money);
+		if(money > 0 && DAR.econ != null) 	DAR.econ.withdrawPlayer(player.getName(), money);
 		
 		// mcMMO
 		if (plugin.getConfig().getBoolean("MCMMO")) {
@@ -481,7 +513,7 @@ public class Ghosts {
 	 * @param player who tries to resurrect someone
 	 * @param target player to be resurrected
 	 */
-	public void resurrect(final Player player, final Player target) {
+	public void resurrect(final Player player, final Player target, final Location loc, final boolean cmd) {
 		// *** check distance ***
 		double distance = player.getLocation().distance(target.getLocation());
 		if(distance > plugin.getConfig().getInt("DISTANCE")) {
@@ -506,45 +538,58 @@ public class Ghosts {
 			}
 		}
 		
-		final String name = player.getName();
-		new Thread() {
-			public void run() {
-				int counter = 0;
-				int time = plugin.getConfig().getInt("RESURRECT_TIME");
-				int x = player.getLocation().getBlockX(),
-					z = player.getLocation().getBlockZ();
-				isRessing.put(name, true);
-				if (plugin.getConfig().getBoolean("SPOUT_ENABLED")) {
-					plugin.darSpout.playResSound(player, plugin.getConfig().getString("RES_SOUND"));
-				}
-				while (counter < time && isRessing.get(name)) {
-					if (x != player.getLocation().getBlockX() || z != player.getLocation().getBlockZ()) {
-						isRessing.put(name, false);
-						continue;
-					}
-					plugin.message.send(player, Messages.resurrecting, String.valueOf(counter));
-					try {
-						sleep(1000);
-					}catch (InterruptedException e) {
-						Errors.whileRessing();
-						e.printStackTrace();
-					}
-					counter++;
-				}
-				isRessing.remove(name);
-				if(counter >= time) {					
-					resurrect(target);
-					plugin.message.send(player, Messages.resurrected, " "+target.getName());
-					plugin.message.sendResurrected(target, player, Messages.resurrectedBy);
-					plugin.message.sendResurrecter(player, target, Messages.resurrectedGhost);
-					target.teleport(getLocation(target, target.getWorld().getName()));
-				// spout related
-					if (plugin.getConfig().getBoolean("SPOUT_ENABLED")) {
-						plugin.darSpout.playRebirthSound(player, plugin.getConfig().getString("REB_SOUND"));
-					}
-				}
+		if(cmd) {
+			resurrect(target);
+			plugin.message.send(player, Messages.resurrected, " "+target.getName());
+			plugin.message.sendResurrected(target, player, Messages.resurrectedBy);
+			plugin.message.sendResurrecter(player, target, Messages.resurrectedGhost);
+			if(loc != null) {
+				target.teleport(loc);
 			}
-		}.start();		
+			if (plugin.getConfig().getBoolean("SPOUT_ENABLED")) {
+				plugin.darSpout.playRebirthSound(player, plugin.getConfig().getString("REB_SOUND"));
+			}
+		} else {
+			final String name = player.getName();
+			new Thread() {
+				public void run() {
+					int counter = 0;
+					int time = plugin.getConfig().getInt("RESURRECT_TIME");
+					int x = player.getLocation().getBlockX(),
+						z = player.getLocation().getBlockZ();
+					isRessing.put(name, true);
+					if (plugin.getConfig().getBoolean("SPOUT_ENABLED")) {
+						plugin.darSpout.playResSound(player, plugin.getConfig().getString("RES_SOUND"));
+					}
+					while (counter < time && isRessing.get(name)) {
+						if (x != player.getLocation().getBlockX() || z != player.getLocation().getBlockZ()) {
+							isRessing.put(name, false);
+							continue;
+						}
+						plugin.message.send(player, Messages.resurrecting, String.valueOf(counter));
+						try {
+							sleep(1000);
+						}catch (InterruptedException e) {
+							Errors.whileRessing();
+							e.printStackTrace();
+						}
+						counter++;
+					}
+					isRessing.remove(name);
+					if(counter >= time) {					
+						resurrect(target);
+						plugin.message.send(player, Messages.resurrected, " "+target.getName());
+						plugin.message.sendResurrected(target, player, Messages.resurrectedBy);
+						plugin.message.sendResurrecter(player, target, Messages.resurrectedGhost);
+						target.teleport(getLocation(target, target.getWorld().getName()));
+					// spout related
+						if (plugin.getConfig().getBoolean("SPOUT_ENABLED")) {
+							plugin.darSpout.playRebirthSound(player, plugin.getConfig().getString("REB_SOUND"));
+						}
+					}
+				}
+			}.start();		
+		}
 	}
 	
 	/**
@@ -788,6 +833,7 @@ public class Ghosts {
 	    return true;
 	}
 	
+	@SuppressWarnings("deprecation")
 	public void punishResurrecter(Player player) {
 		if(plugin.getConfig().getInt("OTHERS_PAYMENT") != 0)
 		{

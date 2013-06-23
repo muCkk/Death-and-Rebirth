@@ -1,3 +1,27 @@
+Version 3.1 (early alpha, please test and report bugs)
+	updated for CB 1.5.2-R1.1
+	updated all APIs
+	added unconsciousmode, player will die after certain time, while unconscious can be resurrected but not interact walk etc. UM denies normal ghost mode
+	added '/reb <target> <target loc (player)>' with permission dar.reb.others.pos
+	added 'no permission'-message (for cmd)
+	added autores, player will be resurrected automatically after certain time
+	changed reb command to work without timer and costs
+	fixed bugs with some commands
+	fixed various small bugs
+	removed Heroes support (Heroes is using bukkit no longer as far as I know)
+	
+Version 3.0.3.02
+	updated for CB 1.4.7-R0.2
+	updated as many APIs as possible
+	added OTHERS_WAIT_TIME to set an time resurrecters must wait until they can res others
+	
+Version 3.0.3.01
+	updated for CB 1.4.5-R1.0
+	updated all APIs (plugins DaR connected with)
+
+Version 3.0.3.00.1
+	fixed version check not being disabled
+
 Version 3.0.3
 	updated for CB 1.3.2-R1.1
 	updated all APIs
