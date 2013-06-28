@@ -42,6 +42,7 @@ public class DAR extends JavaPlugin {
 	private Shrines shrines;
 	private PListener plistener;
 	private Blacklist blacklist;
+	private SListener slistener;
 	
 	private static final Logger log = Logger.getLogger("Minecraft");
     public static Economy econ = null;
@@ -79,9 +80,11 @@ public class DAR extends JavaPlugin {
         if(mobArena != null && mobArena.isEnabled())
             setupMobArena(mobArena);
         
-        /*if(Bukkit.getPluginManager().getPlugin("Heroes").isEnabled()) {
-        	heroes = (Heroes) Bukkit.getPluginManager().getPlugin("Heroes");        	
-        } */
+        heroes = (Heroes) Bukkit.getPluginManager().getPlugin("Heroes");
+		if (heroes != null && getConfig().getBoolean("HEROES"))
+			getConfig().set("HEROES_ENABLED", true);
+		else
+			getConfig().set("HEROES_ENABLED", false);
 		
 	// Config
 		getConfig().options().copyDefaults(true);
@@ -95,6 +98,7 @@ public class DAR extends JavaPlugin {
 		graves = new Graves(this, dataDir);
 		ghosts = new Ghosts(this, dir, graves, shrines, heroes);
 		blacklist = new Blacklist(this);
+		slistener = new SListener(this);
 		darSpout.setGhosts(ghosts);
 		
 	// custom configs
@@ -125,6 +129,9 @@ public class DAR extends JavaPlugin {
 		
 		if(this.getConfig().getBoolean("SPOUT_ENABLED"))
 			this.getLogger().info("Spout found, features supported now");
+		
+		if(this.getConfig().getBoolean("HEROES_ENABLED"))
+			this.getLogger().info("Heroes found, features supported now");
 		
 		this.getLogger().info("Configs loaded!");
 		
@@ -423,6 +430,7 @@ public class DAR extends JavaPlugin {
 				message.saveCustomConfig();
 				blacklist.reloadCustomConfig();
 				blacklist.saveCustomConfig();
+				slistener.checkForPlugins();
 				log.info("[Death and Rebirth] Configs reloaded");
 				return true;
 			}
@@ -459,6 +467,7 @@ public class DAR extends JavaPlugin {
 				message.saveCustomConfig();
 				blacklist.reloadCustomConfig();
 				blacklist.saveCustomConfig();
+				slistener.checkForPlugins();
 				message.sendChat(player, Messages.reloadComplete);
 				return true;
 			}

@@ -32,7 +32,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.herocraftonline.heroes.Heroes;
 
-
 public class Ghosts {
 
 	private static final Logger log = Logger.getLogger("Minecraft");
@@ -482,7 +481,7 @@ public class Ghosts {
 			    	health = 1;	
 				player.setHealth(health);
 			}
-		}
+		} 
 
 		//drops
         dardrops.selfResPunish(player);

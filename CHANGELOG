@@ -1,3 +1,8 @@
+Version 3.1.01 (still alpha please give a feedback)
+	added option to disable soft dependecies
+	added Heroes support
+	fixed spout features not working
+
 Version 3.1 (early alpha, please test and report bugs)
 	updated for CB 1.5.2-R1.1
 	updated all APIs

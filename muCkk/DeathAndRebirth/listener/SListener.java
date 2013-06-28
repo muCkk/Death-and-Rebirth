@@ -25,24 +25,22 @@ public class SListener implements Listener{
 		PluginManager plugman = plugin.getServer().getPluginManager();
 		
 		// Spout
-		if(pluginName.equalsIgnoreCase("spout")) {
-			Plugin spoutPlugin = plugman.getPlugin("Spout");
-			if (spoutPlugin != null) {
+		if(pluginName.equalsIgnoreCase("spoutplugin")) {
+			Plugin spoutPlugin = plugman.getPlugin("SpoutPlugin");
+			if (spoutPlugin != null && plugin.getConfig().getBoolean("SPOUT")) {
 				Errors.foundSpout();
 				plugin.message.setSpout(true);
 				plugin.getConfig().set("SPOUT_ENABLED", true);
-				plugin.message.setSpout(true);
 			}
 			else {
 				plugin.message.setSpout(false);
 				plugin.getConfig().set("SPOUT_ENABLED", false);
-				plugin.message.setSpout(false);
 			}
 		}
 		// Citizens
 		if(pluginName.equalsIgnoreCase("citizens")) {
 			Plugin citizensPlugin = plugman.getPlugin("Citizens");
-			if (citizensPlugin != null)	plugin.getConfig().set("CITIZENS_ENABLED", true);
+			if (citizensPlugin != null && plugin.getConfig().getBoolean("CITIZENS"))	plugin.getConfig().set("CITIZENS_ENABLED", true);
 			else						plugin.getConfig().set("CITIZENS_ENABLED", false);
 		}
 		// mcMMO
@@ -53,13 +51,13 @@ public class SListener implements Listener{
 		// MobArena
 		if(pluginName.equalsIgnoreCase("MobArena")) {
 			Plugin maPlug = plugman.getPlugin("MobArena");
-			if (maPlug != null)	plugin.getConfig().set("MOBARENA_ENABLED", true);
+			if (maPlug != null && plugin.getConfig().getBoolean("MOBARENA"))	plugin.getConfig().set("MOBARENA_ENABLED", true);
 			else				plugin.getConfig().set("MOBARENA_ENABLED", false);
 		}
 		// Heroes
 		if(pluginName.equalsIgnoreCase("Heroes")) {
 			Plugin maPlug = plugman.getPlugin("Heroes");
-			if (maPlug != null)	plugin.getConfig().set("HEROES_ENABLED", true);
+			if (maPlug != null && plugin.getConfig().getBoolean("HEROES"))	plugin.getConfig().set("HEROES_ENABLED", true);
 			else				plugin.getConfig().set("HEROES_ENABLED", false);
 		}
 	}
@@ -68,8 +66,8 @@ public class SListener implements Listener{
 		PluginManager plugman = plugin.getServer().getPluginManager();
 		
 		// spout
-		Plugin spoutPlugin = plugman.getPlugin("Spout");
-		if (spoutPlugin != null) {
+		Plugin spoutPlugin = plugman.getPlugin("SpoutPlugin");
+		if (spoutPlugin != null && plugin.getConfig().getBoolean("SPOUT")) {
 			plugin.getConfig().set("SPOUT_ENABLED", true);
 			plugin.message.setSpout(true);
 		}
@@ -80,7 +78,7 @@ public class SListener implements Listener{
 		
 		// citizens
 		Plugin citizensPlugin = plugman.getPlugin("Citizens");
-		if (citizensPlugin != null)	plugin.getConfig().set("CITIZENS_ENABLED", true);
+		if (citizensPlugin != null && plugin.getConfig().getBoolean("CITIZENS")) plugin.getConfig().set("CITIZENS_ENABLED", true);
 		else						plugin.getConfig().set("CITIZENS_ENABLED", false);
 		
 		// mcMMO
@@ -89,7 +87,7 @@ public class SListener implements Listener{
 		
 		// MobArena
 		Plugin maPlug = plugman.getPlugin("MobArena");
-		if (maPlug != null) {
+		if (maPlug != null && plugin.getConfig().getBoolean("MOBARENA")) {
 			plugin.getConfig().set("MOBARENA_ENABLED", true);
 		}
 		else {
@@ -98,7 +96,7 @@ public class SListener implements Listener{
 		
 		// Heroes
 		Plugin heroPlug = plugman.getPlugin("Heroes");
-		if (heroPlug != null) {
+		if (heroPlug != null && plugin.getConfig().getBoolean("HEROES")) {
 			plugin.getConfig().set("HEROES_ENABLED", true);
 		}
 		else {

@@ -140,10 +140,7 @@ public class Messenger {
 //	************************************************************************************
 	private void spout(Player player, String msg) {
 		SpoutPlayer sp = (SpoutPlayer) player;
-		////////////////////// remove to enable spout notifications again
-		boolean DISABLED = true;
-		//////////////////////
-		if(msg.length() <= 26 && !DISABLED)
+		if(msg.length() <= 26)
 			sp.sendNotification(title, msg, mat);
 		else chat(player, msg);
 	  }

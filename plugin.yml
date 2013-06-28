@@ -1,10 +1,10 @@
 name: Death and Rebirth
 main: muCkk.DeathAndRebirth.DAR
-version: 3.1
+version: 3.1.01
 author: [muCkk, G4meM0ment]
 
 depend: [Vault]
-softdepend: [MobArena, Heroes, Citizens, Spout]
+softdepend: [MobArena, Citizens, SpoutPlugin, Heroes]
 
 commands:
     rebirth:

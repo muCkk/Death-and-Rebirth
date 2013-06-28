@@ -10,27 +10,25 @@ Installation:
 To install the plugin simply drag and drop the 'DeathAndRebirth.jar' file into your 
 plugins directory. If you install DaR first time also drop the Death and Rebirth directory, 
 in normal cases it should be automatically generated.
+Don't forget to download Vault (http://dev.bukkit.org/server-mods/vault/) and drop it into you plugins directory too.
 
 
 Dependencies:
 --------------------
-CraftBukkit 1.4.7-R0.2
+CraftBukkit 1.5.2-R1.1
 http://bukkit.org/
 
-Vault 1.2.22
+Vault 1.2.25
 http://dev.bukkit.org/server-mods/vault/
 
-Citizens v2.0.5
+Citizens v2.0.8
 http://dev.bukkit.org/server-mods/citizens/
 
-mcMMO v1.3.11
+mcMMO v1.4.06-beta5
 http://dev.bukkit.org/server-mods/mcmmo/
 
-SpoutPlugin #1412
+SpoutPlugin #1458
 http://dev.bukkit.org/server-mods/spout/
 
-MobArena v0.94.4.91
+MobArena v0.94.4.98
 http://dev.bukkit.org/server-mods/mobarena/
-
-Heroes v1.5.0
-http://dev.bukkit.org/server-mods/heroes/
