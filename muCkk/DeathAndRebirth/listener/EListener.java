@@ -8,10 +8,9 @@ import muCkk.DeathAndRebirth.ghost.Ghosts;
 import muCkk.DeathAndRebirth.ghost.Shrines;
 import muCkk.DeathAndRebirth.messages.Messages;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
-import org.bukkit.craftbukkit.v1_5_R3.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_6_R2.entity.CraftPlayer;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -26,12 +25,10 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 import net.citizensnpcs.api.CitizensAPI;
-import net.minecraft.server.v1_5_R3.Packet205ClientCommand;
 
 public class EListener implements Listener {
 
@@ -54,7 +51,6 @@ public class EListener implements Listener {
 		Entity entity = event.getEntity();
 		if(!(entity instanceof Player)) return;
 		final Player player = (Player) entity;
-		
 		// check for ignore	
 		if(plugin.hasPermIgnore(player))
 			return;
@@ -82,8 +78,7 @@ public class EListener implements Listener {
 		if(plugin.getConfig().getBoolean("VOID_DEATH") && damageCause.equalsIgnoreCase("VOID")) return;
 		
 		// other plugins which avoid death
-		if(player.getHealth() > 0) return;
-
+		if( ((CraftPlayer)player).getHandle().getHealth() > 0) return;
 		//Defines Location of death
 		final Location loc = player.getLocation();
 		final Block block = player.getWorld().getBlockAt(loc);	
@@ -170,10 +165,12 @@ public class EListener implements Listener {
 		// dropping OFF   OR    dar.nodrop 
 		if (!plugin.getConfig().getBoolean("DROPPING") || plugin.hasPermNoDrop(player)) {
 			drops.clear();
+			
 			ghosts.died(player, inv, loc, false);
 			return;
+		} else {
+			ghosts.died(player, inv, loc, false);
 		}
-		ghosts.died(player, inv, loc, false);
 	}
 		
 	
@@ -297,7 +294,7 @@ public class EListener implements Listener {
 		}
 				// *************************************************
 				// TODO evil citizens do damage
-				event.setDamage(0);
+				event.setDamage(0.0);
 				event.setCancelled(true);
 			}
 		}

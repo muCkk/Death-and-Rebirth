@@ -19,7 +19,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-//import org.bukkit.craftbukkit.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_6_R2.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -40,6 +40,8 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 
+import com.herocraftonline.heroes.Heroes;
+
 public class PListener implements Listener {
 
 	private Ghosts ghosts;
@@ -47,6 +49,7 @@ public class PListener implements Listener {
 	private Shrines shrines;
 	private DAR plugin;
 	private double flySpeed;
+	private Heroes heroes;
 	
 	private ArrayList<String> checkList;
 	
@@ -56,6 +59,7 @@ public class PListener implements Listener {
 		this.ghosts = ghosts;
 		this.shrines = shrines;
 		this.graves = graves;
+		heroes = DAR.getHeroes();
 		checkList = new ArrayList<String>();
 	}
 	
@@ -180,6 +184,20 @@ public class PListener implements Listener {
 			ghosts.resurrect(player);
 		}
 		
+		if(plugin.getConfig().getBoolean("HEROES")) {
+			new Thread() {
+				@Override
+				public void run() {
+						try {
+							Thread.sleep(100);
+						} catch(InterruptedException e) {
+							e.printStackTrace();
+						}
+						heroes.getCharacterManager().getHero(player).setMana(heroes.getCharacterManager().getHero(player).getMaxMana());
+				}
+			}.start();
+		}
+		
 		if(ghosts.isGhost(player)) {
 			if(unconsciousTime > 0) {
 				//set respawn location where he died
@@ -201,11 +219,11 @@ public class PListener implements Listener {
 						} catch (InterruptedException e1) {
 							e1.printStackTrace();
 						}
-						int delay = unconsciousTime/player.getMaxHealth();
+						int delay = unconsciousTime/((int) ((CraftPlayer)player).getHandle().getMaxHealth());
 						int skip = (((int) System.currentTimeMillis() - (int) ghosts.getCustomConfig().getLong("players."+player.getName() +"."+player.getWorld().getName() +".unconsciousstart"))/1000)/delay;
-						player.setHealth(player.getMaxHealth()-skip);
-						while(player.getHealth() > 0 && ghosts.isGhost(player)) {
-							player.setHealth(player.getHealth() -1);
+						player.setHealth(((CraftPlayer)player).getHandle().getMaxHealth()-skip);
+						while(((CraftPlayer)player).getHandle().getHealth() > 0 && ghosts.isGhost(player)) {
+							player.setHealth(((CraftPlayer)player).getHandle().getHealth() -1);
 							player.setFoodLevel(1);
 							
 							try {
@@ -216,7 +234,7 @@ public class PListener implements Listener {
 						}
 
 						if(ghosts.isGhost(player)) {
-							player.setHealth(0);
+							player.setHealth(0.0);
 							ghosts.getCustomConfig().set("players."+player.getName() +"."+player.getWorld().getName() +".dead", false);
 						}
 					}

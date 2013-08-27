@@ -76,7 +76,7 @@ SHRINE_PROTECTION: true
 SPOUT: false
 CITIZENS: false
 MOBARENA: false
-HEORES: false
+HEROES: false
 
 GHOST_SOUND_EFFECTS: true
 DEATH_SOUND: http://dl.dropbox.com/u/12769915/minecraft/plugins/DAR/sounds/death.wav

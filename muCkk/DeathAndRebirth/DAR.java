@@ -81,7 +81,7 @@ public class DAR extends JavaPlugin {
             setupMobArena(mobArena);
         
         heroes = (Heroes) Bukkit.getPluginManager().getPlugin("Heroes");
-		if (heroes != null && getConfig().getBoolean("HEROES"))
+		if (heroes != null && heroes.isEnabled() && getConfig().getBoolean("HEROES"))
 			getConfig().set("HEROES_ENABLED", true);
 		else
 			getConfig().set("HEROES_ENABLED", false);
@@ -173,6 +173,10 @@ public class DAR extends JavaPlugin {
     public static ArenaMaster getAM()
     {
         return am;
+    }
+    
+    public static Heroes getHeroes() {
+    	return heroes;
     }
 	
 	public boolean checkAdminPerms() {

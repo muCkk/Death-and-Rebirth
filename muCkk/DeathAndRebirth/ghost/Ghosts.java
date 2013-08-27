@@ -23,6 +23,7 @@ import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.craftbukkit.v1_6_R2.entity.CraftPlayer;
 //import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
@@ -186,7 +187,6 @@ public class Ghosts {
 			ConfigurationSection cfgsel = getCustomConfig().getConfigurationSection("players."+pname);
 			if(cfgsel != null) { 
 				Set<String> worlds = cfgsel.getKeys(false);
-				
 				try {
 					for(String otherWorld : worlds) {
 						if(!otherWorld.equalsIgnoreCase(world))
@@ -312,6 +312,10 @@ public class Ghosts {
 	// check if lightning is enabled
 		if (plugin.getConfig().getBoolean("LIGHTNING_REBIRTH")) {
 			player.getWorld().strikeLightningEffect(player.getLocation());
+		}
+		
+		if(plugin.getConfig().getBoolean("HEROES")) {
+			heroes.getCharacterManager().getHero(player).setMana(0);
 		}
 		
 		setDisplayName(player, false);
@@ -455,27 +459,28 @@ public class Ghosts {
 		selfResPunish(player);
 	}
 	
-	@SuppressWarnings("deprecation")
 	public void selfResPunish(Player player) {
 		// health
 		int percent = plugin.getConfig().getInt("HEALTH");
 		if(percent > 0 && percent < 100)
 		{
 			if(plugin.getConfig().getBoolean("HEROES_ENABLED"))
-			{				
-				double pHealth = (double) heroes.getCharacterManager().getHero(player).getMaxHealth();
+			{		
+				double pHealth = (double) heroes.getCharacterManager().getHero(player).resolveMaxHealth();
 			    pHealth = (pHealth/100)*percent;
-			    int health = (int) pHealth;
+			    double health = pHealth;
 			    
 			    if(health <= 1)
 			    	health = 1;
-				EntityRegainHealthEvent event = new EntityRegainHealthEvent(player, health, null);
-				player.getServer().getPluginManager().callEvent(event);
+			    
+			    player.setHealth(health);
+//				EntityRegainHealthEvent event = new EntityRegainHealthEvent(player, health, null);
+//				player.getServer().getPluginManager().callEvent(event);
 			}
 			else {				
-				double pHealth = (double) player.getMaxHealth();
+				double pHealth = ((CraftPlayer)player).getHandle().getMaxHealth();
 			    pHealth = (pHealth/100)*percent;
-			    int health = (int) pHealth;
+			    double health = pHealth;
 	
 			    if(health <= 1)
 			    	health = 1;	
@@ -832,7 +837,6 @@ public class Ghosts {
 	    return true;
 	}
 	
-	@SuppressWarnings("deprecation")
 	public void punishResurrecter(Player player) {
 		if(plugin.getConfig().getInt("OTHERS_PAYMENT") != 0)
 		{
@@ -844,17 +848,17 @@ public class Ghosts {
 		{
 			if(plugin.getConfig().getBoolean("HEROES_ENABLED"))
 			{				
-				double pHealth = (double) heroes.getCharacterManager().getMaxHealth(player);
+				double pHealth = heroes.getCharacterManager().getHero(player).resolveMaxHealth();
 			    pHealth = (pHealth/100)*percent;
-			    int health = heroes.getCharacterManager().getHealth(player) - (int) pHealth;
+			    double health = ((CraftPlayer) player).getHandle().getHealth() - pHealth;
 			    
 				EntityRegainHealthEvent event = new EntityRegainHealthEvent(player, health, null);
 				player.getServer().getPluginManager().callEvent(event);
 			}
 			else {				
-				double pHealth = (double) player.getMaxHealth();
+				double pHealth = ((CraftPlayer) player).getHandle().getHealth();
 			    pHealth = (pHealth/100)*percent;
-			    int health = player.getHealth() - (int) pHealth;
+			    double health = ((CraftPlayer) player).getHandle().getHealth() - pHealth;
 			    if(health <= 0) health = 1;
 			    
 				player.setHealth(health);

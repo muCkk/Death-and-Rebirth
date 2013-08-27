@@ -37,6 +37,7 @@ public class Blacklist {
 	    if (defConfigStream != null) {
 	        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
 	        customConfig.setDefaults(defConfig);
+	        customConfig.options().copyDefaults(true);
 	    }
 	}
 	

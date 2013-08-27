@@ -1,3 +1,13 @@
+Version 3.1.03
+	I DECIDED TO DISCONTINUE DaR ON ITS ONE, IT WILL BE INCLUDED IN G&E RPGEssentails, DaR WILL BE RECODED
+	updated for CB 1.6.2-R0.2
+	added no mana regain while ghost, set mana on respawn to 0
+	fixed heroes dependency
+	fixed config creation
+
+Version 3.1.02
+	updated for CB 1.6.2-R0.1
+
 Version 3.1.01 (still alpha please give a feedback)
 	added option to disable soft dependecies
 	added Heroes support
